@@ -6,16 +6,17 @@ This is an *extremely* basic 3D graphics engine, built entirely from the ground 
 Currently on hold until I take linear algebra where I hope to learn math concepts applicable to 3D graphics.
 
 
+
 To-Do List (in no specific order):
 
-Improve organization of code
+- Improve organization of code
 
-Add OOP
+- Add OOP
 
-General bug fixes
+- General bug fixes
 
-Add mouse-based camera controls
+- Add mouse-based camera controls
 
-Add 3d shape creation tools
+- Add 3d shape creation tools
 
-Add more advanced 3d graphics features (rendering triangles and faces instead of just lines)
+- Add more advanced 3d graphics features (rendering triangles and faces instead of just lines)
