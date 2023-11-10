@@ -341,18 +341,38 @@ while running:
             if p1[2] == True: # if one of the points is out of view (MAGIC)
                 deltaX = p2[0] - p1[0]
                 deltaY = p2[1] - p1[1]
-                d1 = (numpy.sign(deltaX) * screenWidth - p1[0]) / deltaX
-                d2 = (numpy.sign(deltaY) * screenWidth - p1[1]) / deltaY
-                if d1 < d2:
+                choose_d1, choose_d2 = False, False
+                if deltaX == 0:
+                    choose_d2 = True
+                if deltaY == 0:
+                    choose_d1 = True
+                if not choose_d1 and not choose_d2:
+                    d1 = (numpy.sign(deltaX) * screenWidth - p1[0]) / deltaX
+                    d2 = (numpy.sign(deltaY) * screenWidth - p1[1]) / deltaY
+                    if (d1 < d2):
+                        choose_d1 = True
+                    else:
+                        choose_d2 = True
+                if choose_d1:
                     p1 = (p1[0] + d1 * deltaX, p1[1] + d1 * deltaY, p1[2])
                 else:
                     p1 = (p1[0] + d2 * deltaX, p1[1] + d2 * deltaY, p1[2])
             if p2[2] == True: # if the other point is out of view (MAGIC)
                 deltaX = p1[0] - p2[0]
                 deltaY = p1[1] - p2[1]
-                d1 = (numpy.sign(deltaX) * screenWidth - p2[0]) / deltaX
-                d2 = (numpy.sign(deltaY) * screenWidth - p2[1]) / deltaY
-                if d1 < d2:
+                choose_d1, choose_d2 = False, False
+                if deltaX == 0:
+                    choose_d2 = True
+                if deltaY == 0:
+                    choose_d1 = True
+                if not choose_d1 and not choose_d2:
+                    d1 = (numpy.sign(deltaX) * screenWidth - p2[0]) / deltaX
+                    d2 = (numpy.sign(deltaY) * screenWidth - p2[1]) / deltaY
+                    if (d1 < d2):
+                        choose_d1 = True
+                    else:
+                        choose_d2 = True
+                if choose_d1:
                     p2 = (p2[0] + d1 * deltaX, p2[1] + d1 * deltaY, p2[2])
                 else:
                     p2 = (p2[0] + d2 * deltaX, p2[1] + d2 * deltaY, p2[2])
