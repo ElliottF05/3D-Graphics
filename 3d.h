@@ -35,6 +35,8 @@ namespace _3d {
         float thetaY, thetaZ, fov, fov_rad;
 
         Camera(Vec3 pos, float thetaY, float thetaZ, float fov);
+
+        Vec3 getUnitFloorVector();
     };
 
     struct Line {

@@ -54,6 +54,34 @@ int main(int, char**){
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
             cam.thetaZ += 0.02;
         }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
+            cam.thetaY += 0.02;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
+            cam.thetaY -= 0.02;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+            _3d::Vec3 v = cam.getUnitFloorVector();
+            v.scalarMult(0.2);
+            cam.pos.add(v);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+            _3d::Vec3 v = cam.getUnitFloorVector();
+            v.scalarMult(-0.2);
+            cam.pos.add(v);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+            _3d::Vec3 u = cam.getUnitFloorVector();
+            _3d::Vec3 v = _3d::Vec3(u.y, -u.x, 0);
+            v.scalarMult(0.2);
+            cam.pos.add(v);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+            _3d::Vec3 u = cam.getUnitFloorVector();
+            _3d::Vec3 v = _3d::Vec3(-u.y, u.x, 0);
+            v.scalarMult(0.2);
+            cam.pos.add(v);
+        }
 
         // clear the window with black color
         window.clear(sf::Color::Black);

@@ -105,6 +105,16 @@ _3d::Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->fov_rad = fov * M_PI / 180.0;
 }
 
+_3d::Vec3 _3d::Camera::getUnitFloorVector() {
+    float tan_theta = tan(this->thetaZ);
+    float denom = sqrt(pow(tan_theta, 2) + 1);
+    _3d::Vec3 v = _3d::Vec3(-1/ denom, -tan_theta / denom, 0);
+    if (std::fmod(this->thetaZ,  2 * M_PI) < M_PI / 2.0 || std::fmod(this->thetaZ,2 * M_PI) > 3 * M_PI / 2.0) {
+        v.scalarMult(-1);
+    }
+    return v;
+}
+
 
 
 _3d::Line::Line(Vec3& p1, Vec3& p2) {
