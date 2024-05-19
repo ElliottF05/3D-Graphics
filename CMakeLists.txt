@@ -6,7 +6,12 @@ enable_testing()
 
 find_package(SFML COMPONENTS system window graphics REQUIRED)
 
-add_executable(3D-Graphics-Engine main.cpp)
+set(SOURCES
+    main.cpp
+    2d.cpp
+    3d.cpp
+)
+add_executable(3D-Graphics-Engine ${SOURCES})
 
 # set(CMAKE_TOOLCHAIN_FILE /Users/elliottfaa/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 
