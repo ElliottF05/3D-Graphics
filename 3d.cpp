@@ -1,71 +1,73 @@
 #include "3d.h"
+#include <iostream>
 
-_3d::Vec3::Vec3(float x, float y, float z) {
+using namespace _3d;
+
+Vec3::Vec3(float x, float y, float z) {
     this->x = x;
     this->y = y;
     this->z = z;
 }
 
-_3d::Vec3::Vec3() {
+Vec3::Vec3() {
     this->x = 0;
     this->y = 0;
     this->z = 0;
 };
 
-_3d::Vec3::Vec3(const Vec3& other) {
+Vec3::Vec3(const Vec3& other) {
     this->x = other.x;
     this->y = other.y;
     this->z = other.z;
 }
 
-void _3d::Vec3::add(const Vec3& other) {
+void Vec3::add(const Vec3& other) {
     this->x += other.x;
     this->y += other.y;
     this->z += other.z;
 };
 
-void _3d::Vec3::subtract(const Vec3& other) {
+void Vec3::subtract(const Vec3& other) {
     this->x -= other.x;
     this->y -= other.y;
     this->z -= other.z;
 }
 
-void _3d::Vec3::scalarMult(float k) {
+void Vec3::scalarMult(float k) {
     this->x *= k;
     this->y *= k;
     this->z *= k;
 }
 
-void _3d::Vec3::rotateZ(float thetaZ) {
+void Vec3::rotateZ(float thetaZ) {
     Vec3 orig = Vec3(*this);
 
     this->x = orig.x * cos(thetaZ) - orig.y * sin(thetaZ);
     this->y = orig.x * sin(thetaZ) + orig.y * cos(thetaZ);
 }
 
-void _3d::Vec3::rotateY(float thetaY) {
+void Vec3::rotateY(float thetaY) {
     Vec3 orig = Vec3(*this);
 
     this->x = orig.x * cos(thetaY) - orig.z * sin(thetaY);
     this->z = orig.x * sin(thetaY) + orig.z * cos(thetaY);
 }
 
-void _3d::Vec3::rotate(float thetaZ, float thetaY) {
-    // TODO: check this, might not work at all lmao 
-    float angleFromX = atan(this->y / this->x);
-    //std::cout << "angleFromX: " << angleFromX << "\n";
+void Vec3::rotate(float thetaZ, float thetaY) {
+    float angleFromX = atan2(this->y, this->x);
     rotateZ(-angleFromX);
-    //std::cout << "after subtracting angle from x: " << toString(); 
+    // std::cout << "after first rotate z: " << toString() << "\n";
     rotateY(thetaY);
+    // std::cout << "after rotate y: " << toString() << "\n";
     rotateZ(angleFromX + thetaZ);
-    //std::cout << "after rotations: " << toString();
+    // std::cout << "after second rotate z: " << toString() << "\n";
 }
 
-std::string _3d::Vec3::toString() {
-    return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z) + "\n";
+std::string Vec3::toString() {
+    return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
 }
 
-_2d::Vec2 _3d::Vec3::toPlaneCoords(const Camera& cam) {
+_2d::Vec2 Vec3::toPlaneCoords(const Camera& cam) {
     Vec3 rotated = Vec3(*this);
 
     // std::cout << toString();
@@ -73,14 +75,14 @@ _2d::Vec2 _3d::Vec3::toPlaneCoords(const Camera& cam) {
     rotated.subtract(cam.pos);
     rotated.rotate(-cam.thetaZ, -cam.thetaY);
 
-    // std::cout << rotated.toString();
+    // std::cout << "rotated: " << rotated.toString() << "wrong\n";
 
     return _2d::Vec2(rotated.y / rotated.x, rotated.z / rotated.x, (rotated.x > 0) ? true : false);
 }
 
-_2d::Vec2 _3d::Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
+_2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     _2d::Vec2 planeCoords = toPlaneCoords(cam);
-    // std::cout << "planeCoords: " << planeCoords.x << ", " << planeCoords.y << "\n";
+    // std::cout << "planeCoords: " << planeCoords.x << ", " << planeCoords.y << "wrong\n";
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
     float screenX = window.getSize().x * (planeCoords.x / maxPlaneCoordValue + 0.5);
@@ -89,15 +91,16 @@ _2d::Vec2 _3d::Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window)
     return _2d::Vec2(screenX, screenY, planeCoords.inFront);
 }
 
-void _3d::Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
+void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     _2d::Vec2 v = toScreenCoords(cam, window);
+    // std::cout << "screen coords: " << v.x << ", " << v.y << "wrong\n\n";
     if (v.inFront) {
         v.draw(window);
     }
 }
 
 
-_3d::Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
+Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->pos = pos;
     this->thetaY = thetaY;
     this->thetaZ = thetaZ;
@@ -105,10 +108,10 @@ _3d::Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->fov_rad = fov * M_PI / 180.0;
 }
 
-_3d::Vec3 _3d::Camera::getUnitFloorVector() {
+Vec3 Camera::getUnitFloorVector() {
     float tan_theta = tan(this->thetaZ);
     float denom = sqrt(pow(tan_theta, 2) + 1);
-    _3d::Vec3 v = _3d::Vec3(-1/ denom, -tan_theta / denom, 0);
+    Vec3 v = Vec3(-1/ denom, -tan_theta / denom, 0);
     if (std::fmod(this->thetaZ,  2 * M_PI) < M_PI / 2.0 || std::fmod(this->thetaZ,2 * M_PI) > 3 * M_PI / 2.0) {
         v.scalarMult(-1);
     }
@@ -117,12 +120,12 @@ _3d::Vec3 _3d::Camera::getUnitFloorVector() {
 
 
 
-_3d::Line::Line(Vec3& p1, Vec3& p2) {
+Line::Line(Vec3& p1, Vec3& p2) {
     this->p1 = p1;
     this->p2 = p2;
 }
 
-void _3d::Line::draw(const Camera& cam, sf::RenderWindow& window) {
+void Line::draw(const Camera& cam, sf::RenderWindow& window) {
     _2d::Vec2 v1 = p1.toScreenCoords(cam, window);
     _2d::Vec2 v2 = p2.toScreenCoords(cam, window);
 

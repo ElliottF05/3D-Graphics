@@ -36,6 +36,7 @@ int main(int, char**){
     _3d::Line l5 = _3d::Line(v2, v4);
     _3d::Line l6 = _3d::Line(v3, v4);
 
+
     // run the program as long as the window is open
     while (window.isOpen()) {
 
@@ -73,13 +74,13 @@ int main(int, char**){
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(u.y, -u.x, 0);
-            v.scalarMult(0.2);
+            v.scalarMult(0.1);
             cam.pos.add(v);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(-u.y, u.x, 0);
-            v.scalarMult(0.2);
+            v.scalarMult(0.1);
             cam.pos.add(v);
         }
 
