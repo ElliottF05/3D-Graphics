@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <sfml/Graphics.hpp>
+#include <vector>
 #include "2d.h"
 #include "3d.h"
 
@@ -20,21 +21,39 @@ int main(int, char**){
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
-    sf::RenderWindow window(sf::VideoMode(800, 600), "My window", sf::Style::Default, settings);
+    sf::RenderWindow window(sf::VideoMode(800, 800), "My window", sf::Style::Default, settings);
     window.setFramerateLimit(60); // call it once, after creating the window
 
     //testing some vectors
-    _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 0), 0, 0, 90);
-    _3d::Vec3 v1 = _3d::Vec3(10,0, -2);
-    _3d::Vec3 v2 = _3d::Vec3(10,2,-2);
-    _3d::Vec3 v3 = _3d::Vec3(11, 1, -2);
-    _3d::Vec3 v4 = _3d::Vec3(10.5, 1, 2);
+    _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 2), 0, 0, 90);
+    _3d::Vec3 v1 = _3d::Vec3(10,0, 0);
+    _3d::Vec3 v2 = _3d::Vec3(10,2,0);
+    _3d::Vec3 v3 = _3d::Vec3(11, 1, 0);
+    _3d::Vec3 v4 = _3d::Vec3(10.5, 1, 4);
     _3d::Line l1 = _3d::Line(v1, v2);
     _3d::Line l2 = _3d::Line(v1, v3);
     _3d::Line l3 = _3d::Line(v1, v4);
     _3d::Line l4 = _3d::Line(v2, v3);
     _3d::Line l5 = _3d::Line(v2, v4);
     _3d::Line l6 = _3d::Line(v3, v4);
+
+    std::vector<_3d::Line> floorGrid = std::vector<_3d::Line>();
+    for (int i = -5; i <= 5; i++) {
+        _3d::Vec3 a = _3d::Vec3(i,5,0);
+        _3d::Vec3 b = _3d::Vec3(i, -5, 0);
+        _3d::Line c = _3d::Line(a, b);
+        _3d::Vec3 d = _3d::Vec3(5,i,0);
+        _3d::Vec3 e = _3d::Vec3(-5, i, 0);
+        _3d::Line f = _3d::Line(d, e);
+        
+        floorGrid.push_back(c);
+        floorGrid.push_back(f);
+    }
+
+    _3d::Vec3 a = _3d::Vec3(10,9,0);
+    _3d::Vec3 b = _3d::Vec3(10,5,0);
+    _3d::Vec3 c = _3d::Vec3(10,0,0);
+    _3d::Line l = _3d::Line(a, b);
 
 
     // run the program as long as the window is open
@@ -50,16 +69,22 @@ int main(int, char**){
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left)) {
-            cam.thetaZ -= 0.02;
+            cam.thetaZ += 0.02;
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) {
-            cam.thetaZ += 0.02;
+            cam.thetaZ -= 0.02;
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
             cam.thetaY += 0.02;
+            if (cam.thetaY > M_PI / 2.0) {
+                cam.thetaY = M_PI / 2.0;
+            }
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
             cam.thetaY -= 0.02;
+            if (cam.thetaY < - M_PI / 2.0) {
+                cam.thetaY = - M_PI / 2.0;
+            }
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
             _3d::Vec3 v = cam.getUnitFloorVector();
@@ -71,13 +96,13 @@ int main(int, char**){
             v.scalarMult(-0.2);
             cam.pos.add(v);
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(u.y, -u.x, 0);
             v.scalarMult(0.1);
             cam.pos.add(v);
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(-u.y, u.x, 0);
             v.scalarMult(0.1);
@@ -90,12 +115,20 @@ int main(int, char**){
         // draw everything here...
         // window.draw(...);
         // drawLine(window, 200.f, 50.f, 500.f, 500.f);
-        l1.draw(cam, window);
-        l2.draw(cam, window);
-        l3.draw(cam, window);
-        l4.draw(cam, window);
-        l5.draw(cam, window);
-        l6.draw(cam, window);
+        // l1.draw(cam, window);
+        // l2.draw(cam, window);
+        // l3.draw(cam, window);
+        // l4.draw(cam, window);
+        // l5.draw(cam, window);
+        // l6.draw(cam, window);
+
+        for (_3d::Line a : floorGrid) {
+            a.draw(cam, window);
+        }
+        l.draw(cam, window);
+        a.draw(cam, window);
+        b.draw(cam, window);
+        c.draw(cam, window);
 
         // end the current frame
         window.display();

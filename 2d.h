@@ -7,8 +7,8 @@ namespace _2d {
 
     struct Vec2;
 
-    void drawPoint(sf::RenderWindow& window, Vec2 a);
-    void drawLine(sf::RenderWindow& window, Vec2 a, Vec2 b);
+    void drawPoint(sf::RenderWindow& window, const Vec2& a);
+    void drawLine(sf::RenderWindow& window, const Vec2& a, const Vec2& b);
 
     struct Vec2 {
         float x, y;

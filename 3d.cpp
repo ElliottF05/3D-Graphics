@@ -54,46 +54,56 @@ void Vec3::rotateY(float thetaY) {
 }
 
 void Vec3::rotate(float thetaZ, float thetaY) {
-    float angleFromX = atan2(this->y, this->x);
-    rotateZ(-angleFromX);
+    // float angleFromX = atan2(this->y, this->x);
+    // rotateZ(-angleFromX);
     // std::cout << "after first rotate z: " << toString() << "\n";
-    rotateY(thetaY);
+    // rotateY(thetaY);
     // std::cout << "after rotate y: " << toString() << "\n";
-    rotateZ(angleFromX + thetaZ);
+    // rotateZ(angleFromX + thetaZ);
     // std::cout << "after second rotate z: " << toString() << "\n";
+
+    rotateZ(thetaZ);
+    rotateY(thetaY);
+
 }
 
 std::string Vec3::toString() {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
 }
 
-_2d::Vec2 Vec3::toPlaneCoords(const Camera& cam) {
+Vec3 Vec3::toPlaneCoords(const Camera& cam) {
     Vec3 rotated = Vec3(*this);
 
-    // std::cout << toString();
+    std::cout << "original vec: " + toString() + "\n";
 
     rotated.subtract(cam.pos);
     rotated.rotate(-cam.thetaZ, -cam.thetaY);
 
     // std::cout << "rotated: " << rotated.toString() << "wrong\n";
 
-    return _2d::Vec2(rotated.y / rotated.x, rotated.z / rotated.x, (rotated.x > 0) ? true : false);
+    return Vec3(rotated.y / rotated.x, rotated.z / rotated.x, rotated.x);
 }
 
 _2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
-    _2d::Vec2 planeCoords = toPlaneCoords(cam);
-    // std::cout << "planeCoords: " << planeCoords.x << ", " << planeCoords.y << "wrong\n";
+    Vec3 planeCoords = toPlaneCoords(cam);
+    std::cout << "planeCoords: " + planeCoords.toString() + "\n";
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
-    float screenX = window.getSize().x * (planeCoords.x / maxPlaneCoordValue + 0.5);
-    float screenY = 0.5 * window.getSize().y - window.getSize().x * planeCoords.y / maxPlaneCoordValue;
+    bool inFront = planeCoords.x > 0;
 
-    return _2d::Vec2(screenX, screenY, planeCoords.inFront);
+    if (planeCoords.x < 0) {
+        //planeCoords.scalarMult(-1);
+    }
+
+    float screenX = (0.5 * window.getSize().x) * (1 - planeCoords.x / maxPlaneCoordValue);
+    float screenY = 0.5 * window.getSize().y - planeCoords.y / maxPlaneCoordValue * 0.5 * window.getSize().x;
+
+    return _2d::Vec2(screenX, screenY, inFront);
 }
 
 void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     _2d::Vec2 v = toScreenCoords(cam, window);
-    // std::cout << "screen coords: " << v.x << ", " << v.y << "wrong\n\n";
+    std::cout << "screen coords: " << v.x << ", " << v.y << "wrong\n\n";
     if (v.inFront) {
         v.draw(window);
     }
@@ -108,13 +118,8 @@ Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->fov_rad = fov * M_PI / 180.0;
 }
 
-Vec3 Camera::getUnitFloorVector() {
-    float tan_theta = tan(this->thetaZ);
-    float denom = sqrt(pow(tan_theta, 2) + 1);
-    Vec3 v = Vec3(-1/ denom, -tan_theta / denom, 0);
-    if (std::fmod(this->thetaZ,  2 * M_PI) < M_PI / 2.0 || std::fmod(this->thetaZ,2 * M_PI) > 3 * M_PI / 2.0) {
-        v.scalarMult(-1);
-    }
+Vec3 Camera::getUnitFloorVector() {;
+    Vec3 v = Vec3(cos(thetaZ), sin(thetaZ), 0);
     return v;
 }
 
@@ -129,15 +134,5 @@ void Line::draw(const Camera& cam, sf::RenderWindow& window) {
     _2d::Vec2 v1 = p1.toScreenCoords(cam, window);
     _2d::Vec2 v2 = p2.toScreenCoords(cam, window);
 
-    if (!v1.inFront && !v2.inFront) {
-        return;
-    } else if (!v1.inFront) {
-        v1.scalarMult(-1);
-        v1.scalarMult(10);
-    } else if (!v2.inFront) {
-        v2.scalarMult(-1);
-        v2.scalarMult(10);
-    }
-
-    drawLine(window, v1, v2);
+    _2d::drawLine(window, v1, v2);
 }
