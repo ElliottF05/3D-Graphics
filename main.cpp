@@ -30,6 +30,8 @@ int main(int, char**){
     sf::Vector2i screenCenter = sf::Vector2i(sf::VideoMode::getDesktopMode().width / 2, sf::VideoMode::getDesktopMode().height / 2);
     sf::Mouse::setPosition(screenCenter);
 
+    std::cout << sf::VideoMode::getDesktopMode().height << "\n";
+
     //testing some vectors
     _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 2), 0, 0, 90);
 
@@ -107,7 +109,17 @@ int main(int, char**){
         }
 
         sf::Vector2i mousePos = sf::Mouse::getPosition();
+        mousePos.y /= 3;
+        std::cout << "mousePos" << mousePos.x << ", " << mousePos.y << "\n";
+        std::cout << "screenSize" << sf::VideoMode::getDesktopMode().width << ", " << sf::VideoMode::getDesktopMode().height << "\n";
         cam.thetaZ -= ((mousePos.x - screenCenter.x) / 400.0);
+        cam.thetaY -= ((mousePos.y - screenCenter.y) / 400.0);
+        if (cam.thetaY < -M_PI / 2.0) {
+            cam.thetaY = -M_PI / 2.0;
+        }
+        if (cam.thetaY > M_PI / 2.0) {
+            cam.thetaY = M_PI / 2.0;
+        }
         sf::Mouse::setPosition(screenCenter);
 
         // clear the window with black color
