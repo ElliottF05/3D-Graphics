@@ -2,8 +2,11 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Vector2.hpp>
+#include <SFML/Window/Cursor.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Mouse.hpp>
+#include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/Window.hpp>
 #include <SFML/Window/WindowStyle.hpp>
 #include <cmath>
@@ -22,20 +25,13 @@ int main(int, char**){
     settings.antialiasingLevel = 8;
 
     sf::RenderWindow window(sf::VideoMode(800, 800), "My window", sf::Style::Default, settings);
-    window.setFramerateLimit(60); // call it once, after creating the window
+    window.setFramerateLimit(60);
+    //window.setMouseCursorVisible(false);
+    sf::Vector2i screenCenter = sf::Vector2i(sf::VideoMode::getDesktopMode().width / 2, sf::VideoMode::getDesktopMode().height / 2);
+    sf::Mouse::setPosition(screenCenter);
 
     //testing some vectors
     _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 2), 0, 0, 90);
-    _3d::Vec3 v1 = _3d::Vec3(10,0, 0);
-    _3d::Vec3 v2 = _3d::Vec3(10,2,0);
-    _3d::Vec3 v3 = _3d::Vec3(11, 1, 0);
-    _3d::Vec3 v4 = _3d::Vec3(10.5, 1, 4);
-    _3d::Line l1 = _3d::Line(v1, v2);
-    _3d::Line l2 = _3d::Line(v1, v3);
-    _3d::Line l3 = _3d::Line(v1, v4);
-    _3d::Line l4 = _3d::Line(v2, v3);
-    _3d::Line l5 = _3d::Line(v2, v4);
-    _3d::Line l6 = _3d::Line(v3, v4);
 
     std::vector<_3d::Line> floorGrid = std::vector<_3d::Line>();
     for (int i = -5; i <= 5; i++) {
@@ -49,11 +45,6 @@ int main(int, char**){
         floorGrid.push_back(c);
         floorGrid.push_back(f);
     }
-
-    _3d::Vec3 a = _3d::Vec3(10,9,0);
-    _3d::Vec3 b = _3d::Vec3(10,5,0);
-    _3d::Vec3 c = _3d::Vec3(10,0,0);
-    _3d::Line l = _3d::Line(a, b);
 
 
     // run the program as long as the window is open
@@ -108,27 +99,24 @@ int main(int, char**){
             v.scalarMult(0.1);
             cam.pos.add(v);
         }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+            cam.pos.z += 0.1;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+            cam.pos.z -= 0.1;
+        }
+
+        sf::Vector2i mousePos = sf::Mouse::getPosition();
+        cam.thetaZ -= ((mousePos.x - screenCenter.x) / 400.0);
+        sf::Mouse::setPosition(screenCenter);
 
         // clear the window with black color
         window.clear(sf::Color::Black);
 
         // draw everything here...
-        // window.draw(...);
-        // drawLine(window, 200.f, 50.f, 500.f, 500.f);
-        // l1.draw(cam, window);
-        // l2.draw(cam, window);
-        // l3.draw(cam, window);
-        // l4.draw(cam, window);
-        // l5.draw(cam, window);
-        // l6.draw(cam, window);
-
         for (_3d::Line a : floorGrid) {
             a.draw(cam, window);
         }
-        l.draw(cam, window);
-        a.draw(cam, window);
-        b.draw(cam, window);
-        c.draw(cam, window);
 
         // end the current frame
         window.display();
