@@ -1,4 +1,5 @@
 #include "3d.h"
+#include "2d.h"
 #include <iostream>
 
 using namespace _3d;
@@ -102,6 +103,20 @@ Vec3 Camera::getUnitFloorVector() {;
     return v;
 }
 
+void Camera::setThetaY(float angle) {
+    if (angle > M_PI / 2) {
+        angle = M_PI / 2;
+    }
+    if (angle < -M_PI / 2) {
+        angle = -M_PI / 2;
+    }
+    this->thetaY = angle;
+}
+
+void Camera::setThetaZ(float angle) {
+    this->thetaZ = angle;
+}
+
 
 
 Line::Line(Vec3& p1, Vec3& p2) {
@@ -124,4 +139,18 @@ void Line::draw(const Camera& cam, sf::RenderWindow& window) {
     }
 
     _2d::drawLine(window, v1, v2);
+}
+
+Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
+    this->p1 = p1;
+    this->p2 = p2;
+    this->p3 = p3;
+}
+
+void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
+    _2d::Vec2 v1 = p1.toScreenCoords(cam, window);
+    _2d::Vec2 v2 = p2.toScreenCoords(cam, window);
+    _2d::Vec2 v3 = p3.toScreenCoords(cam, window);
+
+
 }

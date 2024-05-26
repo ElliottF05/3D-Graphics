@@ -36,6 +36,9 @@ namespace _3d {
 
         Camera(Vec3 pos, float thetaY, float thetaZ, float fov);
 
+        void setThetaY(float angle);
+        void setThetaZ(float angle);
+
         Vec3 getUnitFloorVector();
     };
 
@@ -44,6 +47,16 @@ namespace _3d {
         Vec3 p2;
 
         Line(Vec3& p1, Vec3& p2);
+
+        void draw(const Camera& cam, sf::RenderWindow& window);
+    };
+
+    struct Triangle {
+        Vec3 p1;
+        Vec3 p2;
+        Vec3 p3;
+
+        Triangle(Vec3& p1, Vec3& p2, Vec3& p3);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
     };

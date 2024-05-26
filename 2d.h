@@ -9,12 +9,14 @@ namespace _2d {
 
     void drawPoint(sf::RenderWindow& window, const Vec2& a);
     void drawLine(sf::RenderWindow& window, const Vec2& a, const Vec2& b);
+    void drawTriangle(sf::RenderWindow& window, const Vec2& a, const Vec2& b, const Vec2& c);
 
     struct Vec2 {
         float x, y;
         bool inFront;
 
         Vec2(float x, float y, bool inFront);
+        Vec2(float x, float y);
         void scalarMult(float k);
         void draw(sf::RenderWindow& window);
 

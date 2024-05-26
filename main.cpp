@@ -30,10 +30,8 @@ int main(int, char**){
     sf::Vector2i screenCenter = sf::Vector2i(sf::VideoMode::getDesktopMode().width / 2, sf::VideoMode::getDesktopMode().height / 2);
     sf::Mouse::setPosition(screenCenter);
 
-    std::cout << sf::VideoMode::getDesktopMode().height << "\n";
-
     //testing some vectors
-    _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 2), 0, 0, 90);
+    _3d::Camera cam = _3d::Camera(_3d::Vec3(5.84, 1.77, 3.12), -0.0325, 3.1908, 90);
 
     std::vector<_3d::Line> floorGrid = std::vector<_3d::Line>();
     for (int i = -5; i <= 5; i++) {
@@ -47,6 +45,12 @@ int main(int, char**){
         floorGrid.push_back(c);
         floorGrid.push_back(f);
     }
+
+    _3d::Vec3 a(-10, 0, 2);
+    _3d::Vec3 b(10, 3, 2);
+    _3d::Vec3 b2(10, 4, 2);
+    _3d::Line l(a,b);
+    _3d::Line l2(a, b2);
 
 
     // run the program as long as the window is open
@@ -68,16 +72,10 @@ int main(int, char**){
             cam.thetaZ -= 0.02;
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-            cam.thetaY += 0.02;
-            if (cam.thetaY > M_PI / 2.0) {
-                cam.thetaY = M_PI / 2.0;
-            }
+            cam.setThetaY(cam.thetaY + 0.02);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-            cam.thetaY -= 0.02;
-            if (cam.thetaY < - M_PI / 2.0) {
-                cam.thetaY = - M_PI / 2.0;
-            }
+            cam.setThetaY(cam.thetaY - 0.02);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
             _3d::Vec3 v = cam.getUnitFloorVector();
@@ -92,13 +90,13 @@ int main(int, char**){
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(u.y, -u.x, 0);
-            v.scalarMult(0.1);
+            v.scalarMult(0.2);
             cam.pos.add(v);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
             _3d::Vec3 u = cam.getUnitFloorVector();
             _3d::Vec3 v = _3d::Vec3(-u.y, u.x, 0);
-            v.scalarMult(0.1);
+            v.scalarMult(0.2);
             cam.pos.add(v);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
@@ -108,18 +106,14 @@ int main(int, char**){
             cam.pos.z -= 0.1;
         }
 
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
+            std::cout << "pos: " + cam.pos.toString() << ", thetaZ: " << cam.thetaZ << ", thetaY: " << cam.thetaY << "\n";
+        }
+
         sf::Vector2i mousePos = sf::Mouse::getPosition();
         mousePos.y /= 3;
-        std::cout << "mousePos" << mousePos.x << ", " << mousePos.y << "\n";
-        std::cout << "screenSize" << sf::VideoMode::getDesktopMode().width << ", " << sf::VideoMode::getDesktopMode().height << "\n";
-        cam.thetaZ -= ((mousePos.x - screenCenter.x) / 400.0);
-        cam.thetaY -= ((mousePos.y - screenCenter.y) / 400.0);
-        if (cam.thetaY < -M_PI / 2.0) {
-            cam.thetaY = -M_PI / 2.0;
-        }
-        if (cam.thetaY > M_PI / 2.0) {
-            cam.thetaY = M_PI / 2.0;
-        }
+        cam.setThetaZ(cam.thetaZ - (mousePos.x - screenCenter.x) / 400.0);
+        cam.setThetaY(cam.thetaY - (mousePos.y - screenCenter.y) / 400.0);
         sf::Mouse::setPosition(screenCenter);
 
         // clear the window with black color
@@ -129,6 +123,12 @@ int main(int, char**){
         for (_3d::Line a : floorGrid) {
             a.draw(cam, window);
         }
+
+        a.draw(cam, window);
+        //b.draw(cam, window);
+        b2.draw(cam, window);
+        //l.draw(cam, window);
+        l2.draw(cam, window);
 
         // end the current frame
         window.display();
