@@ -31,7 +31,7 @@ int main(int, char**){
     sf::Mouse::setPosition(screenCenter);
 
     //testing some vectors
-    _3d::Camera cam = _3d::Camera(_3d::Vec3(5.84, 1.77, 3.12), -0.0325, 3.1908, 90);
+    _3d::Camera cam = _3d::Camera(_3d::Vec3(0, 0, 2.2), -0, 0, 90);
 
     std::vector<_3d::Line> floorGrid = std::vector<_3d::Line>();
     for (int i = -5; i <= 5; i++) {
@@ -48,9 +48,7 @@ int main(int, char**){
 
     _3d::Vec3 a(-10, 0, 2);
     _3d::Vec3 b(10, 3, 2);
-    _3d::Vec3 b2(10, 4, 2);
     _3d::Line l(a,b);
-    _3d::Line l2(a, b2);
 
 
     // run the program as long as the window is open
@@ -125,10 +123,8 @@ int main(int, char**){
         }
 
         a.draw(cam, window);
-        //b.draw(cam, window);
-        b2.draw(cam, window);
-        //l.draw(cam, window);
-        l2.draw(cam, window);
+        b.draw(cam, window);
+        l.draw(cam, window);
 
         // end the current frame
         window.display();

@@ -63,27 +63,36 @@ std::string Vec3::toString() {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
 }
 
-Vec3 Vec3::toPlaneCoords(const Camera& cam) {
-    Vec3 rotated = Vec3(*this);
+void Vec3::toPlaneCoords(const Camera& cam) {
+    this->subtract(cam.pos);
+    this->rotate(-cam.thetaZ, -cam.thetaY);
 
-    rotated.subtract(cam.pos);
-    rotated.rotate(-cam.thetaZ, -cam.thetaY);
+    float rotatedX = this->x;
 
-    return Vec3(rotated.y / rotated.x, rotated.z / rotated.x, (rotated.x) < 0 ? -1 : 1);
+    this->x = this->y / rotatedX;
+    this->y = this->z / rotatedX;
+
+    if (rotatedX > 0) {
+        this->z = 1;
+    } else {
+        this->z = -1;
+    }
+
 }
 
 _2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
-    Vec3 planeCoords = toPlaneCoords(cam);
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
-    float screenX = (0.5 * window.getSize().x) * (1 - planeCoords.x / maxPlaneCoordValue);
-    float screenY = 0.5 * window.getSize().y - planeCoords.y / maxPlaneCoordValue * 0.5 * window.getSize().x;
+    float screenX = (0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue);
+    float screenY = 0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x;
 
-    return _2d::Vec2(screenX, screenY, planeCoords.z > 0);
+    return _2d::Vec2(screenX, screenY, this->z > 0);
 }
 
 void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
-    _2d::Vec2 v = toScreenCoords(cam, window);
+    Vec3 copy = *this;
+    copy.toPlaneCoords(cam);
+    _2d::Vec2 v = copy.toScreenCoords(cam, window);
     if (v.inFront) {
         v.draw(window);
     }
@@ -125,19 +134,80 @@ Line::Line(Vec3& p1, Vec3& p2) {
 }
 
 void Line::draw(const Camera& cam, sf::RenderWindow& window) {
-    _2d::Vec2 v1 = p1.toScreenCoords(cam, window);
-    _2d::Vec2 v2 = p2.toScreenCoords(cam, window);
+    Vec3 p1copy = p1;
+    Vec3 p2copy = p2;
 
-    if (!v1.inFront && !v2.inFront) {
+    p1copy.toPlaneCoords(cam);
+    p2copy.toPlaneCoords(cam);
+
+    if (p1copy.z < 0 && p2copy.z < 0) {
         return;
-    } else if (!v1.inFront) {
-        v1.x += 10 * (v2.x - v1.x);
-        v1.y += 10 * (v2.y - v1.y);
-    } else if (!v2.inFront) {
-        v2.x += 10 * (v1.x - v2.x);
-        v2.y += 10 * (v1.y - v2.y);
     }
 
+    if (p1copy.z < 0 || p2copy.z < 0) {
+
+        // make p2copy be the OUT OF VIEW one
+        // so, p1copy is the IN VIEW one
+        if (p1copy.z < 0) {
+            Vec3 temp = p1copy;
+            p1copy = p2copy;
+            p2copy = temp;
+        }
+
+        // _2d::Vec2 v = p2copy.toScreenCoords(cam, window);
+        // _2d::drawPoint(window, v);
+
+        // std::cout << p1copy.toString() + "\n";
+
+        float dx = p1copy.x - p2copy.x;
+        float dy = p1copy.y - p2copy.y;
+
+        float distToX, distToY;
+
+        if (dx < 0) {
+            distToX = -1 - p2copy.x;
+        } else {
+            distToX = 1 - p2copy.x;
+        }
+
+        if (dy < 0) {
+            distToY = -1 - p2copy.y;
+        } else {
+            distToY = 1 - p2copy.y;
+        }
+
+        // std::cout << "distToX: " << distToX << ", distToY: " << distToY << "\n";
+        // std::cout << "dx: " << dx << ", dy: " << dy << "\n";
+
+        if (abs(distToX * dy) < abs(distToY * dx)) { // distToX / dx < distToY / dy
+            // x is closer
+            p2copy.y += distToX / dx * dy;
+            p2copy.x += distToX;
+        } else {
+            // y is closer
+            p2copy.x += distToY / dy * dx;
+            p2copy.y += distToY;
+        }
+
+        // std::cout << p2copy.toString() + "\n";
+
+    }
+    
+    // _2d::Vec2 v1 = p1copy.toScreenCoords(cam, window);
+    // _2d::Vec2 v2 = p2copy.toScreenCoords(cam, window);
+    //
+    // if (!v1.inFront && !v2.inFront) {
+    //     return;
+    // } else if (!v1.inFront) {
+    //     v1.x += 10 * (v2.x - v1.x);
+    //     v1.y += 10 * (v2.y - v1.y);
+    // } else if (!v2.inFront) {
+    //     v2.x += 10 * (v1.x - v2.x);
+    //     v2.y += 10 * (v1.y - v2.y);
+    // }
+
+    _2d::Vec2 v1 = p1copy.toScreenCoords(cam, window);
+    _2d::Vec2 v2 = p2copy.toScreenCoords(cam, window);
     _2d::drawLine(window, v1, v2);
 }
 

@@ -23,7 +23,7 @@ namespace _3d {
 
         void rotate(float thetaZ, float thetaY);
 
-        Vec3 toPlaneCoords(const Camera& cam);
+        void toPlaneCoords(const Camera& cam);
         _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
         void draw(const Camera& cam, sf::RenderWindow& window);
 
