@@ -17,6 +17,7 @@ namespace _2d {
 
         Vec2(float x, float y, bool inFront);
         Vec2(float x, float y);
+        Vec2();
         void scalarMult(float k);
         void draw(sf::RenderWindow& window);
 

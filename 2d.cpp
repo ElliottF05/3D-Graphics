@@ -41,6 +41,12 @@ _2d::Vec2::Vec2(float x, float y) {
     this->inFront = false;
 }
 
+_2d::Vec2::Vec2() {
+    this->x = 0;
+    this->y = 0;
+    this->inFront = false;
+}
+
 void _2d::Vec2::scalarMult(float k) {
     this->x *= k;
     this->y *= k;

@@ -6,6 +6,11 @@
 namespace _3d {
 
     struct Camera;
+    struct Vec3;
+    struct Line;
+    struct Triangle;
+
+    void project(Vec3& a, Vec3& b);
 
     struct Vec3 {
         float x,y,z;
