@@ -29,6 +29,7 @@ namespace _3d {
         void draw(const Camera& cam, sf::RenderWindow& window);
 
         Vec3 cross(const Vec3& other);
+        float dot(const Vec3& other);
 
         std::string toString();
     };

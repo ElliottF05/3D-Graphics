@@ -135,6 +135,10 @@ Vec3 Vec3::cross(const Vec3& other) {
         );
 }
 
+float Vec3::dot(const Vec3& other) {
+    return this->x * other.x + this->y * other.y + this->z * other.z;
+}
+
 
 Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->pos = pos;
