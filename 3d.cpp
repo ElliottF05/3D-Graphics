@@ -196,7 +196,7 @@ Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
 }
 
 void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
-    // TODO: redo this whole section
+    // TODO: fully check correctness of this section
 
     Vec3 v1, v2, v3;
     v1 = this->p1;
