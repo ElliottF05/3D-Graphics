@@ -215,6 +215,17 @@ Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
 void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
     // TODO: fully check correctness of this section
 
+    // TODO: update this for full functionality
+    // Calculate color:
+    Vec3 sunDirection = Vec3(1,1,1);
+    Vec3 a,b;
+    a = p1;
+    b = p2;
+    a.subtract(p3); // p1 - p3
+    b.subtract(p3); // p2 - p3
+
+    Vec3 norm = a.cross(b);
+
     Vec3 v1, v2, v3;
     v1 = this->p1;
     v2 = this->p2;
