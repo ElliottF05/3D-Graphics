@@ -127,7 +127,7 @@ void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     }
 }
 
-Vec3 Vec3::cross(const Vec3& other) {
+Vec3 Vec3::cross(const Vec3& other) const {
     return Vec3(
         this->y * other.z - this->z * other.y,
         this->z * other.x - this->x * other.z,
@@ -135,8 +135,16 @@ Vec3 Vec3::cross(const Vec3& other) {
         );
 }
 
-float Vec3::dot(const Vec3& other) {
+float Vec3::dot(const Vec3& other) const {
     return this->x * other.x + this->y * other.y + this->z * other.z;
+}
+
+float Vec3::mag() const {
+    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+}
+
+float Vec3::angleWith(const Vec3 &other) const {
+    return acos(this->dot(other) / (this->mag() * other.mag()));
 }
 
 

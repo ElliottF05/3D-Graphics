@@ -28,8 +28,10 @@ namespace _3d {
         _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
         void draw(const Camera& cam, sf::RenderWindow& window);
 
-        Vec3 cross(const Vec3& other);
-        float dot(const Vec3& other);
+        Vec3 cross(const Vec3& other) const;
+        float dot(const Vec3& other) const;
+        float mag() const;
+        float angleWith(const Vec3& other) const;
 
         std::string toString();
     };
