@@ -1,5 +1,6 @@
 #include "3d.h"
 #include "2d.h"
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -233,6 +234,25 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
     b.subtract(p3); // p2 - p3
 
     Vec3 norm = a.cross(b);
+    
+    // make sure norm points towards camera
+    Vec3 midpoint = p1;
+    midpoint.add(p2);
+    midpoint.add(p3);
+    midpoint.scalarMult(1.0/3);
+
+    Vec3 toCam = cam.pos;
+    toCam.subtract(midpoint);
+    if (toCam.angleWith(norm) >= M_PI / 2.0) {
+        norm.scalarMult(-1);
+    }
+
+    float color = 0;
+    if (sunDirection.angleWith(norm) < M_PI / 2.0) {
+        color = cos(sunDirection.angleWith(norm));
+    }
+
+
 
     Vec3 v1, v2, v3;
     v1 = this->p1;
