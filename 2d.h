@@ -9,6 +9,7 @@ namespace _2d {
 
     void drawPoint(sf::RenderWindow& window, const Vec2& a);
     void drawLine(sf::RenderWindow& window, const Vec2& a, const Vec2& b);
+    void drawTriangle(sf::RenderWindow& window, const Vec2&a, const Vec2&b, const Vec2&c, float color);
     void drawTriangle(sf::RenderWindow& window, const Vec2& a, const Vec2& b, const Vec2& c);
 
     struct Vec2 {

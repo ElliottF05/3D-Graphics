@@ -48,9 +48,11 @@ int main(int, char**){
 
     _3d::Vec3 a(10, 1, 2);
     _3d::Vec3 b(5, 1, 2);
-    _3d::Vec3 c(5, 1, 5);
+    _3d::Vec3 c(5, 3, 5);
+    _3d::Vec3 d(10, 10, -2);
     _3d::Line l(a,b);
     _3d::Triangle t(a, b, c);
+    _3d::Triangle t2(a, b, d);
 
 
     // run the program as long as the window is open
@@ -131,6 +133,7 @@ int main(int, char**){
         // b.draw(cam, window);
         l.draw(cam, window);
         t.draw(cam, window);
+        t2.draw(cam, window);
 
         // end the current frame
         window.display();

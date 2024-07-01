@@ -282,7 +282,7 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         l1 = v1.toScreenCoords(cam, window);
         l2 = v2.toScreenCoords(cam, window);
         l3 = v3.toScreenCoords(cam, window);
-        _2d::drawTriangle(window, l1, l2, l3);
+        _2d::drawTriangle(window, l1, l2, l3, color);
     } else if (inViewCount == 1) {
 
         Vec3 inView;
@@ -315,7 +315,7 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         l1 = inView.toScreenCoords(cam, window);
         l2 = outOfView[0].toScreenCoords(cam, window);
         l3 = outOfView[1].toScreenCoords(cam, window);
-        _2d::drawTriangle(window, l1, l2, l3);
+        _2d::drawTriangle(window, l1, l2, l3, color);
 
     } else { // inViewCount == 2
         std::vector<Vec3> inView;
@@ -352,8 +352,8 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         l3 = inView[1].toScreenCoords(cam, window);
         l4 = outOfView2.toScreenCoords(cam, window);
 
-        _2d::drawTriangle(window, l1, l2, l3);
-        _2d::drawTriangle(window, l3, l4, l2);
+        _2d::drawTriangle(window, l1, l2, l3, color);
+        _2d::drawTriangle(window, l3, l4, l2, color);
     }
 
 }
