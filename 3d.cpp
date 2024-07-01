@@ -136,6 +136,11 @@ Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->fov_rad = fov * M_PI / 180.0;
 }
 
+Camera::Camera() {
+    Vec3 a;
+    Camera(a, 0, 0, 90);
+}
+
 Vec3 Camera::getUnitFloorVector() {;
     Vec3 v = Vec3(cos(thetaZ), sin(thetaZ), 0);
     return v;
@@ -299,6 +304,10 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         _2d::drawTriangle(window, l1, l2, l3);
         _2d::drawTriangle(window, l3, l4, l2);
     }
-    // _2d::drawTriangle(window, points[0], points[1], points[2]);
-    // _2d::drawTriangle(window, points[2], points[3], points[1]);
+
+}
+
+World::World(Camera cam, Vec3 sunDirection) {
+    this->cam = cam;
+    this->sunDirection = sunDirection;
 }

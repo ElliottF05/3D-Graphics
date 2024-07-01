@@ -35,6 +35,7 @@ namespace _3d {
         Vec3 pos;
         float thetaY, thetaZ, fov, fov_rad;
 
+        Camera();
         Camera(Vec3 pos, float thetaY, float thetaZ, float fov);
 
         void setThetaY(float angle);
@@ -60,6 +61,13 @@ namespace _3d {
         Triangle(Vec3& p1, Vec3& p2, Vec3& p3);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
+    };
+
+    struct World {
+        Camera cam;
+        Vec3 sunDirection;
+
+        World(Camera cam, Vec3 sunDirection);
     };
 
 }
