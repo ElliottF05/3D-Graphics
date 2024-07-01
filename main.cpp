@@ -46,9 +46,9 @@ int main(int, char**){
         floorGrid.push_back(f);
     }
 
-    _3d::Vec3 a(15, 1, 2);
-    _3d::Vec3 b(15, 1, 5);
-    _3d::Vec3 c(-5, 1, 2);
+    _3d::Vec3 a(10, 1, 2);
+    _3d::Vec3 b(5, 1, 2);
+    _3d::Vec3 c(5, 1, 5);
     _3d::Line l(a,b);
     _3d::Triangle t(a, b, c);
 
@@ -123,13 +123,13 @@ int main(int, char**){
         window.clear(sf::Color::Black);
 
         // draw everything here...
-        // for (_3d::Line a : floorGrid) {
-        //     a.draw(cam, window);
-        // }
+        for (_3d::Line a : floorGrid) {
+            a.draw(cam, window);
+        }
 
         // a.draw(cam, window);
         // b.draw(cam, window);
-        // l.draw(cam, window);
+        l.draw(cam, window);
         t.draw(cam, window);
 
         // end the current frame

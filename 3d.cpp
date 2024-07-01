@@ -5,58 +5,22 @@
 
 using namespace _3d;
 
-void _3d::project(Vec3& a, Vec3& b) {
-    std::cout << "in project()" << "\n";
-    // make b be the OUT OF VIEW one
-    // so, a is the IN VIEW one
-    if (a.z < 0) {
-        Vec3 temp = a;
-        a = b;
-        b = temp;
+void project(Vec3& v1, Vec3& v2) {
+    // make v1 be the one in front
+    if (v1.z < 0) {
+        Vec3 temp = v1;
+        v1 = v2;
+        v2 = temp;
     }
 
+    // KISS: KEEP IT SIMPLE STUPID (can always improve later)
+    Vec3 r = v1;
+    r.subtract(v2); // r = v1 - v2
+    r.scalarMult(100);
 
-    // _2d::Vec2 v = b.toScreenCoords(cam, window);
-    // _2d::drawPoint(window, v);
+    v2.add(r);
 
-    // std::cout << a.toString() + "\n";
-
-    float dx = a.x - b.x;
-    float dy = a.y - b.y;
-
-    float distToX, distToY;
-
-    if (dx < 0) {
-        distToX = -1 - b.x;
-    } else {
-        distToX = 1 - b.x;
-    }
-
-    if (dy < 0) {
-        distToY = -1 - b.y;
-    } else {
-        distToY = 1 - b.y;
-    }
-
-    // std::cout << "distToX: " << distToX << ", distToY: " << distToY << "\n";
-    // std::cout << "dx: " << dx << ", dy: " << dy << "\n";
-
-    // Normally, this would have a < symbol to find whichever border is closer.
-    // To find whichever border is farther, use a > symbol
-    if (abs(distToX * dy) > abs(distToY * dx)) { // distToX / dx < distToY / dy
-        // x is closer
-        b.y += distToX / dx * dy;
-        b.x += distToX;
-        std::cout << "x is chosen" << "\n";
-    } else {
-        // y is closer
-        b.x += distToY / dy * dx;
-        b.y += distToY;
-        std::cout << "x is chosen" << "\n";
-    }
-
-    // std::cout << p2copy.toString() + "\n";
-
+    v2.z = -1;
 }
 
 Vec3::Vec3(float x, float y, float z) {
@@ -118,12 +82,11 @@ std::string Vec3::toString() {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
 }
 
-void Vec3::toPlaneCoords(const Camera& cam) {
-    this->subtract(cam.pos);
-    this->rotate(-cam.thetaZ, -cam.thetaY);
-    std::cout << this->toString() << ",    ";
-
-    float rotatedX = this->x;
+// Note that if rotated vector lies behind camera plane, vector produced
+// by this function will still give its interception with the x=1 plane
+// Setting this-> = -1 is just a formality to still communicate this information
+void Vec3::toPlaneCoords() {
+float rotatedX = this->x;
 
     this->x = this->y / rotatedX;
     this->y = this->z / rotatedX;
@@ -136,6 +99,11 @@ void Vec3::toPlaneCoords(const Camera& cam) {
 
 }
 
+void Vec3::subtractAndRotate(const Camera&cam) {
+    this->subtract(cam.pos);
+    this->rotate(-cam.thetaZ, -cam.thetaY);
+}
+
 _2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
@@ -145,9 +113,14 @@ _2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     return _2d::Vec2(screenX, screenY, this->z > 0);
 }
 
+void Vec3::fullyToPlaneCoords(const Camera& cam) {
+    this->subtractAndRotate(cam);
+    this->toPlaneCoords();
+}
+
 void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     Vec3 copy = *this;
-    copy.toPlaneCoords(cam);
+    copy.fullyToPlaneCoords(cam);
     _2d::Vec2 v = copy.toScreenCoords(cam, window);
     if (v.inFront) {
         v.draw(window);
@@ -190,40 +163,30 @@ Line::Line(Vec3& p1, Vec3& p2) {
 }
 
 void Line::draw(const Camera& cam, sf::RenderWindow& window) {
-    std::cout << "\n";
-    Vec3 p1copy = p1;
-    Vec3 p2copy = p2;
+    // TODO: fully check the correctness of this section
 
-    p1copy.toPlaneCoords(cam);
-    p2copy.toPlaneCoords(cam);
+    Vec3 v1 = p1;
+    Vec3 v2 = p2;
 
-    std::cout << p1copy.toString() + ", " + p2copy.toString() << "\n";
+    v1.fullyToPlaneCoords(cam);
+    v2.fullyToPlaneCoords(cam);
 
-    if (p1copy.z < 0 && p2copy.z < 0) {
+    _2d::Vec2 l1, l2;
+
+    if (v1.z < 0 && v2.z < 0) {
         return;
+    } else if (v1.z > 0 && v2.z > 0) {
+        l1 = v1.toScreenCoords(cam, window);
+        l2 = v2.toScreenCoords(cam, window);
+    } else {
+        project(v1, v2);
+
+        l1 = v1.toScreenCoords(cam, window);
+        l2 = v2.toScreenCoords(cam, window);
     }
 
-    if (p1copy.z < 0 || p2copy.z < 0) {
-        _3d::project(p1copy, p2copy);
-    }
-    
-    // _2d::Vec2 v1 = p1copy.toScreenCoords(cam, window);
-    // _2d::Vec2 v2 = p2copy.toScreenCoords(cam, window);
-    //
-    // if (!v1.inFront && !v2.inFront) {
-    //     return;
-    // } else if (!v1.inFront) {
-    //     v1.x += 10 * (v2.x - v1.x);
-    //     v1.y += 10 * (v2.y - v1.y);
-    // } else if (!v2.inFront) {
-    //     v2.x += 10 * (v1.x - v2.x);
-    //     v2.y += 10 * (v1.y - v2.y);
-    // }
+    _2d::drawLine(window, l1, l2);
 
-    _2d::Vec2 v1 = p1copy.toScreenCoords(cam, window);
-    _2d::Vec2 v2 = p2copy.toScreenCoords(cam, window);
-    std::cout << "(x,y): (" << v1.x << "," << v1.y << "), (x,y): (" << v2.x << "," << v2.y << ")\n";
-    _2d::drawLine(window, v1, v2);
 }
 
 Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
@@ -233,63 +196,109 @@ Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
 }
 
 void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
-    Vec3 p1copy = p1;
-    Vec3 p2copy = p2;
-    Vec3 p3copy = p3;
+    // TODO: redo this whole section
 
-    p1copy.toPlaneCoords(cam);
-    p2copy.toPlaneCoords(cam);
-    p3copy.toPlaneCoords(cam);
-    std::cout << "\n";
-    std::cout << p1copy.toString() + ",    " + p2copy.toString() + ",    " + p3copy.toString() + "\n";
+    Vec3 v1, v2, v3;
+    v1 = this->p1;
+    v2 = this->p2;
+    v3 = this->p3;
 
-    if (p1copy.z < 0 && p2copy.z < 0 && p3copy.z < 0) {
+    v1.fullyToPlaneCoords(cam);
+    v2.fullyToPlaneCoords(cam);
+    v3.fullyToPlaneCoords(cam);
+
+    _2d::Vec2 l1, l2, l3;
+
+    int inViewCount = 0;
+    if (v1.z > 0) {
+        inViewCount++;
+    }
+    if (v2.z > 0) {
+        inViewCount++;
+    }
+    if (v3.z > 0) {
+        inViewCount++;
+    }
+
+    if (inViewCount == 0) {
         return;
-    }
+    } else if (inViewCount == 3) {
+        l1 = v1.toScreenCoords(cam, window);
+        l2 = v2.toScreenCoords(cam, window);
+        l3 = v3.toScreenCoords(cam, window);
+        _2d::drawTriangle(window, l1, l2, l3);
+    } else if (inViewCount == 1) {
 
-    if (p1copy.z > 0 && p2copy.z > 0 && p3copy.z > 0) {
-        _2d::Vec2 v1 = p1copy.toScreenCoords(cam, window);
-        _2d::Vec2 v2 = p2copy.toScreenCoords(cam, window);
-        _2d::Vec2 v3 = p3copy.toScreenCoords(cam, window);
-        _2d::drawTriangle(window, v1, v2, v3);
-        return;
-    }
+        Vec3 inView;
+        std::vector<Vec3> outOfView;
+        if (v1.z > 0) {
+            inView = v1;
+        } else {
+            outOfView.push_back(v1);
+        }
 
-    std::vector<_2d::Vec2> points = std::vector<_2d::Vec2>();
-    
-    if (p1copy.z > 0 != p2copy.z > 0) {
-        Vec3 a = p1copy;
-        Vec3 b = p2copy;
-        project(a, b);
-        points.push_back(a.toScreenCoords(cam, window));
-        points.push_back(b.toScreenCoords(cam, window));
-    }
-    if (p1copy.z > 0 != p3copy.z > 0) {
-        Vec3 a = p1copy;
-        Vec3 b = p3copy;
-        project(a, b);
-        points.push_back(a.toScreenCoords(cam, window));
-        points.push_back(b.toScreenCoords(cam, window));
-    }
-    if (p2copy.z > 0 != p3copy.z > 0) {
-        Vec3 a = p2copy;
-        Vec3 b = p3copy;
-        project(a, b);
-        points.push_back(a.toScreenCoords(cam, window));
-        points.push_back(b.toScreenCoords(cam, window));
-    }
+        if (v2.z > 0) {
+            inView = v2;
+        } else {
+            outOfView.push_back(v2);
+        }
 
-    if (points.size() != 4) {
-        std::cout << "error" << "\n";
+        if (v3.z > 0) {
+            inView = v3;
+        } else {
+            outOfView.push_back(v3);
+        }
+
+        if (outOfView.size() != 2) {
+            throw 2;
+        }
+
+        project(inView, outOfView[0]);
+        project(inView, outOfView[1]);
+
+        l1 = inView.toScreenCoords(cam, window);
+        l2 = outOfView[0].toScreenCoords(cam, window);
+        l3 = outOfView[1].toScreenCoords(cam, window);
+        _2d::drawTriangle(window, l1, l2, l3);
+
+    } else { // inViewCount == 2
+        std::vector<Vec3> inView;
+        Vec3 outOfView;
+
+        if (v1.z < 0) {
+            outOfView = v1;
+        } else {
+            inView.push_back(v1);
+        }
+        if (v2.z < 0) {
+            outOfView = v2;
+        } else {
+            inView.push_back(v2);
+        }
+        if (v3.z < 0) {
+            outOfView = v3;
+        } else {
+            inView.push_back(v3);
+        }
+
+        if (inView.size() != 2) {
+            throw 3;
+        }
+
+        Vec3 outOfView2 = outOfView;
+
+        project(inView[0], outOfView);
+        project(inView[1], outOfView2);
+
+        _2d::Vec2 l4;
+        l1 = inView[0].toScreenCoords(cam, window);
+        l2 = outOfView.toScreenCoords(cam, window);
+        l3 = inView[1].toScreenCoords(cam, window);
+        l4 = outOfView2.toScreenCoords(cam, window);
+
+        _2d::drawTriangle(window, l1, l2, l3);
+        _2d::drawTriangle(window, l3, l4, l2);
     }
-
-    for (_2d::Vec2 v : points) {
-        std::cout << "(x,y):  (" << v.x << "," << v.y << "), ";
-    }
-    std::cout << "\n";
-
-    _2d::drawTriangle(window, points[0], points[1], points[2]);
-    _2d::drawTriangle(window, points[2], points[3], points[1]);
-    
-
+    // _2d::drawTriangle(window, points[0], points[1], points[2]);
+    // _2d::drawTriangle(window, points[2], points[3], points[1]);
 }

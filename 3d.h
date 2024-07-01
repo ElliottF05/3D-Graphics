@@ -10,8 +10,6 @@ namespace _3d {
     struct Line;
     struct Triangle;
 
-    void project(Vec3& a, Vec3& b);
-
     struct Vec3 {
         float x,y,z;
 
@@ -21,14 +19,12 @@ namespace _3d {
         void add(const Vec3& other);
         void subtract(const Vec3& other);
         void scalarMult(float k);
-
         void rotateZ(float thetaZ);
-
         void rotateY(float thetaY);
-
+        void subtractAndRotate(const Camera&cam);
         void rotate(float thetaZ, float thetaY);
-
-        void toPlaneCoords(const Camera& cam);
+        void toPlaneCoords();
+        void fullyToPlaneCoords(const Camera& cam);
         _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
         void draw(const Camera& cam, sf::RenderWindow& window);
 
