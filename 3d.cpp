@@ -127,6 +127,14 @@ void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     }
 }
 
+Vec3 Vec3::cross(const Vec3& other) {
+    return Vec3(
+        this->y * other.z - this->z * other.y,
+        this->z * other.x - this->x * other.z,
+        this->x * other.y - this->y * other.x
+        );
+}
+
 
 Camera::Camera(Vec3 pos, float thetaY, float thetaZ, float fov) {
     this->pos = pos;

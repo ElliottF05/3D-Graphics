@@ -28,6 +28,8 @@ namespace _3d {
         _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
         void draw(const Camera& cam, sf::RenderWindow& window);
 
+        Vec3 cross(const Vec3& other);
+
         std::string toString();
     };
 
