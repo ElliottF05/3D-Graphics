@@ -130,10 +130,7 @@ int main(int, char**){
             a.draw(cam, window);
         }
 
-        t.draw(cam, window);
-        t2.draw(cam, window);
-        t3.draw(cam, window);
-        t4.draw(cam, window);
+        _3d::Triangle::drawAll(cam, window);
 
         // end the current frame
         window.display();

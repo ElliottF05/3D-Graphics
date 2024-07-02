@@ -1,5 +1,6 @@
 #include "3d.h"
 #include "2d.h"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -73,13 +74,13 @@ Vec3 Vec3::operator/(const float scalar) const {
     float a = 1.0 / scalar;
     return Vec3(this->x * a, this->y * a, this->z * a);
 }
-    Vec3 operator*(const float scalar, const Vec3& vec) {
-        return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
-    }
-    Vec3 operator/(const float scalar, const Vec3&vec) {
-        float x = 1.0 / scalar;
-        return Vec3(vec.x * x, vec.y * x, vec.z * x);
-    }
+Vec3 operator*(const float scalar, const Vec3& vec) {
+    return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+}
+Vec3 operator/(const float scalar, const Vec3&vec) {
+    float x = 1.0 / scalar;
+    return Vec3(vec.x * x, vec.y * x, vec.z * x);
+}
 
 Vec3 Vec3::cross(const Vec3& other) const {
     return Vec3(
@@ -238,10 +239,18 @@ void Line::draw(const Camera& cam, sf::RenderWindow& window) {
 
 }
 
+std::vector<Triangle*> Triangle::triangles;
+
 Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
     this->p1 = p1;
     this->p2 = p2;
     this->p3 = p3;
+
+    this->center = (p1 + p2 + p3) / 3;
+    this->norm = (p1 - p2).cross(p1 - p3);
+    this->distanceToCam = 0;
+
+    Triangle::triangles.push_back(this);
 }
 
 void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
@@ -379,6 +388,21 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         _2d::drawTriangle(window, l3, l4, l2, color);
     }
 
+}
+
+bool Triangle::compareByDistance(Triangle* t1, Triangle* t2) {
+    return t1->distanceToCam > t2->distanceToCam;
+}
+
+void Triangle::drawAll(const Camera& cam, sf::RenderWindow& window) {
+    for (Triangle* trianglePointer : Triangle::triangles) {
+        trianglePointer->distanceToCam = (trianglePointer->center - cam.pos).mag();
+    }
+    std::sort(Triangle::triangles.begin(), Triangle::triangles.end(), Triangle::compareByDistance);
+    for (Triangle* trianglePointer : Triangle::triangles) {
+        Triangle triangle = *trianglePointer;
+        triangle.draw(cam, window);
+    }
 }
 
 World::World(Camera cam, Vec3 sunDirection) {
