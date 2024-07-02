@@ -16,9 +16,21 @@ namespace _3d {
         Vec3(float x, float y, float z);
         Vec3();
         Vec3(const Vec3& other);
+
         void add(const Vec3& other);
         void subtract(const Vec3& other);
         void scalarMult(float k);
+
+        Vec3 operator+(const Vec3& other) const;
+        Vec3 operator-(const Vec3& other) const;
+        Vec3 operator*(const float scalar) const;
+        Vec3 operator/(const float scalar) const;
+
+        Vec3 cross(const Vec3& other) const;
+        float dot(const Vec3& other) const;
+        float mag() const;
+        float angleWith(const Vec3& other) const;
+
         void rotateZ(float thetaZ);
         void rotateY(float thetaY);
         void subtractAndRotate(const Camera&cam);
@@ -26,15 +38,14 @@ namespace _3d {
         void toPlaneCoords();
         void fullyToPlaneCoords(const Camera& cam);
         _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
-        void draw(const Camera& cam, sf::RenderWindow& window);
 
-        Vec3 cross(const Vec3& other) const;
-        float dot(const Vec3& other) const;
-        float mag() const;
-        float angleWith(const Vec3& other) const;
+        void draw(const Camera& cam, sf::RenderWindow& window);
 
         std::string toString();
     };
+
+    Vec3 operator*(const float scalar, const Vec3& vec);
+    Vec3 operator/(const float scalar, const Vec3&vec);
 
     struct Camera {
         Vec3 pos;
@@ -69,7 +80,7 @@ namespace _3d {
         Triangle(Vec3& p1, Vec3& p2, Vec3& p3);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
-        bool operator<(const Triangle& right);
+        bool operator<(const Triangle& right) const;
     };
 
     struct World {

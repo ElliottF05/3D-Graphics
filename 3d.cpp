@@ -60,6 +60,48 @@ void Vec3::scalarMult(float k) {
     this->z *= k;
 }
 
+Vec3 Vec3::operator+(const Vec3& other) const {
+    return Vec3(this->x + other.x, this->y + other.y, this->z + other.z);
+}
+Vec3 Vec3::operator-(const Vec3& other) const {
+    return Vec3(this->x - other.x, this->y - other.y, this->z - other.z);
+}
+Vec3 Vec3::operator*(const float scalar) const {
+    return Vec3(this->x * scalar, this->y * scalar, this->z * scalar);
+}
+Vec3 Vec3::operator/(const float scalar) const {
+    float a = 1.0 / scalar;
+    return Vec3(this->x * a, this->y * a, this->z * a);
+}
+    Vec3 operator*(const float scalar, const Vec3& vec) {
+        return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
+    }
+    Vec3 operator/(const float scalar, const Vec3&vec) {
+        float x = 1.0 / scalar;
+        return Vec3(vec.x * x, vec.y * x, vec.z * x);
+    }
+
+Vec3 Vec3::cross(const Vec3& other) const {
+    return Vec3(
+        this->y * other.z - this->z * other.y,
+        this->z * other.x - this->x * other.z,
+        this->x * other.y - this->y * other.x
+        );
+}
+
+float Vec3::dot(const Vec3& other) const {
+    return this->x * other.x + this->y * other.y + this->z * other.z;
+}
+
+float Vec3::mag() const {
+    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+}
+
+float Vec3::angleWith(const Vec3 &other) const {
+    return acos(this->dot(other) / (this->mag() * other.mag()));
+}
+
+
 void Vec3::rotateZ(float thetaZ) {
     Vec3 orig = Vec3(*this);
 
@@ -119,6 +161,7 @@ void Vec3::fullyToPlaneCoords(const Camera& cam) {
     this->toPlaneCoords();
 }
 
+
 void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     Vec3 copy = *this;
     copy.fullyToPlaneCoords(cam);
@@ -126,26 +169,6 @@ void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     if (v.inFront) {
         v.draw(window);
     }
-}
-
-Vec3 Vec3::cross(const Vec3& other) const {
-    return Vec3(
-        this->y * other.z - this->z * other.y,
-        this->z * other.x - this->x * other.z,
-        this->x * other.y - this->y * other.x
-        );
-}
-
-float Vec3::dot(const Vec3& other) const {
-    return this->x * other.x + this->y * other.y + this->z * other.z;
-}
-
-float Vec3::mag() const {
-    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
-}
-
-float Vec3::angleWith(const Vec3 &other) const {
-    return acos(this->dot(other) / (this->mag() * other.mag()));
 }
 
 
