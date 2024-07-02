@@ -247,9 +247,9 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         norm.scalarMult(-1);
     }
 
-    float color = 0;
+    float color = 0.1;
     if (sunDirection.angleWith(norm) < M_PI / 2.0) {
-        color = cos(sunDirection.angleWith(norm));
+        color = 0.1 + 0.9 * cos(sunDirection.angleWith(norm));
     }
 
 

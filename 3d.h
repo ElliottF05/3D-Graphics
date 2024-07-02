@@ -59,13 +59,17 @@ namespace _3d {
     };
 
     struct Triangle {
+        static std::vector<Triangle> triangles;
         Vec3 p1;
         Vec3 p2;
         Vec3 p3;
+        Vec3 center;
+        Vec3 norm;
 
         Triangle(Vec3& p1, Vec3& p2, Vec3& p3);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
+        bool operator<(const Triangle& right);
     };
 
     struct World {
