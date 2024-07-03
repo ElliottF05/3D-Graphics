@@ -79,7 +79,7 @@ namespace _3d {
         Vec3 norm;
         float distanceToCam;
 
-        Triangle(Vec3& p1, Vec3& p2, Vec3& p3);
+        Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
         

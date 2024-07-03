@@ -241,7 +241,7 @@ void Line::draw(const Camera& cam, sf::RenderWindow& window) {
 
 std::vector<Triangle*> Triangle::triangles;
 
-Triangle::Triangle(Vec3& p1, Vec3& p2, Vec3& p3) {
+Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) {
     this->p1 = p1;
     this->p2 = p2;
     this->p3 = p3;
@@ -398,7 +398,7 @@ void Triangle::drawAll(const Camera& cam, sf::RenderWindow& window) {
     for (Triangle* trianglePointer : Triangle::triangles) {
         trianglePointer->distanceToCam = (trianglePointer->center - cam.pos).mag();
     }
-    std::sort(Triangle::triangles.begin(), Triangle::triangles.end(), Triangle::compareByDistance);
+    //std::sort(Triangle::triangles.begin(), Triangle::triangles.end(), Triangle::compareByDistance);
     for (Triangle* trianglePointer : Triangle::triangles) {
         Triangle triangle = *trianglePointer;
         triangle.draw(cam, window);

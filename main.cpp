@@ -18,6 +18,18 @@
 #include "2d.h"
 #include "3d.h"
 
+void spawnTetrehedron(_3d::Camera cam) {
+    _3d::Vec3 a = cam.pos;
+    _3d::Vec3 b = a + _3d::Vec3(1,0,0);
+    _3d::Vec3 c = a + _3d::Vec3(0,1,0);
+    _3d::Vec3 d = a + _3d::Vec3(0,0,1);
+
+    _3d::Triangle t1 = *(new _3d::Triangle(a,b,c));
+    _3d::Triangle t2 = *(new _3d::Triangle(a,b,d));
+    _3d::Triangle t3 = *(new _3d::Triangle(a,c,d));
+    _3d::Triangle t4 = *(new _3d::Triangle(b,c,d));
+}
+
 
 int main(int, char**){
 
@@ -59,12 +71,20 @@ int main(int, char**){
     // run the program as long as the window is open
     while (window.isOpen()) {
 
+        std::cout << _3d::Triangle::triangles.back()->p1.toString() << "\n";
+
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
         while (window.pollEvent(event)) {
             // "close requested" event: we close the window
             if (event.type == sf::Event::Closed)
                 window.close();
+
+            if (event.type == sf::Event::KeyPressed) {
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
+                    spawnTetrehedron(cam);
+                }
+            }
 
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
@@ -110,10 +130,6 @@ int main(int, char**){
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
             cam.pos.z -= 0.1;
-        }
-
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
-            std::cout << "pos: " + cam.pos.toString() << ", thetaZ: " << cam.thetaZ << ", thetaY: " << cam.thetaY << "\n";
         }
 
         sf::Vector2i mousePos = sf::Mouse::getPosition();

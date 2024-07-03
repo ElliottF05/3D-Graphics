@@ -14,3 +14,7 @@ ZBuffer::ZBuffer(int width, int height) {
         }
     }
 }
+
+void ZBuffer::addPolygon(const _3d::Vec3 &a, const _3d::Vec3 &b, const _3d::Vec3 &c) {
+    // trying linear interpolation
+}
