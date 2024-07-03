@@ -1,13 +1,11 @@
 # ninja log v6
-268	359	1719863911357601612	3D-Graphics-Engine	da21ae26386a3163
-6	300	1719947946102163375	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	30ff549e62e9b1ee
-6	417	1719863190318773295	CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o	dd6caf80891e3cbb
-6	536	1719948280985029960	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
-8	536	1719948480413441777	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
-537	695	1719948480942396239	3D-Graphics-Engine	da21ae26386a3163
-6	391	1719948527264033403	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	30ff549e62e9b1ee
-391	514	1719948527648990204	3D-Graphics-Engine	da21ae26386a3163
-6	509	1719948672503050027	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
-509	664	1719948673005970304	3D-Graphics-Engine	da21ae26386a3163
 5	397	1719948705662276695	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
+6	417	1719863190318773295	CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o	dd6caf80891e3cbb
+6	391	1719948527264033403	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	30ff549e62e9b1ee
 397	517	1719948706054431757	3D-Graphics-Engine	da21ae26386a3163
+3	155	1719976805852793681	build.ninja	af3ba48f5349e11f
+3	232	1719976805870802229	CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o	37a4850df2940fc6
+232	402	1719976806099665622	3D-Graphics-Engine	ac178e28af7702a2
+5	410	1719977346099733177	CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o	37a4850df2940fc6
+5	497	1719977346099379473	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
+497	663	1719977346591326375	3D-Graphics-Engine	ac178e28af7702a2

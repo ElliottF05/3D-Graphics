@@ -151,8 +151,8 @@ void Vec3::subtractAndRotate(const Camera&cam) {
 _2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
-    float screenX = (0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue);
-    float screenY = 0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x;
+    int screenX = round((0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue));
+    int screenY = round(0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x);
 
     return _2d::Vec2(screenX, screenY, this->z > 0);
 }

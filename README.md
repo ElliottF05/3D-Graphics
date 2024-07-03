@@ -1,2 +1,2 @@
 ### TODO LIST
-- Make Line rendering extend point to edge of screen when behind.
+- Add z-buffer. To do this must first revamp Vec2 class
