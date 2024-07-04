@@ -1,6 +1,8 @@
 #include <SFML/Graphics/CircleShape.hpp>
+#include <SFML/Graphics/Image.hpp>
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Cursor.hpp>
 #include <SFML/Window/Event.hpp>
@@ -17,6 +19,7 @@
 #include <vector>
 #include "2d.h"
 #include "3d.h"
+#include "window.h"
 
 void spawnTetrehedron(_3d::Camera cam) {
     _3d::Vec3 a = cam.pos;
@@ -68,10 +71,11 @@ int main(int, char**){
     _3d::Triangle t4(b,c,d);
 
 
+    // testing drawing window manually
+    wd::PixelArray pixelArray(800, 800);
+
     // run the program as long as the window is open
     while (window.isOpen()) {
-
-        std::cout << _3d::Triangle::triangles.back()->p1.toString() << "\n";
 
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
@@ -147,6 +151,43 @@ int main(int, char**){
         }
 
         _3d::Triangle::drawAll(cam, window);
+
+        _3d::Vec3 v1, v2, v3;
+        v1 = t.p1;
+        v2 = t.p2;
+        v3 = t.p3;
+
+        v1.fullyToPlaneCoords(cam);
+        v2.fullyToPlaneCoords(cam);
+        v3.fullyToPlaneCoords(cam);
+
+        v1.toScreenCoords(cam, window);
+        v2.toScreenCoords(cam, window);
+        v3.toScreenCoords(cam, window);
+
+        pixelArray.drawTriangle(v1, v2, v3);
+
+        
+
+        sf::Image image;
+        image.create(800,800);
+
+        for (int y = 0; y < 800; y++) {
+            for (int x = 0; x < 800; x++) {
+                int value = pixelArray.getPixel(x, y);
+                sf::Color color = sf::Color(value, value, value);
+                // std::cout << value << "\n";
+                image.setPixel(x, y, color);
+            }
+        }
+
+        sf::Texture texture;
+        texture.create(800, 800);
+        texture.update(image);
+
+        sf::Sprite sprite(texture);
+
+        window.draw(sprite);
 
         // end the current frame
         window.display();

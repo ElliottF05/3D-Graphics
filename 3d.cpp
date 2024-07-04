@@ -82,6 +82,9 @@ Vec3 operator/(const float scalar, const Vec3&vec) {
     float x = 1.0 / scalar;
     return Vec3(vec.x * x, vec.y * x, vec.z * x);
 }
+bool Vec3::operator==(const Vec3& other) const {
+    return this->x == other.x && this->y == other.y && this->z == other.z;
+}
 
 Vec3 Vec3::cross(const Vec3& other) const {
     return Vec3(
@@ -153,8 +156,8 @@ void Vec3::subtractAndRotate(const Camera&cam) {
 void Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
-    int screenX = round((0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue));
-    int screenY = round(0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x);
+    float screenX = (0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue);
+    float screenY = 0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x;
 
     this->x = screenX;
     this->y = screenY;
