@@ -12,7 +12,7 @@ namespace _3d {
     struct Triangle;
 
     struct Vec3 {
-        float x,y,z;
+        float x,y,z,depth;
 
         Vec3(float x, float y, float z);
         Vec3();
@@ -38,7 +38,7 @@ namespace _3d {
         void rotate(float thetaZ, float thetaY);
         void toPlaneCoords();
         void fullyToPlaneCoords(const Camera& cam);
-        _2d::Vec2 toScreenCoords(const Camera& cam, sf::RenderWindow& window);
+        void toScreenCoords(const Camera& cam, sf::RenderWindow& window);
 
         void draw(const Camera& cam, sf::RenderWindow& window);
 

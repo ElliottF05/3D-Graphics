@@ -3,26 +3,16 @@
 
 #include <SFML/Graphics/RenderWindow.hpp>
 
+namespace _3d {
+    struct Vec3;
+}
+
 namespace _2d {
 
-    struct Vec2;
-
-    void drawPoint(sf::RenderWindow& window, const Vec2& a);
-    void drawLine(sf::RenderWindow& window, const Vec2& a, const Vec2& b);
-    void drawTriangle(sf::RenderWindow& window, const Vec2&a, const Vec2&b, const Vec2&c, float color);
-    void drawTriangle(sf::RenderWindow& window, const Vec2& a, const Vec2& b, const Vec2& c);
-
-    struct Vec2 {
-        float x, y;
-        bool inFront;
-
-        Vec2(float x, float y, bool inFront);
-        Vec2(float x, float y);
-        Vec2();
-        void scalarMult(float k);
-        void draw(sf::RenderWindow& window);
-
-    };
+    void drawPoint(sf::RenderWindow& window, const _3d::Vec3& a);
+    void drawLine(sf::RenderWindow& window, const _3d::Vec3& a, const _3d::Vec3& b);
+    void drawTriangle(sf::RenderWindow& window, const _3d::Vec3&a, const _3d::Vec3&b, const _3d::Vec3&c, float color);
+    void drawTriangle(sf::RenderWindow& window, const _3d::Vec3& a, const _3d::Vec3& b, const _3d::Vec3& c);
     
 }
 

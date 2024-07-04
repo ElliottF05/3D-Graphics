@@ -40,3 +40,8 @@
 259	350	1720035231171444534	3D-Graphics-Engine	ac178e28af7702a2
 27	572	1720046895022743338	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
 572	761	1720046895567461060	3D-Graphics-Engine	ac178e28af7702a2
+6	454	1720064851335689505	CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o	dd6caf80891e3cbb
+6	480	1720064851335948090	CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o	37a4850df2940fc6
+5	484	1720064851335427336	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	30ff549e62e9b1ee
+6	495	1720064851335827006	CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o	bf5b2b21b94b7ff1
+495	663	1720064851825141780	3D-Graphics-Engine	ac178e28af7702a2

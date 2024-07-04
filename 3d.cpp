@@ -29,6 +29,7 @@ Vec3::Vec3(float x, float y, float z) {
     this->x = x;
     this->y = y;
     this->z = z;
+    this->depth = 0;
 }
 
 Vec3::Vec3() {
@@ -146,15 +147,17 @@ float rotatedX = this->x;
 void Vec3::subtractAndRotate(const Camera&cam) {
     this->subtract(cam.pos);
     this->rotate(-cam.thetaZ, -cam.thetaY);
+    this->depth = this->mag();
 }
 
-_2d::Vec2 Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
+void Vec3::toScreenCoords(const Camera& cam, sf::RenderWindow& window) {
     float maxPlaneCoordValue = tan(0.5 * cam.fov_rad);
 
     int screenX = round((0.5 * window.getSize().x) * (1 - this->x / maxPlaneCoordValue));
     int screenY = round(0.5 * window.getSize().y - this->y / maxPlaneCoordValue * 0.5 * window.getSize().x);
 
-    return _2d::Vec2(screenX, screenY, this->z > 0);
+    this->x = screenX;
+    this->y = screenY;
 }
 
 void Vec3::fullyToPlaneCoords(const Camera& cam) {
@@ -166,9 +169,9 @@ void Vec3::fullyToPlaneCoords(const Camera& cam) {
 void Vec3::draw(const Camera& cam, sf::RenderWindow& window) {
     Vec3 copy = *this;
     copy.fullyToPlaneCoords(cam);
-    _2d::Vec2 v = copy.toScreenCoords(cam, window);
-    if (v.inFront) {
-        v.draw(window);
+    copy.toScreenCoords(cam, window);
+    if (copy.z > 0) {
+        _2d::drawPoint(window, copy);
     }
 }
 
@@ -221,21 +224,19 @@ void Line::draw(const Camera& cam, sf::RenderWindow& window) {
     v1.fullyToPlaneCoords(cam);
     v2.fullyToPlaneCoords(cam);
 
-    _2d::Vec2 l1, l2;
-
     if (v1.z < 0 && v2.z < 0) {
         return;
     } else if (v1.z > 0 && v2.z > 0) {
-        l1 = v1.toScreenCoords(cam, window);
-        l2 = v2.toScreenCoords(cam, window);
+        v1.toScreenCoords(cam, window);
+        v2.toScreenCoords(cam, window);
     } else {
         project(v1, v2);
 
-        l1 = v1.toScreenCoords(cam, window);
-        l2 = v2.toScreenCoords(cam, window);
+        v1.toScreenCoords(cam, window);
+        v2.toScreenCoords(cam, window);
     }
 
-    _2d::drawLine(window, l1, l2);
+    _2d::drawLine(window, v1, v2);
 
 }
 
@@ -295,8 +296,6 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
     v2.fullyToPlaneCoords(cam);
     v3.fullyToPlaneCoords(cam);
 
-    _2d::Vec2 l1, l2, l3;
-
     int inViewCount = 0;
     if (v1.z > 0) {
         inViewCount++;
@@ -311,10 +310,10 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
     if (inViewCount == 0) {
         return;
     } else if (inViewCount == 3) {
-        l1 = v1.toScreenCoords(cam, window);
-        l2 = v2.toScreenCoords(cam, window);
-        l3 = v3.toScreenCoords(cam, window);
-        _2d::drawTriangle(window, l1, l2, l3, color);
+        v1.toScreenCoords(cam, window);
+        v2.toScreenCoords(cam, window);
+        v3.toScreenCoords(cam, window);
+        _2d::drawTriangle(window, v1, v2, v3, color);
     } else if (inViewCount == 1) {
 
         Vec3 inView;
@@ -344,10 +343,10 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         project(inView, outOfView[0]);
         project(inView, outOfView[1]);
 
-        l1 = inView.toScreenCoords(cam, window);
-        l2 = outOfView[0].toScreenCoords(cam, window);
-        l3 = outOfView[1].toScreenCoords(cam, window);
-        _2d::drawTriangle(window, l1, l2, l3, color);
+        inView.toScreenCoords(cam, window);
+        outOfView[0].toScreenCoords(cam, window);
+        outOfView[1].toScreenCoords(cam, window);
+        _2d::drawTriangle(window, inView, outOfView[0], outOfView[1], color);
 
     } else { // inViewCount == 2
         std::vector<Vec3> inView;
@@ -378,14 +377,14 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         project(inView[0], outOfView);
         project(inView[1], outOfView2);
 
-        _2d::Vec2 l4;
-        l1 = inView[0].toScreenCoords(cam, window);
-        l2 = outOfView.toScreenCoords(cam, window);
-        l3 = inView[1].toScreenCoords(cam, window);
-        l4 = outOfView2.toScreenCoords(cam, window);
+        Vec3 v4;
+        inView[0].toScreenCoords(cam, window);
+        outOfView.toScreenCoords(cam, window);
+        inView[1].toScreenCoords(cam, window);
+        outOfView2.toScreenCoords(cam, window);
 
-        _2d::drawTriangle(window, l1, l2, l3, color);
-        _2d::drawTriangle(window, l3, l4, l2, color);
+        _2d::drawTriangle(window, inView[0], outOfView, inView[1], color);
+        _2d::drawTriangle(window, inView[1], outOfView2, outOfView, color);
     }
 
 }
