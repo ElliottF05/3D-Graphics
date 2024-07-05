@@ -1,5 +1,6 @@
 #include "3d.h"
 #include "2d.h"
+#include "window.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -257,7 +258,7 @@ Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) {
     Triangle::triangles.push_back(this);
 }
 
-void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
+void Triangle::draw(const Camera& cam, sf::RenderWindow& window, wd::PixelArray& pixelArray) {
     // TODO: fully check correctness of this section
 
     // TODO: update this for full functionality
@@ -283,10 +284,12 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         norm.scalarMult(-1);
     }
 
-    float color = 0.1;
+    float colorf = 0.1;
     if (sunDirection.angleWith(norm) < M_PI / 2.0) {
-        color = 0.1 + 0.9 * cos(sunDirection.angleWith(norm));
+        colorf = 0.1 + 0.9 * cos(sunDirection.angleWith(norm));
     }
+    colorf *= 255;
+    int color = round(colorf);
 
 
 
@@ -316,7 +319,7 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         v1.toScreenCoords(cam, window);
         v2.toScreenCoords(cam, window);
         v3.toScreenCoords(cam, window);
-        _2d::drawTriangle(window, v1, v2, v3, color);
+        pixelArray.drawTriangle(v1, v2, v3, color);
     } else if (inViewCount == 1) {
 
         Vec3 inView;
@@ -349,7 +352,7 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         inView.toScreenCoords(cam, window);
         outOfView[0].toScreenCoords(cam, window);
         outOfView[1].toScreenCoords(cam, window);
-        _2d::drawTriangle(window, inView, outOfView[0], outOfView[1], color);
+        pixelArray.drawTriangle(inView, outOfView[0], outOfView[1], color);
 
     } else { // inViewCount == 2
         std::vector<Vec3> inView;
@@ -386,8 +389,8 @@ void Triangle::draw(const Camera &cam, sf::RenderWindow &window) {
         inView[1].toScreenCoords(cam, window);
         outOfView2.toScreenCoords(cam, window);
 
-        _2d::drawTriangle(window, inView[0], outOfView, inView[1], color);
-        _2d::drawTriangle(window, inView[1], outOfView2, outOfView, color);
+        pixelArray.drawTriangle(inView[0], outOfView, inView[1], color);
+        pixelArray.drawTriangle(inView[1], outOfView2, outOfView, color);
     }
 
 }
@@ -396,14 +399,14 @@ bool Triangle::compareByDistance(Triangle* t1, Triangle* t2) {
     return t1->distanceToCam > t2->distanceToCam;
 }
 
-void Triangle::drawAll(const Camera& cam, sf::RenderWindow& window) {
+void Triangle::drawAll(const Camera& cam, sf::RenderWindow& window, wd::PixelArray& pixelArray) {
     for (Triangle* trianglePointer : Triangle::triangles) {
         trianglePointer->distanceToCam = (trianglePointer->center - cam.pos).mag();
     }
     //std::sort(Triangle::triangles.begin(), Triangle::triangles.end(), Triangle::compareByDistance);
     for (Triangle* trianglePointer : Triangle::triangles) {
         Triangle triangle = *trianglePointer;
-        triangle.draw(cam, window);
+        triangle.draw(cam, window, pixelArray);
     }
 }
 

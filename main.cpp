@@ -150,24 +150,9 @@ int main(int, char**){
             a.draw(cam, window);
         }
 
-        _3d::Triangle::drawAll(cam, window);
+        pixelArray.clearArray();
+        _3d::Triangle::drawAll(cam, window, pixelArray);
 
-        _3d::Vec3 v1, v2, v3;
-        v1 = t.p1;
-        v2 = t.p2;
-        v3 = t.p3;
-
-        v1.fullyToPlaneCoords(cam);
-        v2.fullyToPlaneCoords(cam);
-        v3.fullyToPlaneCoords(cam);
-
-        v1.toScreenCoords(cam, window);
-        v2.toScreenCoords(cam, window);
-        v3.toScreenCoords(cam, window);
-
-        pixelArray.drawTriangle(v1, v2, v3);
-
-        
 
         sf::Image image;
         image.create(800,800);
@@ -192,7 +177,7 @@ int main(int, char**){
         // end the current frame
         window.display();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     return 0;

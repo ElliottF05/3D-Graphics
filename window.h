@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "3d.h"
+
 namespace wd {
 
     struct ZBuffer {
@@ -22,6 +23,8 @@ namespace wd {
         void setPixel(int x, int y, int value);
         int getPixel(int x, int y);
 
+        void clearArray();
         void drawTriangle(const _3d::Vec3& a, const _3d::Vec3&b, const _3d::Vec3& c);
+        void drawTriangle(const _3d::Vec3& a, const _3d::Vec3&b, const _3d::Vec3& c, int color);
     };
 }

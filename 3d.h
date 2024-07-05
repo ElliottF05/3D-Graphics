@@ -4,6 +4,10 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <sfml/Graphics.hpp>
 
+namespace wd {
+    struct PixelArray;
+}
+
 namespace _3d {
 
     struct Camera;
@@ -82,10 +86,10 @@ namespace _3d {
 
         Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
 
-        void draw(const Camera& cam, sf::RenderWindow& window);
+        void draw(const Camera& cam, sf::RenderWindow& window, wd::PixelArray& pixelArray);
         
         static bool compareByDistance(Triangle* t1, Triangle* t2);
-        static void drawAll(const Camera& cam, sf::RenderWindow& window);
+        static void drawAll(const Camera& cam, sf::RenderWindow& window, wd::PixelArray& pixelArray);
     };
 
     struct World {
