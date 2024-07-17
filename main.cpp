@@ -22,18 +22,6 @@
 #include "3d.h"
 #include "window.h"
 
-void spawnTetrehedron(_3d::Camera cam) {
-    _3d::Vec3 a = cam.pos;
-    _3d::Vec3 b = a + _3d::Vec3(1,0,0);
-    _3d::Vec3 c = a + _3d::Vec3(0,1,0);
-    _3d::Vec3 d = a + _3d::Vec3(0,0,1);
-
-    _3d::Triangle t1 = *(new _3d::Triangle(a,b,c));
-    _3d::Triangle t2 = *(new _3d::Triangle(a,b,d));
-    _3d::Triangle t3 = *(new _3d::Triangle(a,c,d));
-    _3d::Triangle t4 = *(new _3d::Triangle(b,c,d));
-}
-
 
 int main(int, char**){
 
@@ -87,7 +75,7 @@ int main(int, char**){
 
             if (event.type == sf::Event::KeyPressed) {
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::C)) {
-                    spawnTetrehedron(cam);
+                    
                 }
             }
 

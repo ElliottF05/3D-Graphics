@@ -43,6 +43,8 @@ struct Vec3 {
     float angleWith(const Vec3& other) const;
 
     // specific functions
+    void rotateZ(float thetaZ);
+    void rotateY(float thetaY);
     void rotate(float thetaZ, float thetaY);
 
     std::string toString();
