@@ -4,9 +4,8 @@ using namespace graphics;
 
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "Vec3"
-//
-// CONSTRUCTORS
 
+// CONSTRUCTORS
 Vec3::Vec3(float x, float y, float z) {
     this->x = x;
     this->y = y;
@@ -33,6 +32,32 @@ Vec3 Vec3::operator/(const float scalar) const {
     float a = 1.0 / scalar;
     return Vec3(this->x * a, this->y * a, this->z * a);
 }
+Vec3& Vec3::operator+=(const Vec3& vec) {
+    this->x += vec.x;
+    this->y += vec.y;
+    this->z += vec.z;
+    return *this;
+}
+Vec3& Vec3::operator-=(const Vec3& vec) {
+    this->x -= vec.x;
+    this->y -= vec.y;
+    this->z -= vec.z;
+    return *this;
+}
+Vec3& Vec3::operator*=(const float scalar) {
+    this->x *= scalar;
+    this->y *= scalar;
+    this->z *= scalar;
+    return *this;
+}
+Vec3& Vec3::operator/=(const float scalar) {
+    this->x /= scalar;
+    this->y /= scalar;
+    this->z /= scalar;
+    return *this;
+}
+
+// Operators where Vec3 is right-hand-side
 Vec3 operator*(const float scalar, const Vec3& vec) {
     return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
 }
@@ -79,3 +104,7 @@ void Vec3::rotate(float thetaZ, float thetaY) {
 std::string Vec3::toString() {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
 }
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Window"

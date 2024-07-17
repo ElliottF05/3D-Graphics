@@ -33,8 +33,8 @@ struct Vec3 {
     Vec3 operator-(const Vec3& other) const;
     Vec3 operator*(const float scalar) const;
     Vec3 operator/(const float scalar) const;
-    Vec3& operator+=(const float scalar);
-    Vec3& operator-=(const float scalar);
+    Vec3& operator+=(const Vec3& vec);
+    Vec3& operator-=(const Vec3& vec);
     Vec3& operator*=(const float scalar);
     Vec3& operator/=(const float scalar);
     Vec3 cross(const Vec3& other) const;
