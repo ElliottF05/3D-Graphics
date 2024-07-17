@@ -109,12 +109,24 @@ struct World { // TODO: incomplete and unused
 
 struct PixelArray {
     int width, height;
-    std::vector<std::vector<int> > data;
+    std::vector<int> data;
+
+    PixelArray(int width, int height);
+
+    void setPixel(int x, int y, int color);
+    void setPixel(int x, int y, int r, int g, int b);
+    int getPixelMonocolor(int x, int y);
+    std::vector<int> getPixel(int x, int y);
 };
 
 struct ZBuffer {
     int width, height;
-    std::vector<std::vector<int> > data;
+    std::vector<float> data;
+
+    ZBuffer(int width, int height);
+
+    void setDepth(int x, int y, float depth);
+    float getDepth(int x, int y);
 };
 
 struct Window {
@@ -122,6 +134,12 @@ struct Window {
     PixelArray pixelArray;
     ZBuffer zBuffer;
     sf::RenderWindow& sfmlWindow; // implementation specific
+
+    Window(int width, int height);
+    Window(int width, int height, sf::RenderWindow& sfmlWindow);
+
+    void drawLine(Line& line);
+    void drawTriangle(Triangle& triangle);
 };
 
 

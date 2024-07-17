@@ -56,7 +56,6 @@ Vec3& Vec3::operator/=(const float scalar) {
     this->z /= scalar;
     return *this;
 }
-
 // Operators where Vec3 is right-hand-side
 Vec3 operator*(const float scalar, const Vec3& vec) {
     return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
@@ -65,6 +64,7 @@ Vec3 operator/(const float scalar, const Vec3&vec) {
     float x = 1.0 / scalar;
     return Vec3(vec.x * x, vec.y * x, vec.z * x);
 }
+
 Vec3 Vec3::cross(const Vec3& other) const {
     return Vec3(
         this->y * other.z - this->z * other.y,
