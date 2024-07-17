@@ -100,7 +100,7 @@ void PixelArray::drawTriangle(const _3d::Vec3 &a, const _3d::Vec3 &b, const _3d:
     int leftVal = round(left.x);
     int rightVal = round(right.x);
     int centerVal = round(center.x);
-    std::cout << leftVal << ", " << centerVal << ", " << rightVal << "\n";
+    // std::cout << leftVal << ", " << centerVal << ", " << rightVal << "\n";
 
     float dy1 = (center.y - left.y) / (center.x - left.x);
     float dy2 = (right.y - left.y) / (right.x - left.x);

@@ -11,6 +11,7 @@
 #include <SFML/Window/VideoMode.hpp>
 #include <SFML/Window/Window.hpp>
 #include <SFML/Window/WindowStyle.hpp>
+#include <__chrono/duration.h>
 #include <cmath>
 #include <iostream>
 #include <chrono>
@@ -41,7 +42,6 @@ int main(int, char**){
 
     sf::RenderWindow window(sf::VideoMode(800, 800), "My window", sf::Style::Default, settings);
     window.setFramerateLimit(60);
-    //window.setMouseCursorVisible(false);
     sf::Vector2i screenCenter = sf::Vector2i(sf::VideoMode::getDesktopMode().width / 2, sf::VideoMode::getDesktopMode().height / 2);
     sf::Mouse::setPosition(screenCenter);
 
@@ -76,6 +76,7 @@ int main(int, char**){
 
     // run the program as long as the window is open
     while (window.isOpen()) {
+        auto t1 = std::chrono::high_resolution_clock::now();
 
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
@@ -153,6 +154,7 @@ int main(int, char**){
         pixelArray.clearArray();
         _3d::Triangle::drawAll(cam, window, pixelArray);
 
+        auto t2 = std::chrono::high_resolution_clock::now();
 
         sf::Image image;
         image.create(800,800);
@@ -166,6 +168,8 @@ int main(int, char**){
             }
         }
 
+        auto t3 = std::chrono::high_resolution_clock::now();
+
         sf::Texture texture;
         texture.create(800, 800);
         texture.update(image);
@@ -176,6 +180,13 @@ int main(int, char**){
 
         // end the current frame
         window.display();
+
+        auto t4 = std::chrono::high_resolution_clock::now();
+        auto frameTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t1);
+        auto pixelTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
+        std::cout << "frame time: " << frameTime.count() << ", pixel time: " << pixelTime.count() << "\n";
+
+        // current data gives frame time around 27ms, with 21ms being drawing pixels to texture!!
 
     //std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
