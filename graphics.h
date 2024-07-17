@@ -80,6 +80,7 @@ struct Line {
 
 struct Triangle {
     Point p1, p2, p3;
+    Vec3 normal;
 
     Triangle();
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
@@ -113,6 +114,7 @@ struct PixelArray {
 
     PixelArray(int width, int height);
 
+    int getIndex(int x, int y);
     void setPixel(int x, int y, int color);
     void setPixel(int x, int y, int r, int g, int b);
     int getPixelMonocolor(int x, int y);
@@ -125,6 +127,7 @@ struct ZBuffer {
 
     ZBuffer(int width, int height);
 
+    int getIndex(int x, int y);
     void setDepth(int x, int y, float depth);
     float getDepth(int x, int y);
 };
@@ -140,6 +143,7 @@ struct Window {
 
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle);
+    void toSfmlPixels();
 };
 
 

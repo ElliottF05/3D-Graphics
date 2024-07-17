@@ -6,6 +6,9 @@ enable_testing()
 
 find_package(SFML COMPONENTS system window graphics REQUIRED)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 set(SOURCES
     main.cpp
     2d.cpp

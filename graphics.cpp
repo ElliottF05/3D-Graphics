@@ -1,4 +1,5 @@
 #include "graphics.h"
+#include <vector>
 
 using namespace graphics;
 
@@ -107,4 +108,78 @@ std::string Vec3::toString() {
 
 
 //-----------------------------------------------------------------------------------
-// IMPLEMENTATION OF "Window"
+// IMPLEMENTATION OF "PixelArray"
+
+// CONSTRUCTOR
+PixelArray::PixelArray(int width, int height) {
+    this->width = width;
+    this->height = height;
+    this->data = std::vector<int>(width * height * 3, 0);
+}
+
+// METHODS
+int PixelArray::getIndex(int x, int y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        throw "pixel coordinates out of bounds";
+    }
+    return ((this->width * y) + x) * 3;
+}
+void PixelArray::setPixel(int x, int y, int color) {
+    if (color < 0 || color > 255) {
+        throw "color value out of bounds";
+    }
+    int index = this->getIndex(x, y);
+    this->data[index] = color;
+    this->data[index+1] = color;
+    this->data[index+2] = color;
+}
+void PixelArray::setPixel(int x, int y, int r, int g, int b) {
+    if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
+        throw "color value out of bounds";
+    }
+    int index = this->getIndex(x, y);
+    this->data[index] = r;
+    this->data[index+1] = g;
+    this->data[index+2] = b;
+}
+int PixelArray::getPixelMonocolor(int x, int y) {
+    int index = this->getIndex(x, y);
+    return this->data[index];
+}
+std::vector<int> PixelArray::getPixel(int x, int y) {
+    int index = this->getIndex(x, y);
+    std::vector<int> v = {this->data[index], this->data[index+1], this->data[index+2]};
+    return v;
+}
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "ZBuffer"
+
+// CONSTRUCTOR
+ZBuffer::ZBuffer(int width, int height) {
+    this->width = width;
+    this->height = height;
+    data = std::vector<float>(width * height, 99999);
+}
+
+// METHODS
+int ZBuffer::getIndex(int x, int y) {
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        throw "pixel coordinates out of bounds";
+    }
+    return ((this->width * y) + x) * 3;
+}
+void ZBuffer::setDepth(int x, int y, float depth) {
+    if (depth < 0) {
+        throw "invalid depth";
+    }
+    int index = getIndex(x, y);
+    data[index] = depth;
+}
+float ZBuffer::getDepth(int x, int y) {
+    int index = getIndex(x, y);
+    return data[index];
+}
+
+
