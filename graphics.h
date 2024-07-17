@@ -57,8 +57,8 @@ struct Point {
     Vec3 absolutePos, cameraPos, projectedPos, screenPos;
     float distToCamera;
 
-    Point();
     Point(Vec3 absolutePos);
+    Point();
 
     void calculateCameraPos(const Camera& cam);
     void calculateProjectedPos();
@@ -72,8 +72,8 @@ struct Point {
 struct Line {
     Point p1, p2;
 
-    Line();
     Line(Vec3 p1, Vec3 p2);
+    Line();
 
     void draw(const Camera& cam, const Window& window);
 };
@@ -82,8 +82,8 @@ struct Triangle {
     Point p1, p2, p3;
     Vec3 normal;
 
-    Triangle();
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
+    Triangle();
 
     void draw(const Camera& cam, const Window& window);
 };
@@ -95,8 +95,8 @@ struct Camera {
     Vec3 direction;
     Vec3 floorDirection;
 
-    Camera();
     Camera(Vec3 pos, float thetaZ, float thetaY, float fov);
+    Camera();
 
     void moveRelative(float forward, float sideward);
     void rotate(float thetaZ, float thetaY);
@@ -119,6 +119,7 @@ struct PixelArray {
     void setPixel(int x, int y, int r, int g, int b);
     int getPixelMonocolor(int x, int y);
     std::vector<int> getPixel(int x, int y);
+    void clear();
 };
 
 struct ZBuffer {
@@ -130,6 +131,7 @@ struct ZBuffer {
     int getIndex(int x, int y);
     void setDepth(int x, int y, float depth);
     float getDepth(int x, int y);
+    void clear();
 };
 
 struct Window {
@@ -138,12 +140,13 @@ struct Window {
     ZBuffer zBuffer;
     sf::RenderWindow& sfmlWindow; // implementation specific
 
-    Window(int width, int height);
     Window(int width, int height, sf::RenderWindow& sfmlWindow);
 
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle);
     void toSfmlPixels();
+    void draw();
+    void clear();
 };
 
 

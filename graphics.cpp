@@ -1,4 +1,5 @@
 #include "graphics.h"
+#include <SFML/Graphics/RenderWindow.hpp>
 #include <vector>
 
 using namespace graphics;
@@ -151,6 +152,11 @@ std::vector<int> PixelArray::getPixel(int x, int y) {
     std::vector<int> v = {this->data[index], this->data[index+1], this->data[index+2]};
     return v;
 }
+void PixelArray::clear() {
+    for (int i = 0; i < data.size(); i++) {
+        data[i] = 0;
+    }
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -181,5 +187,24 @@ float ZBuffer::getDepth(int x, int y) {
     int index = getIndex(x, y);
     return data[index];
 }
+void ZBuffer::clear() {
+    for (int i = 0; i < data.size(); i++) {
+        data[i] = 99999;
+    }
+}
 
 
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Window"
+
+// CONSTRUCTOR
+Window::Window(int width, int height, sf::RenderWindow& sfmlWindow)
+ : pixelArray(width, height), zBuffer(width, height), sfmlWindow(sfmlWindow) {
+    this->width = width;
+    this->height = height;
+}
+
+void Window::clear() {
+    pixelArray.clear();
+    zBuffer.clear();
+}
