@@ -220,7 +220,7 @@ build cmake_object_order_depends_target_3D-Graphics-Engine: phony || .
 build CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/main.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEFINES = -DSFML_STATIC
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o.d
-  FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
+  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
   INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
@@ -228,7 +228,7 @@ build CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o: CXX_COMPILER__3D-Graphics-En
 build CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/2d.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEFINES = -DSFML_STATIC
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o.d
-  FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
+  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
   INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
@@ -236,7 +236,7 @@ build CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o: CXX_COMPILER__3D-Graphics-Engi
 build CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/3d.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEFINES = -DSFML_STATIC
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o.d
-  FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
+  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
   INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
@@ -244,7 +244,7 @@ build CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o: CXX_COMPILER__3D-Graphics-Engi
 build CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/window.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEFINES = -DSFML_STATIC
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o.d
-  FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
+  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
   INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir

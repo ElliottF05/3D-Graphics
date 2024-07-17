@@ -40,7 +40,7 @@
 			{
 				"command" : 1,
 				"file" : 1,
-				"line" : 15,
+				"line" : 18,
 				"parent" : 0
 			},
 			{
@@ -52,7 +52,7 @@
 			{
 				"command" : 2,
 				"file" : 1,
-				"line" : 23,
+				"line" : 26,
 				"parent" : 0
 			},
 			{
@@ -201,7 +201,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk"
+					"fragment" : "-g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk"
 				}
 			],
 			"defines" : 
@@ -220,6 +220,14 @@
 				}
 			],
 			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					2
+				],
+				"standard" : "17"
+			},
 			"sourceIndexes" : 
 			[
 				0,
