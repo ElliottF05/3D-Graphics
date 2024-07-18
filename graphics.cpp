@@ -126,6 +126,26 @@ Point::Point(Vec3 absolutePos) {
 Point::Point() {};
 
 // METHODS
+void Point::calculateCameraPos(const Camera &cam) {
+    cameraPos = absolutePos - cam.pos;
+    cameraPos.rotate(-cam.thetaZ, -cam.thetaY);
+    distToCamera = cameraPos.mag();
+}
+void Point::calculateProjectedPos() {
+    // NOTE: x, y, and z now carry different meanings. x = horizontal pos, y = vertical pos
+    projectedPos.y = cameraPos.z / cameraPos.x;
+    projectedPos.x = cameraPos.y / cameraPos.x;
+
+    if (cameraPos.x > 0) {
+        projectedPos.z = 1;
+    } else {
+        projectedPos.z = -1;
+    }
+}
+void Point::calculateScreenPos(const Camera& cam, const Window &window) {
+    screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord);
+    screenPos.y = 0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width;
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -228,7 +248,6 @@ void Window::clear() {
     pixelArray.clear();
     zBuffer.clear();
 }
-
 void Window::draw() {
     // TODO: WARNING - this is implemntation specific
 

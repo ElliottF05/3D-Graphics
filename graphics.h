@@ -69,7 +69,7 @@ struct Point {
 
     void calculateCameraPos(const Camera& cam);
     void calculateProjectedPos();
-    void calculateScreenPos(const Window& window);
+    void calculateScreenPos(const Camera& cam, const Window& window);
 
     void drawOnScreen(const Window& window);
 
@@ -109,7 +109,7 @@ struct Triangle {
 // DECLARING "Camera"
 struct Camera {
     Vec3 pos;
-    float thetaZ, thetaY, fov;
+    float thetaZ, thetaY, fov, fov_rad, maxPlaneCoord;
     Vec3 direction;
     Vec3 floorDirection;
 
@@ -172,6 +172,7 @@ struct Window {
 
     Window(int width, int height, sf::RenderWindow& sfmlWindow);
 
+    void drawPoint(Point& point);
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle);
     void draw(); // implementation specific
