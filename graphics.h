@@ -5,7 +5,7 @@
 
 namespace graphics {
 
-//-----------------------------------------------------------------
+//---------------------------------------------------------------------------
 // FORWARD DECLARATION OF STRUCTS
 struct Vec3;
 
@@ -21,7 +21,8 @@ struct ZBuffer;
 struct Window;
 
 
-// DECLARING STRUCT METHODS AND INSTANCE VARIABLES
+//---------------------------------------------------------------------------
+// DECLARING "Vec3"
 struct Vec3 {
     float x,y,z;
 
@@ -54,6 +55,10 @@ struct Vec3 {
 Vec3 operator*(const float scalar, const Vec3& vec);
 Vec3 operator/(const float scalar, const Vec3& vec);
 
+
+
+//---------------------------------------------------------------------------
+// DECLARING "Point"
 struct Point {
     Vec3 absolutePos, cameraPos, projectedPos, screenPos;
     float distToCamera;
@@ -70,6 +75,9 @@ struct Point {
     void draw(const Camera& cam, const Window& window);
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "Line"
 struct Line {
     Point p1, p2;
 
@@ -79,7 +87,12 @@ struct Line {
     void draw(const Camera& cam, const Window& window);
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "Triangle"
 struct Triangle {
+    static std::vector<Triangle> triangles; // TODO: check how static variables are initialized
+
     Point p1, p2, p3;
     Vec3 normal;
 
@@ -90,6 +103,9 @@ struct Triangle {
 };
 
 
+
+//---------------------------------------------------------------------------
+// DECLARING "Camera"
 struct Camera {
     Vec3 pos;
     float thetaZ, thetaY, fov;
@@ -103,12 +119,18 @@ struct Camera {
     void rotate(float thetaZ, float thetaY);
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "World"
 struct World { // TODO: incomplete and unused
     Camera cam;
     Vec3 sunDirection;
 };
 
 
+
+//---------------------------------------------------------------------------
+// DECLARING "PixelArray"
 struct PixelArray {
     int width, height;
     std::vector<int> data;
@@ -123,6 +145,9 @@ struct PixelArray {
     void clear();
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "ZBuffer"
 struct ZBuffer {
     int width, height;
     std::vector<float> data;
@@ -135,6 +160,9 @@ struct ZBuffer {
     void clear();
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "Window"
 struct Window {
     int width, height;
     PixelArray pixelArray;
@@ -149,8 +177,5 @@ struct Window {
     void draw();
     void clear();
 };
-
-
-
 
 }
