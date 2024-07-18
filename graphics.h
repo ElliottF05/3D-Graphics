@@ -5,7 +5,8 @@
 
 namespace graphics {
 
-// DECLARING STRUCTS;
+//-----------------------------------------------------------------
+// FORWARD DECLARATION OF STRUCTS
 struct Vec3;
 
 struct Point;
