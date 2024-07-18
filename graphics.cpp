@@ -112,6 +112,19 @@ std::string Vec3::toString() {
 }
 
 
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Point"
+
+// CONSTRUCTORS
+Point::Point(Vec3 absolutePos) {
+    this->absolutePos = absolutePos;
+}
+Point::Point() {};
+
+// METHODS
+
+
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "PixelArray"
 
