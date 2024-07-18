@@ -84,6 +84,9 @@ float Vec3::dot(const Vec3& other) const {
 float Vec3::mag() const {
     return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
 }
+void Vec3::normalize() {
+    *this /= mag();
+}
 float Vec3::angleWith(const Vec3 &other) const {
     return acos(this->dot(other) / (this->mag() * other.mag()));
 }

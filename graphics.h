@@ -42,6 +42,7 @@ struct Vec3 {
     Vec3 cross(const Vec3& other) const;
     float dot(const Vec3& other) const;
     float mag() const;
+    void normalize();
     float angleWith(const Vec3& other) const;
 
     // specific functions
