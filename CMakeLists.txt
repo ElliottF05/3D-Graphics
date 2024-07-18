@@ -14,6 +14,7 @@ set(SOURCES
     2d.cpp
     3d.cpp
     window.cpp
+    graphics.cpp
 )
 add_executable(3D-Graphics-Engine ${SOURCES})
 

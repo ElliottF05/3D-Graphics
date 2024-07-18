@@ -173,8 +173,7 @@ struct Window {
 
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle);
-    void toSfmlPixels();
-    void draw();
+    void draw(); // implementation specific
     void clear();
 };
 

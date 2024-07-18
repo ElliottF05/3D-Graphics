@@ -22,5 +22,11 @@
   "command": "/usr/bin/clang++ -DSFML_STATIC -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -o CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/window.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/window.cpp",
   "output": "CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o"
+},
+{
+  "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
+  "command": "/usr/bin/clang++ -DSFML_STATIC -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk -o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp",
+  "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp",
+  "output": "CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o"
 }
 ]
