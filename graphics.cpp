@@ -163,7 +163,25 @@ Line::Line(Vec3 p1, Vec3 p2) : p1(p1), p2(p2) {}
 Line::Line() {}
 
 // METHODS
-// TODO: finish this
+// TODO: add draw() method
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Line"
+
+// CONSTRUCTOR
+std::vector<Triangle> Triangle::triangles; // defining the static variable, TODO: check if this is right
+Triangle::Triangle(Point p1, Point p2, Point p3) {
+    this->p1 = p1;
+    this->p2 = p2;
+    this->p3 = p3;
+}
+Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {}
+Triangle::Triangle() {}
+
+// METHODS
+// TODO: add draw() method
+
 
 
 //-----------------------------------------------------------------------------------

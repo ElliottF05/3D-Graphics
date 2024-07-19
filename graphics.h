@@ -94,7 +94,7 @@ struct Line {
 //---------------------------------------------------------------------------
 // DECLARING "Triangle"
 struct Triangle {
-    static std::vector<Triangle> triangles; // TODO: check how static variables are initialized
+    static std::vector<Triangle> triangles;
 
     Point p1, p2, p3;
     Vec3 normal;
