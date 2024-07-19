@@ -155,10 +155,11 @@ void Point::calculateScreenPos(const Camera& cam, const Window &window) {
 // IMPLEMENTATION OF "Line"
 
 // CONSTRUCTORS
-Line::Line(Vec3 p1, Vec3 p2) {
+Line::Line(Point p1, Point p2) {
     this->p1 = p1;
     this->p2 = p2;
 }
+Line::Line(Vec3 p1, Vec3 p2) : p1(p1), p2(p2) {}
 Line::Line() {}
 
 // METHODS

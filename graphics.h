@@ -83,6 +83,7 @@ struct Point {
 struct Line {
     Point p1, p2;
 
+    Line(Point p1, Point p2);
     Line(Vec3 p1, Vec3 p2);
     Line();
 
@@ -98,6 +99,7 @@ struct Triangle {
     Point p1, p2, p3;
     Vec3 normal;
 
+    Triangle(Point p1, Point p2, Point p3);
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
     Triangle();
 
