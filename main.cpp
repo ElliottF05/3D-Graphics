@@ -39,9 +39,9 @@ int main(int, char**){
 
     // TESTING
     graphics::Point p1, p2;
-    p1.screenPos = graphics::Vec3(10, 10, 1);
-    p2.screenPos = graphics::Vec3(100, 100, 1);
-    // graphics::Line l1(p1, p2);
+    p1.screenPos = graphics::Vec3(10, -10, 1);
+    p2.screenPos = graphics::Vec3(5000, 100, 1);
+    graphics::Line l1(p1, p2);
 
 
     // run the program as long as the window is open
@@ -113,6 +113,7 @@ int main(int, char**){
         auto t2 = std::chrono::high_resolution_clock::now();
 
         // TODO: basic testing for now
+        window.drawLine(l1);
         window.draw();
 
         auto t3 = std::chrono::high_resolution_clock::now();
