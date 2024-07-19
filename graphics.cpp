@@ -295,6 +295,72 @@ void Window::drawLine(Line &line) {
     }
 
 }
+void Window::drawTriangle(Triangle &triangle) {
+    Point a, b, c;
+    a = triangle.p1;
+    b = triangle.p2;
+    c = triangle.p3;
+
+    // first make a = leftmost, b = middle, c = rightmost point
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+    if (b.screenPos.x > c.screenPos.x) {
+        std::swap(b, c);
+    }
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+
+    float dy_long = (c.screenPos.y - a.screenPos.y) / (c.screenPos.x - a.screenPos.x);
+    float dy1 = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
+    float dy2 = (c.screenPos.y - b.screenPos.y) / (c.screenPos.x - b.screenPos.x);
+
+    int left = round(a.screenPos.x);
+    int mid = round(b.screenPos.x);
+    int right = round(c.screenPos.x);
+    left = std::max(0, (int) a.screenPos.x);
+    right = std::min(width, (int) c.screenPos.x);
+    mid = std::max(0, (int) b.screenPos.x);
+    mid = std::min(width, (int) b.screenPos.x);
+
+    float y1, y2; // y1 for shorter line segment, y2 for longer line segment
+    int bottom, top;
+    y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
+    for (int x = left; x <= mid; x++) {
+        bottom = round(y1);
+        top = round(y2);
+        if (y2 < y1) {
+            std::swap(y1, y2);
+        }
+        bottom = std::max(0, bottom);
+        top = std::min(height, top);
+        for (int y = bottom; y <= top; y++) {
+            pixelArray.setPixel(x, y, 255);
+        }
+        y1 += dy1;
+        y2 += dy_long;
+    }
+
+    y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
+    for (int x = mid; x <= right; x++) {
+        bottom = round(y1);
+        top = round(y2);
+        if (y2 < y1) {
+            std::swap(y1, y2);
+        }
+        bottom = std::max(0, bottom);
+        top = std::min(height, top);
+        for (int y = bottom; y <= top; y++) {
+            pixelArray.setPixel(x, y, 255);
+        }
+        y1 += dy1;
+        y2 += dy_long;
+    }
+
+}
 void Window::clear() {
     pixelArray.clear();
     zBuffer.clear();
