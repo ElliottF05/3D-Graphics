@@ -123,7 +123,10 @@ std::string Vec3::toString() {
 Point::Point(Vec3 absolutePos) {
     this->absolutePos = absolutePos;
 }
-Point::Point() {};
+Point::Point(float x, float y, float z) {
+    absolutePos = Vec3(x, y, z);
+}
+Point::Point() {}
 
 // METHODS
 void Point::calculateCameraPos(const Camera &cam) {
@@ -146,6 +149,20 @@ void Point::calculateScreenPos(const Camera& cam, const Window &window) {
     screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord);
     screenPos.y = 0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width;
 }
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Line"
+
+// CONSTRUCTORS
+Line::Line(Vec3 p1, Vec3 p2) {
+    this->p1 = p1;
+    this->p2 = p2;
+}
+Line::Line() {}
+
+// METHODS
+// TODO: finish this
 
 
 //-----------------------------------------------------------------------------------

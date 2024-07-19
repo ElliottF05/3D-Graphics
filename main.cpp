@@ -37,6 +37,13 @@ int main(int, char**){
     bool running = true;
 
 
+    // TESTING
+    graphics::Point p1, p2;
+    p1.screenPos = graphics::Vec3(10, 10, 1);
+    p2.screenPos = graphics::Vec3(100, 100, 1);
+    // graphics::Line l1(p1, p2);
+
+
     // run the program as long as the window is open
     while (running) {
         auto t1 = std::chrono::high_resolution_clock::now();

@@ -65,6 +65,7 @@ struct Point {
     float distToCamera;
 
     Point(Vec3 absolutePos);
+    Point(float x, float y, float z);
     Point();
 
     void calculateCameraPos(const Camera& cam);
