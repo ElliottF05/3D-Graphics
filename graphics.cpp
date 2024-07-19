@@ -197,6 +197,8 @@ PixelArray::PixelArray(int width, int height) {
 // METHODS
 int PixelArray::getIndex(int x, int y) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
+        std::cout << "PixelArray::getIndex() failed, pixel coordinates out of bound. INPUTS: x = " << x << 
+        ", y = " << y << "\n"; 
         throw "pixel coordinates out of bounds";
     }
     return ((this->width * y) + x) * 3;
@@ -337,10 +339,12 @@ void Window::drawTriangle(Triangle &triangle) {
     int left = round(a.screenPos.x);
     int mid = round(b.screenPos.x);
     int right = round(c.screenPos.x);
-    left = std::max(0, (int) a.screenPos.x);
-    right = std::min(width, (int) c.screenPos.x);
-    mid = std::max(0, (int) b.screenPos.x);
-    mid = std::min(width, (int) b.screenPos.x);
+    left = std::max(0, left);
+    right = std::min(width - 1, right);
+    mid = std::max(0, mid);
+    mid = std::min(width - 1, mid);
+
+    std::cout << left << ", " << mid << ", " << right << "\n";
 
     float y1, y2; // y1 for shorter line segment, y2 for longer line segment
     int bottom, top;
@@ -349,11 +353,11 @@ void Window::drawTriangle(Triangle &triangle) {
     for (int x = left; x <= mid; x++) {
         bottom = round(y1);
         top = round(y2);
-        if (y2 < y1) {
-            std::swap(y1, y2);
+        if (top < bottom) {
+            std::swap(top, bottom);
         }
         bottom = std::max(0, bottom);
-        top = std::min(height, top);
+        top = std::min(height - 1, top);
         for (int y = bottom; y <= top; y++) {
             pixelArray.setPixel(x, y, 255);
         }
@@ -366,15 +370,15 @@ void Window::drawTriangle(Triangle &triangle) {
     for (int x = mid; x <= right; x++) {
         bottom = round(y1);
         top = round(y2);
-        if (y2 < y1) {
-            std::swap(y1, y2);
+        if (top < bottom) {
+            std::swap(top, bottom);
         }
         bottom = std::max(0, bottom);
-        top = std::min(height, top);
+        top = std::min(height - 1, top);
         for (int y = bottom; y <= top; y++) {
             pixelArray.setPixel(x, y, 255);
         }
-        y1 += dy1;
+        y1 += dy2;
         y2 += dy_long;
     }
 

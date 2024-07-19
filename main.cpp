@@ -38,15 +38,17 @@ int main(int, char**){
 
 
     // TESTING
-    graphics::Point p1, p2;
-    p1.screenPos = graphics::Vec3(10, -10, 1);
-    p2.screenPos = graphics::Vec3(5000, 100, 1);
+    graphics::Point p1, p2, p3;
+    p1.screenPos = graphics::Vec3(-10, -10, 1);
+    p2.screenPos = graphics::Vec3(500, 100, 1);
+    p3.screenPos = graphics::Vec3(200, 2000, 1);
     graphics::Line l1(p1, p2);
+    graphics::Triangle t1(p1, p3, p2);
 
 
     // run the program as long as the window is open
     while (running) {
-        auto t1 = std::chrono::high_resolution_clock::now();
+        auto time1 = std::chrono::high_resolution_clock::now();
 
         // check all the window's events that were triggered since the last iteration of the loop
         sf::Event event;
@@ -110,18 +112,19 @@ int main(int, char**){
 
 
 
-        auto t2 = std::chrono::high_resolution_clock::now();
+        auto time2 = std::chrono::high_resolution_clock::now();
 
         // TODO: basic testing for now
         window.drawLine(l1);
+        window.drawTriangle(t1);
         window.draw();
 
-        auto t3 = std::chrono::high_resolution_clock::now();
+        auto time3 = std::chrono::high_resolution_clock::now();
 
 
-        auto t4 = std::chrono::high_resolution_clock::now();
-        auto frameTime = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t1);
-        auto pixelTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
+        auto time4 = std::chrono::high_resolution_clock::now();
+        auto frameTime = std::chrono::duration_cast<std::chrono::microseconds>(time4 - time1);
+        auto pixelTime = std::chrono::duration_cast<std::chrono::microseconds>(time3 - time2);
         // std::cout << "frame time: " << frameTime.count() << ", pixel time: " << pixelTime.count() << "\n";
 
         // current data gives frame time around 27ms, with 21ms being drawing pixels to texture!!
