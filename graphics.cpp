@@ -244,6 +244,39 @@ Window::Window(int width, int height, sf::RenderWindow& sfmlWindow)
     this->height = height;
 }
 
+void Window::drawPoint(Point& point) {
+    if (point.screenPos.x >= 0 && point.screenPos.x < width
+    && point.screenPos.y >= 0 && point.screenPos.y < height) {
+        pixelArray.setPixel(point.screenPos.x, point.screenPos.y, 255);
+    }
+}
+void Window::drawLine(Line &line) {
+    int direction;
+    if (line.p2.screenPos.x - line.p1.screenPos.x < 0) {
+        direction = -1;
+    } else {
+        direction = 1;
+    }
+    float dy = (line.p2.screenPos.y - line.p1.screenPos.y) / (line.p2.screenPos.x - line.p1.screenPos.x);
+    int half_dy = abs((int) (dy / 2));
+
+    int startVal = round(line.p1.screenPos.x);
+    startVal = std::max(startVal, 0);
+    startVal = std::min(startVal, width - 1);
+    int endVal = round(line.p2.screenPos.x);
+    endVal = std::max(endVal, 0);
+    endVal = std::min(endVal, width - 1);
+
+    float y = line.p1.screenPos.y + (startVal - line.p1.screenPos.x) * dy;
+    for (int x = startVal; x <= endVal; x += direction) {
+        int y_round = round(y);
+        for (int i = std::max(0, y_round - half_dy); i <= std::min(height - 1, y_round + half_dy); i++) {
+            pixelArray.setPixel(x, i, 255);
+        }
+        y += dy;
+    }
+
+}
 void Window::clear() {
     pixelArray.clear();
     zBuffer.clear();
