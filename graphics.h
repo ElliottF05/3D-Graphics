@@ -73,9 +73,9 @@ struct Point {
     void calculateScreenPos(const Camera& cam, const Window& window);
     void calculateAll(const Camera& cam, const Window& window);
 
-    void drawOnScreen(const Window& window);
-
     void draw(const Camera& cam, const Window& window);
+
+    std::string toString();
 };
 
 

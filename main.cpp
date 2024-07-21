@@ -34,16 +34,15 @@ int main(int, char**){
     sf::Vector2i screenCenter = sf::Vector2i(sf::VideoMode::getDesktopMode().width / 2, sf::VideoMode::getDesktopMode().height / 2);
     sf::Mouse::setPosition(screenCenter);
 
+
+    // Setting up simulation necessities
     bool running = true;
+    graphics::Camera cam;
 
 
     // TESTING
-    graphics::Point p1, p2, p3;
-    p1.screenPos = graphics::Vec3(-10, -10, 1);
-    p2.screenPos = graphics::Vec3(500, 100, 1);
-    p3.screenPos = graphics::Vec3(200, 2000, 1);
+    graphics::Point p1(10, 1, 1), p2(10, -1, -1), p3;
     graphics::Line l1(p1, p2);
-    graphics::Triangle t1(p1, p3, p2);
 
 
     // run the program as long as the window is open
@@ -115,8 +114,7 @@ int main(int, char**){
         auto time2 = std::chrono::high_resolution_clock::now();
 
         // TODO: basic testing for now
-        window.drawLine(l1);
-        window.drawTriangle(t1);
+        l1.draw(cam, window);
         window.draw();
 
         auto time3 = std::chrono::high_resolution_clock::now();
