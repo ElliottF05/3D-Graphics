@@ -88,7 +88,7 @@ struct Line {
     Line(Vec3 p1, Vec3 p2);
     Line();
 
-    void draw(const Camera& cam, const Window& window);
+    void draw(const Camera& cam, Window& window);
 };
 
 

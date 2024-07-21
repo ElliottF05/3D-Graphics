@@ -63,10 +63,10 @@ Vec3& Vec3::operator/=(const float scalar) {
     return *this;
 }
 // Operators where Vec3 is right-hand-side
-Vec3 operator*(const float scalar, const Vec3& vec) {
+Vec3 graphics::operator*(const float scalar, const Vec3& vec) {
     return Vec3(vec.x * scalar, vec.y * scalar, vec.z * scalar);
 }
-Vec3 operator/(const float scalar, const Vec3&vec) {
+Vec3 graphics::operator/(const float scalar, const Vec3&vec) {
     float x = 1.0 / scalar;
     return Vec3(vec.x * x, vec.y * x, vec.z * x);
 }
@@ -168,8 +168,32 @@ Line::Line(Vec3 p1, Vec3 p2) : p1(p1), p2(p2) {}
 Line::Line() {}
 
 // METHODS
-void Line::draw(const Camera& cam, const Window& window) {
+void Line::draw(const Camera& cam, Window& window) {
+    p1.calculateCameraPos(cam);
+    p1.calculateProjectedPos();
 
+    p2.calculateCameraPos(cam);
+    p2.calculateProjectedPos();
+
+    // check if both points are behind the camera
+    if (p1.projectedPos.z < 0 && p2.projectedPos.z < 0) {
+        return;
+    } else if (p1.projectedPos.z > 0 && p2.projectedPos.z > 0) {
+        p1.calculateScreenPos(cam, window);
+        p2.calculateScreenPos(cam, window);
+        window.drawLine(*this);
+    } else {
+        if (p1.projectedPos.z < 0) { // p1 is offscreen
+            p1.projectedPos += 100 * (p2.projectedPos - p1.projectedPos);
+            p1.projectedPos.z = 1;
+        } else { // p2 is offscreen
+            p2.projectedPos += 100 * (p1.projectedPos - p2.projectedPos);
+            p1.projectedPos.z = 2;
+        }
+        p1.calculateScreenPos(cam, window);
+        p2.calculateScreenPos(cam, window);
+        window.drawLine(*this);
+    }
 }
 
 
