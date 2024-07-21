@@ -362,26 +362,31 @@ void Window::drawPoint(Point& point) {
     }
 }
 void Window::drawLine(Line &line) {
-    int direction;
-    if (line.p2.screenPos.x - line.p1.screenPos.x < 0) {
-        direction = -1;
-    } else {
-        direction = 1;
+
+    Point a, b;
+    a = line.p1;
+    b = line.p2;
+
+    // first make a = leftmost, b = rightmost point
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
     }
-    float dy = (line.p2.screenPos.y - line.p1.screenPos.y) / (line.p2.screenPos.x - line.p1.screenPos.x);
+
+    float dy = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
     int half_dy = abs((int) (dy / 2));
+    int startVal = round(a.screenPos.x);
+    int endVal = round(b.screenPos.x);
+    startVal = std::max(0, startVal);
+    endVal = std::min(width - 1, endVal);
 
-    int startVal = round(line.p1.screenPos.x);
-    startVal = std::max(startVal, 0);
-    startVal = std::min(startVal, width - 1);
-    int endVal = round(line.p2.screenPos.x);
-    endVal = std::max(endVal, 0);
-    endVal = std::min(endVal, width - 1);
-
-    float y = line.p1.screenPos.y + (startVal - line.p1.screenPos.x) * dy;
-    for (int x = startVal; x <= endVal; x += direction) {
-        int y_round = round(y);
-        for (int i = std::max(0, y_round - half_dy); i <= std::min(height - 1, y_round + half_dy); i++) {
+    float y = a.screenPos.y + dy * (startVal - a.screenPos.x);
+    std::cout << dy << "\n";
+    for (int x = startVal; x <= endVal; x++) {
+        int bottom = round(y - half_dy);
+        int top = round(y + half_dy);
+        bottom = std::max(0, bottom);
+        top = std::min(height - 1, top);
+        for (int i = bottom; i <= top; i++) {
             pixelArray.setPixel(x, i, 255);
         }
         y += dy;

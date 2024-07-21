@@ -56,6 +56,19 @@ int main(int, char**){
             if (event.type == sf::Event::Closed)
                 running = false;
         }
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
+            cam.moveRelative(0.1, 0);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
+            cam.moveRelative(-0.1, 0);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
+            cam.moveRelative(0, -0.1);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
+            cam.moveRelative(0, 0.1);
+        }
         // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
         //     window.close();
         //     running = false;
@@ -102,11 +115,11 @@ int main(int, char**){
         //     cam.pos.z -= 0.1;
         // }
 
-        // sf::Vector2i mousePos = sf::Mouse::getPosition();
-        // mousePos.y /= 3;
-        // cam.setThetaZ(cam.thetaZ - (mousePos.x - screenCenter.x) / 400.0);
-        // cam.setThetaY(cam.thetaY - (mousePos.y - screenCenter.y) / 400.0);
-        // sf::Mouse::setPosition(screenCenter);
+        // MOUSE MOVEMENT
+        sf::Vector2i mousePos = sf::Mouse::getPosition();
+        mousePos.y /= 3;
+        cam.rotate(-(mousePos.x - screenCenter.x) / 400.0, -(mousePos.y - screenCenter.y) / 400.0);
+        sf::Mouse::setPosition(screenCenter);
 
 
 
@@ -114,6 +127,7 @@ int main(int, char**){
         auto time2 = std::chrono::high_resolution_clock::now();
 
         // TODO: basic testing for now
+        window.clear();
         l1.draw(cam, window);
         window.draw();
 
