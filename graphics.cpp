@@ -149,6 +149,11 @@ void Point::calculateScreenPos(const Camera& cam, const Window &window) {
     screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord);
     screenPos.y = 0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width;
 }
+void Point::calculateAll(const Camera& cam, const Window& window) {
+    calculateCameraPos(cam);
+    calculateProjectedPos();
+    calculateScreenPos(cam, window);
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -163,11 +168,13 @@ Line::Line(Vec3 p1, Vec3 p2) : p1(p1), p2(p2) {}
 Line::Line() {}
 
 // METHODS
-// TODO: add draw() method
+void Line::draw(const Camera& cam, const Window& window) {
+
+}
 
 
 //-----------------------------------------------------------------------------------
-// IMPLEMENTATION OF "Line"
+// IMPLEMENTATION OF "Triangle"
 
 // CONSTRUCTOR
 std::vector<Triangle> Triangle::triangles; // defining the static variable, TODO: check if this is right
