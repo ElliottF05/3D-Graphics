@@ -172,7 +172,6 @@ Line::Line() {}
 
 // METHODS
 void Line::draw(const Camera& cam, Window& window) {
-    std::cout << "\ndrawing line" << "\n";
     p1.calculateCameraPos(cam);
     p1.calculateProjectedPos();
 
@@ -181,13 +180,10 @@ void Line::draw(const Camera& cam, Window& window) {
 
     // check if both points are behind the camera
     if (p1.projectedPos.z < 0 && p2.projectedPos.z < 0) {
-        std::cout << "both are behind" << "\n";
         return;
     } else if (p1.projectedPos.z > 0 && p2.projectedPos.z > 0) {
-        std::cout << "both are in front" << "\n";
         p1.calculateScreenPos(cam, window);
         p2.calculateScreenPos(cam, window);
-        std::cout << p1.toString() << "\n" << p2.toString() << "\n";
         window.drawLine(*this);
     } else {
         if (p1.projectedPos.z < 0) { // p1 is offscreen
@@ -223,6 +219,8 @@ Triangle::Triangle() {}
 
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "Camera"
+
+// CONSTRUCTORS
 Camera::Camera(Vec3 pos, float thetaZ, float thetaY, float fov) {
     this->pos = pos;
     this->thetaZ = thetaZ;
@@ -230,11 +228,32 @@ Camera::Camera(Vec3 pos, float thetaZ, float thetaY, float fov) {
     this->fov = fov;
     this->fov_rad = fov * M_PI / 180;
     this->maxPlaneCoord = tan(fov_rad / 2);
+    Vec3 a(1,0,0);
+    a.rotate(thetaZ, thetaY);
+    this->direction = a;
+    Vec3 b(1,0,0);
+    b.rotate(thetaZ, 0);
+    this->floorDirection = b;
 }
 Camera::Camera() {
     this->fov = 90;
     this->fov_rad = 90 * M_PI / 180;
     this->maxPlaneCoord = tan(fov_rad / 2);
+    this->direction = Vec3(1,0,0);
+    this->floorDirection = Vec3(1,0,0);
+}
+
+// METHODS
+void Camera::moveRelative(float forward, float sideward) {
+    Vec3 sideDirection = floorDirection;
+    sideDirection.rotate(-M_PI / 2, 0);
+    pos += floorDirection * forward + sideDirection * sideward;
+}
+void Camera::rotate(float thetaZ, float thetaY) {
+    this->thetaZ += thetaZ;
+    this->thetaY += thetaY;
+    direction.rotate(thetaZ, thetaY);
+    floorDirection.rotate(thetaZ, 0);
 }
 
 
