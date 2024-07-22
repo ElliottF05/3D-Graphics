@@ -362,7 +362,6 @@ void Window::drawPoint(Point& point) {
     }
 }
 void Window::drawLine(Line &line) {
-
     Point a, b;
     a = line.p1;
     b = line.p2;
@@ -373,25 +372,20 @@ void Window::drawLine(Line &line) {
     }
 
     float dy = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
-    int half_dy = abs((int) (dy / 2));
-    int startVal = round(a.screenPos.x);
-    int endVal = round(b.screenPos.x);
+    int startVal = ceil(a.screenPos.x);
+    int endVal = floor(b.screenPos.x);
     startVal = std::max(0, startVal);
     endVal = std::min(width - 1, endVal);
 
     float y = a.screenPos.y + dy * (startVal - a.screenPos.x);
-    std::cout << dy << "\n";
     for (int x = startVal; x <= endVal; x++) {
-        int bottom = round(y - half_dy);
-        int top = round(y + half_dy);
-        bottom = std::max(0, bottom);
-        top = std::min(height - 1, top);
-        for (int i = bottom; i <= top; i++) {
-            pixelArray.setPixel(x, i, 255);
+        int yVal = round(y);
+        if (yVal >= 0 && yVal < height) {
+            pixelArray.setPixel(x, yVal, 255);
         }
         y += dy;
     }
-
+    
 }
 void Window::drawTriangle(Triangle &triangle) {
     Point a, b, c;

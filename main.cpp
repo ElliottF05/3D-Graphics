@@ -41,8 +41,9 @@ int main(int, char**){
 
 
     // TESTING
-    graphics::Point p1(10, 1, 1), p2(10, -1, -1), p3;
+    graphics::Point p1(-1, 5, -1), p2(-1, -5, -1), p3(1, 5, -1), p4(1, -5, -1);
     graphics::Line l1(p1, p2);
+    graphics::Line l2(p3, p4);
 
 
     // run the program as long as the window is open
@@ -129,6 +130,7 @@ int main(int, char**){
         // TODO: basic testing for now
         window.clear();
         l1.draw(cam, window);
+        l2.draw(cam, window);
         window.draw();
 
         auto time3 = std::chrono::high_resolution_clock::now();
