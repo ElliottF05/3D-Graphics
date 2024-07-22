@@ -381,13 +381,20 @@ void Window::drawLine(Line &line) {
     endVal = std::min(width - 1, endVal);
 
     float y = a.screenPos.y + dy * (startVal - a.screenPos.x);
-    for (int x = startVal; x <= endVal; x++) {
-        int yVal = round(y);
-        if (yVal >= 0 && yVal < height) {
+    for (int x = startVal; x < endVal; x++) {
+        int bottom = round(y);
+        int top = round(y + dy);
+        if (top < bottom) {
+            std::swap(top, bottom);
+        }
+        bottom = std::max(0, bottom);
+        top = std::min(height - 1, top);
+        for (int yVal = bottom; yVal <= top; yVal++) {
             pixelArray.setPixel(x, yVal, 255);
         }
         y += dy;
     }
+    // TODO: add line rendering between a.screenpos.x and startVal, and endVal and b.screenpos.x
     
 }
 void Window::drawTriangle(Triangle &triangle) {
