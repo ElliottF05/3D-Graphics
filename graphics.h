@@ -120,7 +120,7 @@ struct Camera {
     Camera(Vec3 pos, float thetaZ, float thetaY, float fov);
     Camera();
 
-    void moveRelative(float forward, float sideward);
+    void moveRelative(float forward, float sideward, float upward);
     void rotate(float thetaZ, float thetaY);
 };
 

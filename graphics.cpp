@@ -244,14 +244,17 @@ Camera::Camera() {
 }
 
 // METHODS
-void Camera::moveRelative(float forward, float sideward) {
+void Camera::moveRelative(float forward, float sideward, float upward) {
     Vec3 sideDirection = floorDirection;
     sideDirection.rotate(-M_PI / 2, 0);
     pos += floorDirection * forward + sideDirection * sideward;
+    pos.z += upward;
 }
 void Camera::rotate(float thetaZ, float thetaY) {
     this->thetaZ += thetaZ;
     this->thetaY += thetaY;
+    this->thetaY = std::max(this->thetaY, (float) -M_PI / 2);
+    this->thetaY = std::min(this->thetaY, (float) M_PI / 2);
     direction.rotate(thetaZ, thetaY);
     floorDirection.rotate(thetaZ, 0);
 }

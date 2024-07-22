@@ -45,6 +45,16 @@ int main(int, char**){
     graphics::Line l1(p1, p2);
     graphics::Line l2(p3, p4);
 
+    std::vector<graphics::Line> floorGrid;
+    for (int i = -5; i <= 5; i++) {
+        graphics::Point p1(i, 5, -2), p2(i, -5, -2);
+        graphics::Line a = *(new graphics::Line(p1, p2));
+        graphics::Point p3(5, i, -2), p4(-5, i, -2);
+        graphics::Line b = *(new graphics::Line(p3, p4));
+        floorGrid.push_back(a);
+        floorGrid.push_back(b);
+    }
+
 
     // run the program as long as the window is open
     while (running) {
@@ -59,16 +69,22 @@ int main(int, char**){
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-            cam.moveRelative(0.1, 0);
+            cam.moveRelative(0.1, 0, 0);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-            cam.moveRelative(-0.1, 0);
+            cam.moveRelative(-0.1, 0, 0);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-            cam.moveRelative(0, -0.1);
+            cam.moveRelative(0, -0.1, 0);
         }
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-            cam.moveRelative(0, 0.1);
+            cam.moveRelative(0, 0.1, 0);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
+            cam.moveRelative(0, 0, 0.1);
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+            cam.moveRelative(0, 0, -0.1);
         }
         // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
         //     window.close();
@@ -129,8 +145,12 @@ int main(int, char**){
 
         // TODO: basic testing for now
         window.clear();
-        l1.draw(cam, window);
-        l2.draw(cam, window);
+        //l1.draw(cam, window);
+        //l2.draw(cam, window);
+        for (graphics::Line l : floorGrid) {
+            l.draw(cam, window);
+        }
+
         window.draw();
 
         auto time3 = std::chrono::high_resolution_clock::now();
