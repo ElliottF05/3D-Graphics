@@ -380,6 +380,20 @@ void Window::drawLine(Line &line) {
     startVal = std::max(0, startVal);
     endVal = std::min(width - 1, endVal);
 
+    if (startVal == endVal) {
+        int bottom = round(a.screenPos.y);
+        int top = round(b.screenPos.y);
+        if (top < bottom) {
+            std::swap(top, bottom);
+        }
+        bottom = std::max(0, bottom);
+        top = std::min(height - 1, top);
+        for (int yVal = bottom; yVal <= top; yVal++) {
+            pixelArray.setPixel(startVal, yVal, 255);
+        }
+        return;
+    }
+
     float y = a.screenPos.y + dy * (startVal - a.screenPos.x);
     for (int x = startVal; x < endVal; x++) {
         int bottom = round(y);
@@ -393,6 +407,36 @@ void Window::drawLine(Line &line) {
             pixelArray.setPixel(x, yVal, 255);
         }
         y += dy;
+    }
+
+    int bottom = round(a.screenPos.y);
+    int top = round(a.screenPos.y + (startVal - a.screenPos.x) * dy);
+    if (top < bottom) {
+        std::swap(top, bottom);
+    }
+    bottom = std::max(0, bottom);
+    top = std::min(height - 1, top);
+    int x = round(a.screenPos.x);
+    if (x < 0 || x >= width) {
+        return;
+    }
+    for (int yVal = bottom; yVal <= top; yVal++) {
+        pixelArray.setPixel(x, yVal, 255);
+    }
+
+    bottom = round(b.screenPos.y);
+    top = round(b.screenPos.y - (b.screenPos.x - endVal) * dy);
+    if (top < bottom) {
+        std::swap(top, bottom);
+    }
+    bottom = std::max(0, bottom);
+    top = std::min(height - 1, top);
+    x = round(b.screenPos.x);
+    if (x < 0 || x >= width) {
+        return;
+    }
+    for (int yVal = bottom; yVal <= top; yVal++) {
+        pixelArray.setPixel(x, yVal, 255);
     }
     // TODO: add line rendering between a.screenpos.x and startVal, and endVal and b.screenpos.x
     
