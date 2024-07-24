@@ -263,6 +263,9 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
         behind2.projectedPos += 100 * (front[1]->projectedPos - behind2.projectedPos);
 
+        behind[0]->calculateScreenPos(cam, window);
+        behind2.calculateScreenPos(cam, window);
+
         Triangle t(*front[0], *front[1], behind2);
 
         window.drawTriangle(*this);

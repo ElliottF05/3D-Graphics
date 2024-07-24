@@ -145,7 +145,7 @@ int main(int, char**){
 
         // TODO: basic testing for now
         window.clear();
-        // t1.draw(cam, window);
+        t1.draw(cam, window);
         for (graphics::Line l : floorGrid) {
             l.draw(cam, window);
         }
