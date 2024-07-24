@@ -214,7 +214,67 @@ Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {}
 Triangle::Triangle() {}
 
 // METHODS
-// TODO: add draw() method
+void Triangle::draw(const Camera& cam, Window& window) {
+    p1.calculateCameraPos(cam);
+    p2.calculateCameraPos(cam);
+    p3.calculateCameraPos(cam);
+
+    p1.calculateProjectedPos();
+    p2.calculateProjectedPos();
+    p3.calculateProjectedPos();
+
+    std::vector<Point*> front;
+    std::vector<Point*> behind;
+
+    if (p1.projectedPos.z > 0) {
+        front.push_back(&p1);
+    } else {
+        behind.push_back(&p1);
+    }
+    if (p2.projectedPos.z > 0) {
+        front.push_back(&p2);
+    } else {
+        behind.push_back(&p2);
+    }
+    if (p3.projectedPos.z > 0) {
+        front.push_back(&p3);
+    } else {
+        behind.push_back(&p3);
+    }
+
+    if (front.size() == 0) {
+        return;
+    } else if (front.size() == 1) {
+        behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
+        behind[0]->projectedPos.z = 1;
+        behind[1]->projectedPos += 100 * (front[0]->projectedPos - behind[1]->projectedPos);
+        behind[1]->projectedPos.z = 1;
+
+        front[0]->calculateScreenPos(cam, window);
+        behind[0]->calculateScreenPos(cam, window);
+        behind[1]->calculateScreenPos(cam, window);
+
+        window.drawTriangle(*this);
+    } else if (front.size() == 2) {
+        front[0]->calculateScreenPos(cam, window);
+        front[1]->calculateScreenPos(cam, window);
+
+        Point behind2 = *behind[0];
+        behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
+        behind2.projectedPos += 100 * (front[1]->projectedPos - behind2.projectedPos);
+
+        Triangle t(*front[0], *front[1], behind2);
+
+        window.drawTriangle(*this);
+        window.drawTriangle(t);
+    } else {
+        front[0]->calculateScreenPos(cam, window);
+        front[1]->calculateScreenPos(cam, window);
+        front[2]->calculateScreenPos(cam, window);
+
+        window.drawTriangle(*this);
+    }
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -380,7 +440,11 @@ void Window::drawLine(Line &line) {
     startVal = std::max(0, startVal);
     endVal = std::min(width - 1, endVal);
 
-    if (startVal == endVal) {
+    if (startVal >= endVal) {
+        startVal = round(a.screenPos.x);
+        if (startVal < 0 || startVal >= width) {
+            return;
+        }
         int bottom = round(a.screenPos.y);
         int top = round(b.screenPos.y);
         if (top < bottom) {
@@ -416,7 +480,7 @@ void Window::drawLine(Line &line) {
     }
     bottom = std::max(0, bottom);
     top = std::min(height - 1, top);
-    int x = round(a.screenPos.x);
+    int x = floor(a.screenPos.x);
     if (x < 0 || x >= width) {
         return;
     }
@@ -438,7 +502,6 @@ void Window::drawLine(Line &line) {
     for (int yVal = bottom; yVal <= top; yVal++) {
         pixelArray.setPixel(x, yVal, 255);
     }
-    // TODO: add line rendering between a.screenpos.x and startVal, and endVal and b.screenpos.x
     
 }
 void Window::drawTriangle(Triangle &triangle) {

@@ -42,8 +42,8 @@ int main(int, char**){
 
     // TESTING
     graphics::Point p1(-1, 5, -1), p2(-1, -5, -1), p3(1, 5, -1), p4(1, -5, -1);
+    graphics::Triangle t1(p1, p2, p3);
     graphics::Line l1(p1, p2);
-    graphics::Line l2(p3, p4);
 
     std::vector<graphics::Line> floorGrid;
     for (int i = -5; i <= 5; i++) {
@@ -145,11 +145,11 @@ int main(int, char**){
 
         // TODO: basic testing for now
         window.clear();
-        //l1.draw(cam, window);
-        //l2.draw(cam, window);
+        // t1.draw(cam, window);
         for (graphics::Line l : floorGrid) {
             l.draw(cam, window);
         }
+        l1.draw(cam, window);
 
         window.draw();
 

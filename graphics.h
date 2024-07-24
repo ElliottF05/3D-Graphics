@@ -104,7 +104,7 @@ struct Triangle {
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
     Triangle();
 
-    void draw(const Camera& cam, const Window& window);
+    void draw(const Camera& cam, Window& window);
 };
 
 
