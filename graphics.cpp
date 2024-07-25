@@ -266,7 +266,7 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[0]->calculateScreenPos(cam, window);
         behind2.calculateScreenPos(cam, window);
 
-        Triangle t(*front[0], *front[1], behind2);
+        Triangle t(*front[1], *behind[0], behind2);
 
         window.drawTriangle(*this);
         window.drawTriangle(t);
@@ -528,13 +528,13 @@ void Window::drawTriangle(Triangle &triangle) {
     float dy1 = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
     float dy2 = (c.screenPos.y - b.screenPos.y) / (c.screenPos.x - b.screenPos.x);
 
-    int left = round(a.screenPos.x);
-    int mid = round(b.screenPos.x);
-    int right = round(c.screenPos.x);
-    left = std::max(0, left);
-    right = std::min(width - 1, right);
-    mid = std::max(0, mid);
-    mid = std::min(width - 1, mid);
+    float left = a.screenPos.x;
+    float  mid = b.screenPos.x;
+    float right = c.screenPos.x;
+    left = std::max((float) 0, left);
+    right = std::min((float) width - 1, right);
+    mid = std::max((float) 0, mid);
+    mid = std::min((float) width - 1, mid);
 
     std::cout << left << ", " << mid << ", " << right << "\n";
 
@@ -542,7 +542,7 @@ void Window::drawTriangle(Triangle &triangle) {
     int bottom, top;
     y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
     y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
-    for (int x = left; x <= mid; x++) {
+    for (float x = left; x < mid; x++) {
         bottom = round(y1);
         top = round(y2);
         if (top < bottom) {
@@ -550,6 +550,10 @@ void Window::drawTriangle(Triangle &triangle) {
         }
         bottom = std::max(0, bottom);
         top = std::min(height - 1, top);
+        std::cout << left - a.screenPos.x << "\n";
+        std::cout << "a.screenPos.y: " << a.screenPos.y << "\n";
+        std::cout << "y1, y2: " << y1 << ", " << y2 << "\n";
+        std::cout << "bottom, top: " << bottom << ", " << top << "\n";
         for (int y = bottom; y <= top; y++) {
             pixelArray.setPixel(x, y, 255);
         }
@@ -559,7 +563,7 @@ void Window::drawTriangle(Triangle &triangle) {
 
     y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
     y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
-    for (int x = mid; x <= right; x++) {
+    for (float x = mid; x < right; x++) {
         bottom = round(y1);
         top = round(y2);
         if (top < bottom) {
