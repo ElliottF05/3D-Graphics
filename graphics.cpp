@@ -209,8 +209,11 @@ Triangle::Triangle(Point p1, Point p2, Point p3) {
     this->p1 = p1;
     this->p2 = p2;
     this->p3 = p3;
+    this->normal = (p2.absolutePos - p1.absolutePos).cross(p3.absolutePos - p1.absolutePos);
 }
-Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {}
+Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {
+    this->normal = (p2 - p1).cross(p3 - p1);
+}
 Triangle::Triangle() {}
 
 // METHODS
