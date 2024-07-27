@@ -3,6 +3,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -210,9 +211,17 @@ Triangle::Triangle(Point p1, Point p2, Point p3) {
     this->p2 = p2;
     this->p3 = p3;
     this->normal = (p2.absolutePos - p1.absolutePos).cross(p3.absolutePos - p1.absolutePos);
+    normal.normalize();
+    this->r = std::rand() % 256;
+    this->g = std::rand() % 256;
+    this->b = std::rand() % 256;
 }
 Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {
-    this->normal = (p2 - p1).cross(p3 - p1);
+    normal = (p2 - p1).cross(p3 - p1);
+    normal.normalize();
+    this->r = std::rand() % 256;
+    this->g = std::rand() % 256;
+    this->b = std::rand() % 256;
 }
 Triangle::Triangle() {}
 
@@ -269,7 +278,13 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[0]->calculateScreenPos(cam, window);
         behind2.calculateScreenPos(cam, window);
 
+        // needed to preserve the 3 original cameraPos values to be used in plane-calculation for depth buffer
+        behind2.cameraPos = front[0]->cameraPos;
+
         Triangle t(*front[1], *behind[0], behind2);
+        t.r = r;
+        t.g = g;
+        t.b = b;
 
         window.drawTriangle(*this);
         window.drawTriangle(t);
@@ -516,6 +531,11 @@ void Window::drawTriangle(Triangle &triangle) {
     b = triangle.p2;
     c = triangle.p3;
 
+    // equation for plane
+    Vec3 normal = (a.cameraPos - b.cameraPos).cross(a.cameraPos - c.cameraPos);
+    normal.normalize();
+    float d1 = normal.x * a.cameraPos.x + normal.y * a.cameraPos.y + normal.z * a.cameraPos.z;
+
     // first make a = leftmost, b = middle, c = rightmost point
     if (a.screenPos.x > b.screenPos.x) {
         std::swap(a, b);
@@ -539,7 +559,7 @@ void Window::drawTriangle(Triangle &triangle) {
     mid = std::max((float) 0, mid);
     mid = std::min((float) width - 1, mid);
 
-    std::cout << left << ", " << mid << ", " << right << "\n";
+    // std::cout << left << ", " << mid << ", " << right << "\n";
 
     float y1, y2; // y1 for shorter line segment, y2 for longer line segment
     int bottom, top;
@@ -553,13 +573,19 @@ void Window::drawTriangle(Triangle &triangle) {
         }
         bottom = std::max(0, bottom);
         top = std::min(height - 1, top);
-        std::cout << left - a.screenPos.x << "\n";
-        std::cout << "a.screenPos.y: " << a.screenPos.y << "\n";
-        std::cout << "y1, y2: " << y1 << ", " << y2 << "\n";
-        std::cout << "bottom, top: " << bottom << ", " << top << "\n";
+        float cameraX = -(x - (0.5 * width)) / (0.5 * width);
+        float depth;
         for (int y = bottom; y <= top; y++) {
-            pixelArray.setPixel(x, y, 255);
+            // calculate depth
+            float cameraY = - (y - (0.5 * height)) / (0.5 * height);
+            float cameraZ = 1;
+            depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            int color = floor(depth) * 10;
+            color %= 256;
+            color = abs(color);
+            pixelArray.setPixel(x, y, color);
         }
+        std::cout << depth << "\n";
         y1 += dy1;
         y2 += dy_long;
     }
@@ -574,8 +600,17 @@ void Window::drawTriangle(Triangle &triangle) {
         }
         bottom = std::max(0, bottom);
         top = std::min(height - 1, top);
+        float cameraX = -(x - (0.5 * width)) / (0.5 * width);
+        float depth;
         for (int y = bottom; y <= top; y++) {
-            pixelArray.setPixel(x, y, 255);
+            // calculate depth
+            float cameraY = - (y - (0.5 * height)) / (0.5 * height);
+            float cameraZ = 1;
+            depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            int color = floor(depth) * 10;
+            color %= 256;
+            color = abs(color);
+            pixelArray.setPixel(x, y, color);
         }
         y1 += dy2;
         y2 += dy_long;

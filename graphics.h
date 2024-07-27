@@ -99,6 +99,7 @@ struct Triangle {
 
     Point p1, p2, p3;
     Vec3 normal;
+    int r,g,b;
 
     Triangle(Point p1, Point p2, Point p3);
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
