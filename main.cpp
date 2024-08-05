@@ -12,6 +12,7 @@
 #include <SFML/Window/WindowStyle.hpp>
 #include <__chrono/duration.h>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -43,7 +44,7 @@ int main(int, char**){
     // TESTING
     graphics::Point p1(-1, 5, -1), p2(-1, -5, -1), p3(1, 5, -1), p4(1, -5, -1);
     graphics::Triangle t1(p1, p2, p3);
-    graphics::Line l1(p1, p2);
+    graphics::Triangle::triangles.push_back(t1);
 
     std::vector<graphics::Line> floorGrid;
     for (int i = -5; i <= 5; i++) {
@@ -66,6 +67,22 @@ int main(int, char**){
             // "close requested" event: we close the window
             if (event.type == sf::Event::Closed)
                 running = false;
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::C) {
+                    graphics::Vec3 a = cam.pos;
+                    graphics::Vec3 b = cam.pos + graphics::Vec3(0.5 + (2.0 * std::rand()) / RAND_MAX, 0, 0);
+                    graphics::Vec3 c = cam.pos + graphics::Vec3(0, 0.5 + (2.0 * std::rand()) / RAND_MAX, 0);
+                    graphics::Vec3 d = cam.pos + graphics::Vec3(0, 0, 0.5 + (2.0 * std::rand()) / RAND_MAX);
+                    graphics::Triangle t1(a, b, c);
+                    graphics::Triangle t2(a, b, d);
+                    graphics::Triangle t3(a,c,d);
+                    graphics::Triangle t4(b, c, d);
+                    graphics::Triangle::triangles.push_back(t1);
+                    graphics::Triangle::triangles.push_back(t2);
+                    graphics::Triangle::triangles.push_back(t3);
+                    graphics::Triangle::triangles.push_back(t4);
+                }
+            }
         }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
@@ -148,8 +165,9 @@ int main(int, char**){
         for (graphics::Line l : floorGrid) {
             l.draw(cam, window);
         }
-        l1.draw(cam, window);
-        t1.draw(cam, window);
+        for (graphics::Triangle t : graphics::Triangle::triangles) {
+            t.draw(cam, window);
+        }
 
         window.draw();
 

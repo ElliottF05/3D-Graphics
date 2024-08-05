@@ -354,7 +354,7 @@ PixelArray::PixelArray(int width, int height) {
 // METHODS
 int PixelArray::getIndex(int x, int y) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
-        std::cout << "PixelArray::getIndex() failed, pixel coordinates out of bound. INPUTS: x = " << x << 
+        std::cout << "PixelArray::getIndex() failed, pixel coordinates out of bounds. INPUTS: x = " << x << 
         ", y = " << y << "\n"; 
         throw "pixel coordinates out of bounds";
     }
@@ -362,6 +362,7 @@ int PixelArray::getIndex(int x, int y) {
 }
 void PixelArray::setPixel(int x, int y, int color) {
     if (color < 0 || color > 255) {
+        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: color = " << color << "\n";
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
@@ -371,6 +372,7 @@ void PixelArray::setPixel(int x, int y, int color) {
 }
 void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
+        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: r, g, b = " << r << ", " << g << ", " << b << "\n";
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
@@ -407,12 +409,15 @@ ZBuffer::ZBuffer(int width, int height) {
 // METHODS
 int ZBuffer::getIndex(int x, int y) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
+        std::cout << "ZBuffer::getIndex() failed, pixel coordinates out of bounds. INPUTS: x = " << x << 
+        ", y = " << y << "\n"; 
         throw "pixel coordinates out of bounds";
     }
-    return ((this->width * y) + x) * 3;
+    return ((this->width * y) + x);
 }
 void ZBuffer::setDepth(int x, int y, float depth) {
     if (depth < 0) {
+        std::cout << "ZBuffer::setDepth() failed, depth value out of bounds. INPUTS: depth = " << depth << "\n"; 
         throw "invalid depth";
     }
     int index = getIndex(x, y);
@@ -580,12 +585,14 @@ void Window::drawTriangle(Triangle &triangle) {
             float cameraY = - (y - (0.5 * height)) / (0.5 * height);
             float cameraZ = 1;
             depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-            int color = floor(depth) * 10;
-            color %= 256;
-            color = abs(color);
-            pixelArray.setPixel(x, y, color);
+            if (depth < 0) {
+                depth = 0;
+            }
+            if (depth < zBuffer.getDepth(x, y)) {
+                zBuffer.setDepth(x, y, depth);
+                pixelArray.setPixel(x, y, triangle.r, triangle.g, triangle.b);
+            }
         }
-        std::cout << depth << "\n";
         y1 += dy1;
         y2 += dy_long;
     }
@@ -607,10 +614,13 @@ void Window::drawTriangle(Triangle &triangle) {
             float cameraY = - (y - (0.5 * height)) / (0.5 * height);
             float cameraZ = 1;
             depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-            int color = floor(depth) * 10;
-            color %= 256;
-            color = abs(color);
-            pixelArray.setPixel(x, y, color);
+            if (depth < 0) {
+                depth = 0;
+            }
+            if (depth < zBuffer.getDepth(x, y)) {
+                zBuffer.setDepth(x, y, depth);
+                pixelArray.setPixel(x, y, triangle.r, triangle.g, triangle.b);
+            }
         }
         y1 += dy2;
         y2 += dy_long;
@@ -631,6 +641,7 @@ void Window::draw() {
     // i gives index in pixelArray, j gives index in sfpixel[]
     for (int i = 0, j = 0; i < height * width * 3; j++) {
         if (j >= height * width * 4) {
+            std::cout << "Window::draw() failed, index in sfpixel[] is out of bounds. INPUTS: j = " << j << "\n"; 
             throw "index in sfpixel[] is out of bounds";
         }
         if ((j + 1) % 4 == 0) {
