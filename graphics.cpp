@@ -266,7 +266,7 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[0]->calculateScreenPos(cam, window);
         behind[1]->calculateScreenPos(cam, window);
 
-        window.drawTriangle(*this);
+        window.drawTriangle(*this, cam);
     } else if (front.size() == 2) {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
@@ -286,14 +286,14 @@ void Triangle::draw(const Camera& cam, Window& window) {
         t.g = g;
         t.b = b;
 
-        window.drawTriangle(*this);
-        window.drawTriangle(t);
+        window.drawTriangle(*this, cam);
+        window.drawTriangle(t, cam);
     } else {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
         front[2]->calculateScreenPos(cam, window);
 
-        window.drawTriangle(*this);
+        window.drawTriangle(*this, cam);
     }
 }
 
@@ -339,6 +339,12 @@ void Camera::rotate(float thetaZ, float thetaY) {
     direction.rotate(thetaZ, thetaY);
     floorDirection.rotate(thetaZ, 0);
 }
+float Camera::getCameraYFromPixel(int x, int width) const {
+    return - maxPlaneCoord * (x - (0.5 * width) + 0.5) / (0.5 * width);
+}
+float Camera::getCameraZFromPixel(int y, int height) const {
+    return - maxPlaneCoord * (y - (0.5 * height) + 0.5) / (0.5 * height);
+}
 
 
 //-----------------------------------------------------------------------------------
@@ -355,14 +361,14 @@ PixelArray::PixelArray(int width, int height) {
 int PixelArray::getIndex(int x, int y) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
         std::cout << "PixelArray::getIndex() failed, pixel coordinates out of bounds. INPUTS: x = " << x << 
-        ", y = " << y << "\n"; 
+        ", y = " << y << std::endl; 
         throw "pixel coordinates out of bounds";
     }
     return ((this->width * y) + x) * 3;
 }
 void PixelArray::setPixel(int x, int y, int color) {
     if (color < 0 || color > 255) {
-        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: color = " << color << "\n";
+        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: color = " << color << std::endl;
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
@@ -372,7 +378,7 @@ void PixelArray::setPixel(int x, int y, int color) {
 }
 void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
-        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: r, g, b = " << r << ", " << g << ", " << b << "\n";
+        std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: r, g, b = " << r << ", " << g << ", " << b << std::endl;
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
@@ -410,14 +416,14 @@ ZBuffer::ZBuffer(int width, int height) {
 int ZBuffer::getIndex(int x, int y) {
     if (x < 0 || x >= width || y < 0 || y >= height) {
         std::cout << "ZBuffer::getIndex() failed, pixel coordinates out of bounds. INPUTS: x = " << x << 
-        ", y = " << y << "\n"; 
+        ", y = " << y << std::endl; 
         throw "pixel coordinates out of bounds";
     }
     return ((this->width * y) + x);
 }
 void ZBuffer::setDepth(int x, int y, float depth) {
     if (depth < 0) {
-        std::cout << "ZBuffer::setDepth() failed, depth value out of bounds. INPUTS: depth = " << depth << "\n"; 
+        std::cout << "ZBuffer::setDepth() failed, depth value out of bounds. INPUTS: depth = " << depth << std::endl; 
         throw "invalid depth";
     }
     int index = getIndex(x, y);
@@ -530,7 +536,7 @@ void Window::drawLine(Line &line) {
     }
     
 }
-void Window::drawTriangle(Triangle &triangle) {
+void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     Point a, b, c;
     a = triangle.p1;
     b = triangle.p2;
@@ -559,10 +565,9 @@ void Window::drawTriangle(Triangle &triangle) {
     float left = a.screenPos.x;
     float  mid = b.screenPos.x;
     float right = c.screenPos.x;
-    left = std::max((float) 0, left);
-    right = std::min((float) width - 1, right);
-    mid = std::max((float) 0, mid);
-    mid = std::min((float) width - 1, mid);
+    utils::clampToRange(left, width - 1);
+    utils::clampToRange(mid, width - 1);
+    utils::clampToRange(right, width - 1);
 
     // std::cout << left << ", " << mid << ", " << right << "\n";
 
@@ -573,19 +578,18 @@ void Window::drawTriangle(Triangle &triangle) {
     for (float x = left; x < mid; x++) {
         bottom = round(y1);
         top = round(y2);
-        if (top < bottom) {
-            std::swap(top, bottom);
-        }
-        bottom = std::max(0, bottom);
-        top = std::min(height - 1, top);
-        float cameraX = -(x - (0.5 * width)) / (0.5 * width);
+        utils::sortAndClamp(bottom, top, height - 1);
+        float cameraY = cam.getCameraYFromPixel(x, width);
         float depth;
         for (int y = bottom; y <= top; y++) {
             // calculate depth
-            float cameraY = - (y - (0.5 * height)) / (0.5 * height);
-            float cameraZ = 1;
-            depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            float cameraZ = cam.getCameraZFromPixel(y, height);
+            float cameraX = 1;
+            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
             if (depth < 0) {
+                if (depth < -0.1) {
+                    std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
+                }
                 depth = 0;
             }
             if (depth < zBuffer.getDepth(x, y)) {
@@ -602,18 +606,14 @@ void Window::drawTriangle(Triangle &triangle) {
     for (float x = mid; x < right; x++) {
         bottom = round(y1);
         top = round(y2);
-        if (top < bottom) {
-            std::swap(top, bottom);
-        }
-        bottom = std::max(0, bottom);
-        top = std::min(height - 1, top);
-        float cameraX = -(x - (0.5 * width)) / (0.5 * width);
+        utils::sortAndClamp(bottom, top, height - 1);
+        float cameraY = cam.getCameraYFromPixel(x, width);
         float depth;
         for (int y = bottom; y <= top; y++) {
             // calculate depth
-            float cameraY = - (y - (0.5 * height)) / (0.5 * height);
-            float cameraZ = 1;
-            depth = (d1 / (normal.x * cameraZ + normal.y * cameraX + normal.z * cameraY)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            float cameraZ = cam.getCameraZFromPixel(y, height);
+            float cameraX = 1;
+            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
             if (depth < 0) {
                 depth = 0;
             }
@@ -641,7 +641,7 @@ void Window::draw() {
     // i gives index in pixelArray, j gives index in sfpixel[]
     for (int i = 0, j = 0; i < height * width * 3; j++) {
         if (j >= height * width * 4) {
-            std::cout << "Window::draw() failed, index in sfpixel[] is out of bounds. INPUTS: j = " << j << "\n"; 
+            std::cout << "Window::draw() failed, index in sfpixel[] is out of bounds. INPUTS: j = " << j << std::endl; 
             throw "index in sfpixel[] is out of bounds";
         }
         if ((j + 1) % 4 == 0) {
@@ -701,6 +701,29 @@ void utils::sortAndClamp(float &toLower, float &toHigher, float min, float max) 
     clampToRange(toHigher, min, max);
 }
 void utils::sortAndClamp(float &toLower, float &toHigher, float max) {
+    if (toLower > toHigher) {
+        std::swap(toLower, toHigher);
+    }
+    if (toLower < 0) {
+        toLower = 0;
+    }
+    if (toHigher > max) {
+        toHigher = max;
+    }
+}
+void utils::sortPair(int &toLower, int &toHigher) {
+    if (toLower > toHigher) {
+        std::swap(toLower, toHigher);
+    }
+}
+void utils::clampToRange(int &value, int max) {
+    if (value < 0) {
+        value = 0;
+    } else if (value > max) {
+        value = max;
+    }
+}
+void utils::sortAndClamp(int &toLower, int &toHigher, int max) {
     if (toLower > toHigher) {
         std::swap(toLower, toHigher);
     }

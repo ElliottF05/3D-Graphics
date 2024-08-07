@@ -123,6 +123,8 @@ struct Camera {
 
     void moveRelative(float forward, float sideward, float upward);
     void rotate(float thetaZ, float thetaY);
+    float getCameraYFromPixel(int x, int width) const;
+    float getCameraZFromPixel(int y, int height) const;
 };
 
 
@@ -179,7 +181,7 @@ struct Window {
 
     void drawPoint(Point& point);
     void drawLine(Line& line);
-    void drawTriangle(Triangle& triangle);
+    void drawTriangle(Triangle& triangle, const Camera& cam);
     void draw(); // implementation specific
     void clear();
 };
@@ -188,11 +190,17 @@ struct Window {
 //---------------------------------------------------------------------------
 // DECLARING "utils"
 namespace utils {
+    // using floats
     void sortPair(float& toLower, float& toHigher);
     void clampToRange(float& value, float min, float max);
     void clampToRange(float& value, float max);
     void sortAndClamp(float& toLower, float& toHigher, float min, float max);
     void sortAndClamp(float& toLower, float& toHigher, float max);
+
+    // using ints
+    void sortPair(int& toLower, int& toHigher);
+    void clampToRange(int& value, int max);
+    void sortAndClamp(int& toLower, int& toHigher, int max);
 }
 
 }
