@@ -18,9 +18,6 @@
 #include <thread>
 #include <sfml/Graphics.hpp>
 #include <vector>
-#include "2d.h"
-#include "3d.h"
-#include "window.h"
 #include "graphics.h"
 
 

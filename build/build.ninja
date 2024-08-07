@@ -225,30 +225,6 @@ build CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o: CXX_COMPILER__3D-Graphics-En
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
 
-build CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/2d.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
-  DEFINES = -DSFML_STATIC
-  DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o.d
-  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
-  INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
-  OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
-  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
-
-build CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/3d.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
-  DEFINES = -DSFML_STATIC
-  DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o.d
-  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
-  INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
-  OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
-  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
-
-build CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/window.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
-  DEFINES = -DSFML_STATIC
-  DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o.d
-  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
-  INCLUDES = -isystem /Users/elliottfaa/vcpkg/installed/arm64-osx/include
-  OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
-  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
-
 build CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEFINES = -DSFML_STATIC
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o.d
@@ -265,7 +241,7 @@ build CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o: CXX_COMPILER__3D-Graphic
 #############################################
 # Link the executable 3D-Graphics-Engine
 
-build 3D-Graphics-Engine: CXX_EXECUTABLE_LINKER__3D-Graphics-Engine_Debug CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o CMakeFiles/3D-Graphics-Engine.dir/3d.cpp.o CMakeFiles/3D-Graphics-Engine.dir/window.cpp.o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o | /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-graphics-s-d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-window-s-d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-system-s-d.a /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/System/Library/Frameworks/OpenGL.framework /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libfreetyped.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlidec.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlicommon.a
+build 3D-Graphics-Engine: CXX_EXECUTABLE_LINKER__3D-Graphics-Engine_Debug CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o | /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-graphics-s-d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-window-s-d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-system-s-d.a /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk/System/Library/Frameworks/OpenGL.framework /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libfreetyped.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlidec.a /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlicommon.a
   FLAGS = -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX14.4.sdk
   LINK_LIBRARIES = /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-graphics-s-d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-window-s-d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libsfml-system-s-d.a  -lpthread  -ObjC  -framework OpenGL  -framework Foundation  -framework AppKit  -framework IOKit  -framework Carbon  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libfreetyped.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbz2d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libpng16d.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libz.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlidec.a  /Users/elliottfaa/vcpkg/installed/arm64-osx/debug/lib/libbrotlicommon.a
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir

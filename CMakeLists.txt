@@ -11,9 +11,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(SOURCES
     main.cpp
-    2d.cpp
-    3d.cpp
-    window.cpp
     graphics.cpp
 )
 add_executable(3D-Graphics-Engine ${SOURCES})
