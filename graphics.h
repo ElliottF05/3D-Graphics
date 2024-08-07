@@ -184,4 +184,15 @@ struct Window {
     void clear();
 };
 
+
+//---------------------------------------------------------------------------
+// DECLARING "utils"
+namespace utils {
+    void sortPair(float& toLower, float& toHigher);
+    void clampToRange(float& value, float min, float max);
+    void clampToRange(float& value, float max);
+    void sortAndClamp(float& toLower, float& toHigher, float min, float max);
+    void sortAndClamp(float& toLower, float& toHigher, float max);
+}
+
 }

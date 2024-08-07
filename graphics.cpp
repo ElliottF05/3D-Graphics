@@ -672,3 +672,42 @@ void Window::draw() {
     auto spriteTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     // std::cout << "inside graphics - pixel time: " << pixelTime.count() << ", sprite time: " << spriteTime.count() << "\n";
 }
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "utils"
+void utils::sortPair(float &toLower, float &toHigher) {
+    if (toLower > toHigher) {
+        std::swap(toLower, toHigher);
+    }
+}
+void utils::clampToRange(float &value, float min, float max) {
+    if (value < min) {
+        value = min;
+    } else if (value > max) {
+        value = max;
+    }
+}
+void utils::clampToRange(float &value, float max) {
+    if (value < 0) {
+        value = 0;
+    } else if (value > max) {
+        value = max;
+    }
+}
+void utils::sortAndClamp(float &toLower, float &toHigher, float min, float max) {
+    sortPair(toLower, toHigher);
+    clampToRange(toLower, min, max);
+    clampToRange(toHigher, min, max);
+}
+void utils::sortAndClamp(float &toLower, float &toHigher, float max) {
+    if (toLower > toHigher) {
+        std::swap(toLower, toHigher);
+    }
+    if (toLower < 0) {
+        toLower = 0;
+    }
+    if (toHigher > max) {
+        toHigher = max;
+    }
+}
