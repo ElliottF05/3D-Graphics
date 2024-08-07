@@ -82,6 +82,31 @@ int main(int, char**){
                     graphics::Triangle::triangles.push_back(t3);
                     graphics::Triangle::triangles.push_back(t4);
                 }
+                if (event.key.code == sf::Keyboard::V) {
+                    int iterations = 20;
+                    std::vector<graphics::Vec3> prev(iterations);
+                    std::vector<graphics::Vec3> curr(iterations);
+                    bool onFirst = true;
+                    for (float thetaY = -M_PI / 2.0; thetaY <= M_PI / 2.0; thetaY += M_PI / iterations) {
+                        prev = curr;
+                        curr.clear();
+                        for (float thetaZ = 0; thetaZ <= 2 * M_PI; thetaZ += 2 * M_PI / iterations) {
+                            graphics::Vec3 v(std::cos(thetaY) * std::cos(thetaZ), std::cos(thetaY) * std::sin(thetaZ), std::sin(thetaY));
+                            v += cam.pos;
+                            curr.push_back(v);
+                        }
+                        if (onFirst) {
+                            onFirst = false;
+                            continue;
+                        }
+                        for (int i = 0; i < prev.size(); i++) {
+                            graphics::Triangle t1(curr[i], prev[i], curr[(i + 1) % iterations]);
+                            graphics::Triangle t2(prev[i], prev[(i + 1) % iterations], curr[(i + 1) % iterations]);
+                            graphics::Triangle::triangles.push_back(t1);
+                            graphics::Triangle::triangles.push_back(t2);
+                        }
+                    }
+                }
             }
         }
 

@@ -588,7 +588,7 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
             depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
             if (depth < 0) {
                 if (depth < -0.1) {
-                    std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
+                    // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
                 }
                 depth = 0;
             }
