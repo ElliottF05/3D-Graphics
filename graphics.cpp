@@ -147,8 +147,8 @@ void Point::calculateProjectedPos() {
     }
 }
 void Point::calculateScreenPos(const Camera& cam, const Window &window) {
-    screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord);
-    screenPos.y = 0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width;
+    screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord) - 0.5;
+    screenPos.y = (0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width) - 0.5;
 }
 void Point::calculateAll(const Camera& cam, const Window& window) {
     calculateCameraPos(cam);

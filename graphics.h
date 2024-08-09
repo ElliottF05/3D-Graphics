@@ -20,6 +20,8 @@ struct PixelArray;
 struct ZBuffer;
 struct Window;
 
+struct Light;
+
 
 //---------------------------------------------------------------------------
 // DECLARING "Vec3"
@@ -184,6 +186,24 @@ struct Window {
     void drawTriangle(Triangle& triangle, const Camera& cam);
     void draw(); // implementation specific
     void clear();
+};
+
+
+//---------------------------------------------------------------------------
+// DECLARING "Light"
+struct Light {
+    Camera cam;
+    ZBuffer zBuffer;
+
+    static std::vector<Light> lights;
+
+    Light(Point pos, Vec3 direction);
+    Light(Vec3 pos, Vec3 direction);
+
+    void fillZBuffer(std::vector<Triangle>& triangles);
+
+    bool isLit(Vec3& vec);
+
 };
 
 
