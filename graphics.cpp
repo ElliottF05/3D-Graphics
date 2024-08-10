@@ -150,6 +150,10 @@ void Point::calculateScreenPos(const Camera& cam, const Window &window) {
     screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord) - 0.5;
     screenPos.y = (0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width) - 0.5;
 }
+void Point::calculateScreenPos(const Camera& cam, const int width, const int height) {
+    screenPos.x = (0.5 * width) * (1 - projectedPos.x / cam.maxPlaneCoord) - 0.5;
+    screenPos.y = (0.5 * height - projectedPos.y / cam.maxPlaneCoord * 0.5 * width) - 0.5;
+}
 void Point::calculateAll(const Camera& cam, const Window& window) {
     calculateCameraPos(cam);
     calculateProjectedPos();
@@ -671,6 +675,183 @@ void Window::draw() {
     auto pixelTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     auto spriteTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     // std::cout << "inside graphics - pixel time: " << pixelTime.count() << ", sprite time: " << spriteTime.count() << "\n";
+}
+
+
+//-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Light"
+std::vector<Light> Light::lights;
+
+// CONSTRUCTORS
+Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
+    Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
+    this->cam = camera;
+}
+Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
+    Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
+    this->cam = camera;
+}
+
+// METHODS
+void Light::getTrianglePerspectiveFromLight(Triangle triangle) {
+    triangle.p1.calculateCameraPos(cam);
+    triangle.p2.calculateCameraPos(cam);
+    triangle.p3.calculateCameraPos(cam);
+
+    triangle.p1.calculateProjectedPos();
+    triangle.p2.calculateProjectedPos();
+    triangle.p3.calculateProjectedPos();
+
+    std::vector<Point*> front;
+    std::vector<Point*> behind;
+
+    if (triangle.p1.projectedPos.z > 0) {
+        front.push_back(&triangle.p1);
+    } else {
+        behind.push_back(&triangle.p1);
+    }
+    if (triangle.p2.projectedPos.z > 0) {
+        front.push_back(&triangle.p2);
+    } else {
+        behind.push_back(&triangle.p2);
+    }
+    if (triangle.p3.projectedPos.z > 0) {
+        front.push_back(&triangle.p3);
+    } else {
+        behind.push_back(&triangle.p3);
+    }
+
+    if (front.size() == 0) {
+        return;
+    } else if (front.size() == 1) {
+        behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
+        behind[0]->projectedPos.z = 1;
+        behind[1]->projectedPos += 100 * (front[0]->projectedPos - behind[1]->projectedPos);
+        behind[1]->projectedPos.z = 1;
+
+        front[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        behind[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        behind[1]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+
+        addTriangleToZBuffer(triangle);
+    } else if (front.size() == 2) {
+        front[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        front[1]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+
+        Point behind2 = *behind[0];
+        behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
+        behind2.projectedPos += 100 * (front[1]->projectedPos - behind2.projectedPos);
+
+        behind[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        behind2.calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+
+        // needed to preserve the 3 original cameraPos values to be used in plane-calculation for depth buffer
+        behind2.cameraPos = front[0]->cameraPos;
+
+        Triangle t(*front[1], *behind[0], behind2);
+
+        addTriangleToZBuffer(triangle);
+        addTriangleToZBuffer(t);
+    } else {
+        front[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        front[1]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+        front[2]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+
+        addTriangleToZBuffer(triangle);
+    }
+}
+void Light::addTriangleToZBuffer(Triangle &triangle) {
+    Point a, b, c;
+    a = triangle.p1;
+    b = triangle.p2;
+    c = triangle.p3;
+
+    // equation for plane
+    Vec3 normal = (a.cameraPos - b.cameraPos).cross(a.cameraPos - c.cameraPos);
+    normal.normalize();
+    float d1 = normal.x * a.cameraPos.x + normal.y * a.cameraPos.y + normal.z * a.cameraPos.z;
+
+    // first make a = leftmost, b = middle, c = rightmost point
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+    if (b.screenPos.x > c.screenPos.x) {
+        std::swap(b, c);
+    }
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+
+    float dy_long = (c.screenPos.y - a.screenPos.y) / (c.screenPos.x - a.screenPos.x);
+    float dy1 = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
+    float dy2 = (c.screenPos.y - b.screenPos.y) / (c.screenPos.x - b.screenPos.x);
+
+    float left = a.screenPos.x;
+    float  mid = b.screenPos.x;
+    float right = c.screenPos.x;
+    utils::clampToRange(left, zBuffer.width - 1);
+    utils::clampToRange(mid, zBuffer.width - 1);
+    utils::clampToRange(right, zBuffer.width - 1);
+
+    // std::cout << left << ", " << mid << ", " << right << "\n";
+
+    float y1, y2; // y1 for shorter line segment, y2 for longer line segment
+    int bottom, top;
+    y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
+    for (float x = left; x < mid; x++) {
+        bottom = round(y1);
+        top = round(y2);
+        utils::sortAndClamp(bottom, top, zBuffer.height - 1);
+        float cameraY = cam.getCameraYFromPixel(x, zBuffer.width);
+        float depth;
+        for (int y = bottom; y <= top; y++) {
+            // calculate depth
+            float cameraZ = cam.getCameraZFromPixel(y, zBuffer.height);
+            float cameraX = 1;
+            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            if (depth < 0) {
+                if (depth < -0.1) {
+                    // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
+                }
+                depth = 0;
+            }
+            if (depth < zBuffer.getDepth(x, y)) {
+                zBuffer.setDepth(x, y, depth);
+            }
+        }
+        y1 += dy1;
+        y2 += dy_long;
+    }
+
+    y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
+    for (float x = mid; x < right; x++) {
+        bottom = round(y1);
+        top = round(y2);
+        utils::sortAndClamp(bottom, top, zBuffer.height - 1);
+        float cameraY = cam.getCameraYFromPixel(x, zBuffer.width);
+        float depth;
+        for (int y = bottom; y <= top; y++) {
+            // calculate depth
+            float cameraZ = cam.getCameraZFromPixel(y, zBuffer.height);
+            float cameraX = 1;
+            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+            if (depth < 0) {
+                depth = 0;
+            }
+            if (depth < zBuffer.getDepth(x, y)) {
+                zBuffer.setDepth(x, y, depth);
+            }
+        }
+        y1 += dy2;
+        y2 += dy_long;
+    }
+}
+void Light::fillZBuffer(std::vector<Triangle> &triangles) {
+    for (Triangle &triangle : triangles) {
+        getTrianglePerspectiveFromLight(triangle);
+    }
 }
 
 

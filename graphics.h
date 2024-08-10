@@ -73,6 +73,7 @@ struct Point {
     void calculateCameraPos(const Camera& cam);
     void calculateProjectedPos();
     void calculateScreenPos(const Camera& cam, const Window& window);
+    void calculateScreenPos(const Camera& cam, const int width, const int height);
     void calculateAll(const Camera& cam, const Window& window);
 
     void draw(const Camera& cam, const Window& window);
@@ -197,9 +198,11 @@ struct Light {
 
     static std::vector<Light> lights;
 
-    Light(Point pos, Vec3 direction);
-    Light(Vec3 pos, Vec3 direction);
+    Light(Point pos, float thetaZ, float thetaY);
+    Light(Vec3 pos, float thetaZ, float thetaY);
 
+    void getTrianglePerspectiveFromLight(Triangle triangle);
+    void addTriangleToZBuffer(Triangle& triangle);
     void fillZBuffer(std::vector<Triangle>& triangles);
 
     bool isLit(Vec3& vec);
