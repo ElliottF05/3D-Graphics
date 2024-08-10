@@ -215,15 +215,15 @@ Triangle::Triangle(Point p1, Point p2, Point p3) {
     this->p1 = p1;
     this->p2 = p2;
     this->p3 = p3;
-    this->normal = (p2.absolutePos - p1.absolutePos).cross(p3.absolutePos - p1.absolutePos);
-    normal.normalize();
+    this->absoluteNormal = (p2.absolutePos - p1.absolutePos).cross(p3.absolutePos - p1.absolutePos);
+    absoluteNormal.normalize();
     this->r = std::rand() % 256;
     this->g = std::rand() % 256;
     this->b = std::rand() % 256;
 }
 Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {
-    normal = (p2 - p1).cross(p3 - p1);
-    normal.normalize();
+    absoluteNormal = (p2 - p1).cross(p3 - p1);
+    absoluteNormal.normalize();
     this->r = std::rand() % 256;
     this->g = std::rand() % 256;
     this->b = std::rand() % 256;
@@ -235,6 +235,9 @@ void Triangle::draw(const Camera& cam, Window& window) {
     p1.calculateCameraPos(cam);
     p2.calculateCameraPos(cam);
     p3.calculateCameraPos(cam);
+
+    cameraNormal = (p2.cameraPos - p1.cameraPos).cross(p3.cameraPos - p1.cameraPos);
+    cameraNormal.normalize();
 
     p1.calculateProjectedPos();
     p2.calculateProjectedPos();
@@ -725,6 +728,9 @@ void Light::getTrianglePerspectiveFromLight(Triangle triangle) {
     triangle.p1.calculateCameraPos(cam);
     triangle.p2.calculateCameraPos(cam);
     triangle.p3.calculateCameraPos(cam);
+
+    triangle.cameraNormal = (triangle.p2.cameraPos - triangle.p1.cameraPos).cross(triangle.p3.cameraPos - triangle.p1.cameraPos);
+    triangle.cameraNormal.normalize();
 
     triangle.p1.calculateProjectedPos();
     triangle.p2.calculateProjectedPos();

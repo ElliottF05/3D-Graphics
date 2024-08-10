@@ -101,7 +101,8 @@ struct Triangle {
     static std::vector<Triangle> triangles;
 
     Point p1, p2, p3;
-    Vec3 normal;
+    Vec3 absoluteNormal;
+    Vec3 cameraNormal;
     int r,g,b;
 
     Triangle(Point p1, Point p2, Point p3);
