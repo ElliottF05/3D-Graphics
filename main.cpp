@@ -45,7 +45,10 @@ int main(int, char**){
 
     graphics::Vec3 not_used(-10, 0, 10);
     graphics::Light l1(not_used, 0, -M_PI / 4.0);
-    l1.fillZBuffer(graphics::Triangle::triangles);
+
+    for (graphics::Light l : graphics::Light::lights) {
+        l.fillZBuffer(graphics::Triangle::triangles);
+    }
 
     std::vector<graphics::Line> floorGrid;
     for (int i = -5; i <= 5; i++) {
@@ -82,7 +85,11 @@ int main(int, char**){
                     graphics::Triangle::triangles.push_back(t2);
                     graphics::Triangle::triangles.push_back(t3);
                     graphics::Triangle::triangles.push_back(t4);
-                    l1.fillZBuffer(graphics::Triangle::triangles);
+                    
+                    for (graphics::Light l : graphics::Light::lights) {
+                        l.fillZBuffer(graphics::Triangle::triangles);
+                    }
+
                 }
                 if (event.key.code == sf::Keyboard::V) {
                     int iterations = 20;
@@ -108,7 +115,10 @@ int main(int, char**){
                             graphics::Triangle::triangles.push_back(t2);
                         }
                     }
-                    l1.fillZBuffer(graphics::Triangle::triangles);
+                    
+                    for (graphics::Light l : graphics::Light::lights) {
+                        l.fillZBuffer(graphics::Triangle::triangles);
+                    }
                 }
             }
         }

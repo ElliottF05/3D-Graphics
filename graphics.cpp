@@ -686,10 +686,12 @@ std::vector<Light> Light::lights;
 Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
     Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
+    Light::lights.push_back(*this);
 }
 Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
     Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
+    Light::lights.push_back(*this);
 }
 
 // METHODS
@@ -852,6 +854,19 @@ void Light::fillZBuffer(std::vector<Triangle> &triangles) {
     for (Triangle &triangle : triangles) {
         getTrianglePerspectiveFromLight(triangle);
     }
+}
+bool Light::isLit(Vec3 &vec) {
+    Point p(vec);
+    p.calculateCameraPos(cam);
+    p.calculateProjectedPos();
+    p.calculateScreenPos(cam, zBuffer.width, zBuffer.height);
+    if (p.screenPos.x < 0 || p.screenPos.x >= zBuffer.width || p.screenPos.y < 0 || p.screenPos.y >= zBuffer.height) {
+        return false;
+    }
+    if (p.distToCamera <= zBuffer.getDepth(p.screenPos.x, p.screenPos.y)) {
+        return true;
+    }
+    return false;
 }
 
 
