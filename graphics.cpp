@@ -4,6 +4,7 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <vector>
 
@@ -598,7 +599,21 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
             }
             if (depth < zBuffer.getDepth(x, y)) {
                 zBuffer.setDepth(x, y, depth);
-                pixelArray.setPixel(x, y, triangle.r, triangle.g, triangle.b);
+
+                Vec3 vec(cameraX, cameraY, cameraZ);
+                vec.normalize();
+                vec *= depth;
+                vec.rotateY(cam.thetaY);
+                vec.rotateZ(cam.thetaZ);
+                vec += cam.pos;
+                float multiplier = 1;
+
+                if (Light::lights[0].isLit(vec)) {
+                    multiplier = 1;
+                } else {
+                    multiplier = 0.2;
+                }
+                pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }
         y1 += dy1;
@@ -623,7 +638,20 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
             }
             if (depth < zBuffer.getDepth(x, y)) {
                 zBuffer.setDepth(x, y, depth);
-                pixelArray.setPixel(x, y, triangle.r, triangle.g, triangle.b);
+
+                Vec3 vec(cameraX, cameraY, cameraZ);
+                vec.normalize();
+                vec *= depth;
+                vec.rotateY(cam.thetaY);
+                vec.rotateZ(cam.thetaZ);
+                vec += cam.pos;
+                float multiplier = 1;
+                if (Light::lights[0].isLit(vec)) {
+                    multiplier = 1;
+                } else {
+                    multiplier = 0.2;
+                }
+                pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }
         y1 += dy2;
@@ -686,12 +714,10 @@ std::vector<Light> Light::lights;
 Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
     Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
-    Light::lights.push_back(*this);
 }
 Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
     Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
-    Light::lights.push_back(*this);
 }
 
 // METHODS
@@ -860,10 +886,12 @@ bool Light::isLit(Vec3 &vec) {
     p.calculateCameraPos(cam);
     p.calculateProjectedPos();
     p.calculateScreenPos(cam, zBuffer.width, zBuffer.height);
-    if (p.screenPos.x < 0 || p.screenPos.x >= zBuffer.width || p.screenPos.y < 0 || p.screenPos.y >= zBuffer.height) {
+    int x = round(p.screenPos.x);
+    int y = round(p.screenPos.y);
+    if (x < 0 || x >= zBuffer.width || y < 0 || y >= zBuffer.height) {
         return false;
     }
-    if (p.distToCamera <= zBuffer.getDepth(p.screenPos.x, p.screenPos.y)) {
+    if (p.distToCamera - 0.01 <= zBuffer.getDepth(x, y)) {
         return true;
     }
     return false;

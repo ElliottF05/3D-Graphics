@@ -39,14 +39,15 @@ int main(int, char**){
 
 
     // TESTING
-    graphics::Point p1(-1, 5, -1), p2(-1, -5, -1), p3(1, 5, -1), p4(1, -5, -1);
+    graphics::Point p1(-5, 10, -1), p2(-5, -10, -1), p3(15, 0, -1), p4(1, -5, -1);
     graphics::Triangle t1(p1, p2, p3);
     graphics::Triangle::triangles.push_back(t1);
 
     graphics::Vec3 not_used(-10, 0, 10);
     graphics::Light l1(not_used, 0, -M_PI / 4.0);
+    graphics::Light::lights.push_back(l1);
 
-    for (graphics::Light l : graphics::Light::lights) {
+    for (graphics::Light &l : graphics::Light::lights) {
         l.fillZBuffer(graphics::Triangle::triangles);
     }
 
@@ -86,7 +87,7 @@ int main(int, char**){
                     graphics::Triangle::triangles.push_back(t3);
                     graphics::Triangle::triangles.push_back(t4);
                     
-                    for (graphics::Light l : graphics::Light::lights) {
+                    for (graphics::Light &l : graphics::Light::lights) {
                         l.fillZBuffer(graphics::Triangle::triangles);
                     }
 
@@ -115,8 +116,8 @@ int main(int, char**){
                             graphics::Triangle::triangles.push_back(t2);
                         }
                     }
-                    
-                    for (graphics::Light l : graphics::Light::lights) {
+
+                    for (graphics::Light &l : graphics::Light::lights) {
                         l.fillZBuffer(graphics::Triangle::triangles);
                     }
                 }
@@ -192,7 +193,6 @@ int main(int, char**){
         mousePos.y /= 3;
         cam.rotate(-(mousePos.x - screenCenter.x) / 400.0, -(mousePos.y - screenCenter.y) / 400.0);
         sf::Mouse::setPosition(screenCenter);
-
 
 
 
