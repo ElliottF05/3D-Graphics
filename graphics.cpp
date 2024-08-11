@@ -609,13 +609,8 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 vec.rotateY(cam.thetaY);
                 vec.rotateZ(cam.thetaZ);
                 vec += cam.pos;
-                float multiplier = 1;
 
-                if (Light::lights[0].isLit(vec)) {
-                    multiplier = 1;
-                } else {
-                    multiplier = 0.2;
-                }
+                float multiplier = 0.2 + 0.8 * Light::lights[0].amountLit(vec);
                 pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }
@@ -648,12 +643,8 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 vec.rotateY(cam.thetaY);
                 vec.rotateZ(cam.thetaZ);
                 vec += cam.pos;
-                float multiplier = 1;
-                if (Light::lights[0].isLit(vec)) {
-                    multiplier = 1;
-                } else {
-                    multiplier = 0.2;
-                }
+
+                float multiplier = 0.2 + 0.8 * Light::lights[0].amountLit(vec);
                 pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }
@@ -714,11 +705,11 @@ void Window::draw() {
 std::vector<Light> Light::lights;
 
 // CONSTRUCTORS
-Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
+Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(4000, 4000) {
     Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
 }
-Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(800, 800) {
+Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(4000, 4000) {
     Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
 }
@@ -803,6 +794,12 @@ void Light::addTriangleToZBuffer(Triangle &triangle) {
     // equation for plane
     Vec3 normal = (a.cameraPos - b.cameraPos).cross(a.cameraPos - c.cameraPos);
     normal.normalize();
+
+    // make normal point TOWARDS camera
+    if (normal.x < 0) {
+        normal *= -1;
+    }
+
     float d1 = normal.x * a.cameraPos.x + normal.y * a.cameraPos.y + normal.z * a.cameraPos.z;
 
     // first make a = leftmost, b = middle, c = rightmost point
@@ -851,7 +848,8 @@ void Light::addTriangleToZBuffer(Triangle &triangle) {
                 depth = 0;
             }
             if (depth < zBuffer.getDepth(x, y)) {
-                zBuffer.setDepth(x, y, depth);
+                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.003);
+                zBuffer.setDepth(x, y, depth + depthBias);
             }
         }
         y1 += dy1;
@@ -875,7 +873,8 @@ void Light::addTriangleToZBuffer(Triangle &triangle) {
                 depth = 0;
             }
             if (depth < zBuffer.getDepth(x, y)) {
-                zBuffer.setDepth(x, y, depth);
+                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.003);
+                zBuffer.setDepth(x, y, depth + depthBias);
             }
         }
         y1 += dy2;
@@ -887,20 +886,27 @@ void Light::fillZBuffer(std::vector<Triangle> &triangles) {
         getTrianglePerspectiveFromLight(triangle);
     }
 }
-bool Light::isLit(Vec3 &vec) {
+float Light::amountLit(Vec3 &vec) {
     Point p(vec);
     p.calculateCameraPos(cam);
     p.calculateProjectedPos();
     p.calculateScreenPos(cam, zBuffer.width, zBuffer.height);
     int x = round(p.screenPos.x);
     int y = round(p.screenPos.y);
-    if (x < 0 || x >= zBuffer.width || y < 0 || y >= zBuffer.height) {
-        return false;
+    float lightingLevel = 0;
+    int offset = 2;
+    for (int i = x - offset; i <= x + offset; i++) {
+        for (int j = y - offset; j <= y + offset; j++) {
+            if (i < 0 || i >= zBuffer.width || j < 0 || j >= zBuffer.height) {
+                continue;
+            }
+            if (p.distToCamera <= zBuffer.getDepth(i, j)) {
+                lightingLevel += 1;
+            }
+        }
     }
-    if (p.distToCamera - 0.01 <= zBuffer.getDepth(x, y)) {
-        return true;
-    }
-    return false;
+    lightingLevel /= (2 * offset + 1) * (2 * offset + 1);
+    return lightingLevel;
 }
 
 

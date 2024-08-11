@@ -206,7 +206,7 @@ struct Light {
     void addTriangleToZBuffer(Triangle& triangle);
     void fillZBuffer(std::vector<Triangle>& triangles);
 
-    bool isLit(Vec3& vec);
+    float amountLit(Vec3& vec);
 
 };
 

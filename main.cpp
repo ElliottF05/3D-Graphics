@@ -43,8 +43,8 @@ int main(int, char**){
     graphics::Triangle t1(p1, p2, p3);
     graphics::Triangle::triangles.push_back(t1);
 
-    graphics::Vec3 not_used(-10, 0, 10);
-    graphics::Light l1(not_used, 0, -M_PI / 4.0);
+    graphics::Vec3 not_used(-10, 0, 5);
+    graphics::Light l1(not_used, 0, -M_PI / 8.0);
     graphics::Light::lights.push_back(l1);
 
     for (graphics::Light &l : graphics::Light::lights) {
