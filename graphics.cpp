@@ -232,6 +232,10 @@ Triangle::Triangle() {}
 
 // METHODS
 void Triangle::draw(const Camera& cam, Window& window) {
+    Vec3 toCam = cam.pos - p1.absolutePos;
+    if (absoluteNormal.dot(cam.pos) < 0) {
+        absoluteNormal *= -1;
+    }
     p1.calculateCameraPos(cam);
     p2.calculateCameraPos(cam);
     p3.calculateCameraPos(cam);
@@ -290,6 +294,8 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind2.cameraPos = front[0]->cameraPos;
 
         Triangle t(*front[1], *behind[0], behind2);
+        t.absoluteNormal = absoluteNormal;
+        t.cameraNormal = cameraNormal;
         t.r = r;
         t.g = g;
         t.b = b;
@@ -552,6 +558,9 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
 
     // equation for plane
     Vec3 normal = (a.cameraPos - b.cameraPos).cross(a.cameraPos - c.cameraPos);
+    if (normal.x < 0) {
+        normal *= -1;
+    }
     normal.normalize();
     float d1 = normal.x * a.cameraPos.x + normal.y * a.cameraPos.y + normal.z * a.cameraPos.z;
 
@@ -610,7 +619,12 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 vec.rotateZ(cam.thetaZ);
                 vec += cam.pos;
 
-                float multiplier = 0.2 + 0.8 * Light::lights[0].amountLit(vec);
+                float proportionInShadow = Light::lights[0].amountLit(vec);
+                float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
+                if (angleLighting < 0) {
+                    angleLighting = 0;
+                }
+                float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
                 pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }
@@ -644,7 +658,12 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 vec.rotateZ(cam.thetaZ);
                 vec += cam.pos;
 
-                float multiplier = 0.2 + 0.8 * Light::lights[0].amountLit(vec);
+                float proportionInShadow = Light::lights[0].amountLit(vec);
+                float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
+                if (angleLighting < 0) {
+                    angleLighting = 0;
+                }
+                float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
                 pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
             }
         }

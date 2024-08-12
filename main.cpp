@@ -43,8 +43,8 @@ int main(int, char**){
     graphics::Triangle t1(p1, p2, p3);
     graphics::Triangle::triangles.push_back(t1);
 
-    graphics::Vec3 not_used(-10, 0, 5);
-    graphics::Light l1(not_used, 0, -M_PI / 8.0);
+    graphics::Vec3 not_used(-10, 0, 10);
+    graphics::Light l1(not_used, 0, -M_PI / 4.0);
     graphics::Light::lights.push_back(l1);
 
     for (graphics::Light &l : graphics::Light::lights) {
@@ -93,7 +93,7 @@ int main(int, char**){
 
                 }
                 if (event.key.code == sf::Keyboard::V) {
-                    int iterations = 20;
+                    int iterations = 100;
                     std::vector<graphics::Vec3> prev(iterations);
                     std::vector<graphics::Vec3> curr(iterations);
                     bool onFirst = true;
@@ -112,6 +112,12 @@ int main(int, char**){
                         for (int i = 0; i < prev.size(); i++) {
                             graphics::Triangle t1(curr[i], prev[i], curr[(i + 1) % iterations]);
                             graphics::Triangle t2(prev[i], prev[(i + 1) % iterations], curr[(i + 1) % iterations]);
+                            t1.r = 255;
+                            t1.g = 255;
+                            t1.b = 255;
+                            t2.r = 255;
+                            t2.g = 255;
+                            t2.b = 255;
                             graphics::Triangle::triangles.push_back(t1);
                             graphics::Triangle::triangles.push_back(t2);
                         }
