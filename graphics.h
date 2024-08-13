@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SFML/Graphics/RenderWindow.hpp>
 #include <vector>
 
 namespace graphics {
@@ -179,14 +178,14 @@ struct Window {
     int width, height;
     PixelArray pixelArray;
     ZBuffer zBuffer;
-    sf::RenderWindow& sfmlWindow; // implementation specific
 
-    Window(int width, int height, sf::RenderWindow& sfmlWindow);
+    Window(int width, int height);
 
     void drawPoint(Point& point);
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle, const Camera& cam);
     void draw(); // implementation specific
+    void getUint8Pointer(uint8_t* buffer); // implementation specific
     void clear();
 };
 

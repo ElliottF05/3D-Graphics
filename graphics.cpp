@@ -1,8 +1,4 @@
 #include "graphics.h"
-#include <SFML/Config.hpp>
-#include <SFML/Graphics/RenderWindow.hpp>
-#include <SFML/Graphics/Sprite.hpp>
-#include <SFML/Graphics/Texture.hpp>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -458,8 +454,8 @@ void ZBuffer::clear() {
 // IMPLEMENTATION OF "Window"
 
 // CONSTRUCTOR
-Window::Window(int width, int height, sf::RenderWindow& sfmlWindow)
- : pixelArray(width, height), zBuffer(width, height), sfmlWindow(sfmlWindow) {
+Window::Window(int width, int height)
+ : pixelArray(width, height), zBuffer(width, height) {
     this->width = width;
     this->height = height;
 }
@@ -679,43 +675,26 @@ void Window::clear() {
 void Window::draw() {
     // TODO: WARNING - this is implemntation specific
 
-    // first convert to sfml Uint8 array
-
     auto t1 = std::chrono::high_resolution_clock::now();
-    sf::Uint8 sfpixel[height * width * 4];
-    // i gives index in pixelArray, j gives index in sfpixel[]
-    for (int i = 0, j = 0; i < height * width * 3; j++) {
-        if (j >= height * width * 4) {
-            std::cout << "Window::draw() failed, index in sfpixel[] is out of bounds. INPUTS: j = " << j << std::endl; 
-            throw "index in sfpixel[] is out of bounds";
-        }
-        if ((j + 1) % 4 == 0) {
-            sfpixel[j] = 255;
-        } else {
-            sfpixel[j] = static_cast<sf::Uint8>(pixelArray.data[i]);
-            i++;
-        }
-    }
-
-    // second, load to sf::Texture
-
     auto t2 = std::chrono::high_resolution_clock::now();
-
-    sf::Texture texture;
-    texture.create(width, height);
-    texture.update(sfpixel);
-
-    // load to sf::Sprinte
-    sf::Sprite sprite;
-    sprite.setTexture(texture);
-
-    // draw and display
-    sfmlWindow.draw(sprite);
-    sfmlWindow.display();
     auto t3 = std::chrono::high_resolution_clock::now();
+
+
     auto pixelTime = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1);
     auto spriteTime = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2);
     // std::cout << "inside graphics - pixel time: " << pixelTime.count() << ", sprite time: " << spriteTime.count() << "\n";
+}
+void Window::getUint8Pointer(uint8_t* buffer) {
+    int i = 0;
+    int j = 0;
+    while (i + 2 < pixelArray.data.size() && j + 3 < width * height * 4) {
+        buffer[j] = pixelArray.data[i];
+        buffer[j + 1] = pixelArray.data[i + 1];
+        buffer[j + 2] = pixelArray.data[i + 2];
+        buffer[j + 3] = 255;
+        i += 3;
+        j += 4;
+    }
 }
 
 

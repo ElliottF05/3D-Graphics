@@ -1,24 +1,16 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(3D-Graphics-Engine)
-
-include(CTest)
-enable_testing()
-
-find_package(SFML COMPONENTS system window graphics REQUIRED)
+cmake_minimum_required(VERSION 3.5.0)
+project(3D-Graphics-Engine VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(SOURCES
-    main.cpp
-    graphics.cpp
-)
-add_executable(3D-Graphics-Engine ${SOURCES})
+add_executable(3D-Graphics-Engine main.cpp graphics.cpp)
 
 # set(CMAKE_TOOLCHAIN_FILE /Users/elliottfaa/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 
-set(CPACK_PROJECT_NAME $3D-Graphics-Engine)
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
+    set(CMAKE_EXECUTABLE_SUFFIX .js)
+endif()
 
-target_link_libraries(3D-Graphics-Engine sfml-graphics)
+# SET( CMAKE_CXX_FLAGS  "-sINITIAL_MEMORY=163840000")
+SET( CMAKE_CXX_FLAGS  "-sALLOW_MEMORY_GROWTH")

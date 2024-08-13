@@ -1,0 +1,7 @@
+#canvas {
+    transform-origin: top left;
+}
+#controls-text {
+    font-size: 20px;
+    text-align: left;
+}
