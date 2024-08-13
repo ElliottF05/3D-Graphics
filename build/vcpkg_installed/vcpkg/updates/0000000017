@@ -1,9 +1,0 @@
-Package: libvorbis
-Version: 1.3.7
-Port-Version: 2
-Depends: libogg, vcpkg-cmake, vcpkg-cmake-config
-Architecture: arm64-osx
-Multi-Arch: same
-Abi: eff26725ad10f632ed4c642a581030bb5de03b0495792e8d145fe55ea0cc07f8
-Description: Ogg Vorbis is a fully open, non-proprietary, patent-and-royalty-free, general-purpose compressed audio format
-Status: install ok installed

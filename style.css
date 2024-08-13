@@ -1,4 +1,6 @@
 #canvas {
+    width: 600px;
+    height: 600px;
     transform-origin: top left;
 }
 #controls-text {

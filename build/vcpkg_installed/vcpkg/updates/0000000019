@@ -1,6 +1,0 @@
-Package: libflac
-Feature: stack-protector
-Architecture: arm64-osx
-Multi-Arch: same
-Description: Build with stack smashing protection
-Status: install ok half-installed
