@@ -1,0 +1,7 @@
+Package: freetype
+Feature: brotli
+Depends: brotli
+Architecture: arm64-osx
+Multi-Arch: same
+Description: Support decompression of WOFF2 streams
+Status: install ok installed

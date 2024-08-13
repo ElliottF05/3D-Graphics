@@ -1,0 +1,7 @@
+Package: freetype
+Feature: png
+Depends: libpng
+Architecture: arm64-osx
+Multi-Arch: same
+Description: Support PNG compressed OpenType embedded bitmaps.
+Status: install ok installed

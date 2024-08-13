@@ -1,0 +1,79 @@
+Fetching registry information from https://github.com/microsoft/vcpkg (HEAD)...
+Detecting compiler hash for triplet arm64-osx...
+Compiler found: /Library/Developer/CommandLineTools/usr/bin/c++
+The following packages will be built and installed:
+  * brotli:arm64-osx@1.1.0#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/4e5b5ae1ad26c80535c893cc0307121f0398549e
+  * bzip2[core,tool]:arm64-osx@1.0.8#5 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/92e9a8bbf1abbd89872b48ad82fcf75852de1006
+  * egl-registry:arm64-osx@2024-01-25 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/d883db43133dd223c4ffdbef4193943f6784d43a
+  * freetype[brotli,bzip2,core,png,zlib]:arm64-osx@2.13.2#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/60a5a2596ec865db746a7ea741458322cf0cc2bc
+  * libflac[core,stack-protector]:arm64-osx@1.4.3#2 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/a92a3397dfb70e6eec94fab7b3665a1288d9f7bd
+  * libogg:arm64-osx@1.3.5#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/98e27727c32704393494d32615c25b7b16eb3067
+  * libpng:arm64-osx@1.6.43#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/1b0781214ef5a3497d0e7db2c0ed7f7fae74248b
+  * libvorbis:arm64-osx@1.3.7#2 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/c4c646a26ce3e6ad63992d3e4a55cb185159b23c
+  * openal-soft:arm64-osx@1.23.1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/d23d6573247830bd439e418fe0e31321de778d85
+  * opengl:arm64-osx@2022-12-04#3 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/c3ae71738f88449ebcd781cef60d9a253fa091d4
+  * opengl-registry:arm64-osx@2024-02-10#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/22f7aa58ee78c9f0db904b6251e9265f2be26f9d
+    sfml:arm64-osx@2.6.1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/3cf9cce0cc82c37f5a37c1c97d05c7fcb4609486
+  * stb:arm64-osx@2023-04-11#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/acd9c2bf96a3e32fbf629b1bfd6cba4827761069
+  * vcpkg-cmake:arm64-osx@2024-04-18 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/a10a94e8d0071ed4804d40d0f0f0c5e4e7180afd
+  * vcpkg-cmake-config:arm64-osx@2022-02-06#1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/8d54cc4f487d51b655abec5f9c9c3f86ca83311f
+  * zlib:arm64-osx@1.3.1 -- /Users/elliottfaa/.cache/vcpkg/registries/git-trees/3f05e04b9aededb96786a911a16193cdb711f0c9
+Additional packages (*) will be modified to complete this operation.
+Restored 16 package(s) from /Users/elliottfaa/.cache/vcpkg/archives in 193 ms. Use --debug to see more details.
+Installing 1/16 vcpkg-cmake-config:arm64-osx@2022-02-06#1...
+Elapsed time to handle vcpkg-cmake-config:arm64-osx: 2.19 ms
+vcpkg-cmake-config:arm64-osx package ABI: 418d6d03ba6fb8ae30842772a95b60d5722a8ecc781c9ee503b4a1f944f75f59
+Installing 2/16 vcpkg-cmake:arm64-osx@2024-04-18...
+Elapsed time to handle vcpkg-cmake:arm64-osx: 2.16 ms
+vcpkg-cmake:arm64-osx package ABI: 5ec4613c9a6dcd40d927070a1a7baddbe391a9e64d92d7a3e97b1e1611b09667
+Installing 3/16 stb:arm64-osx@2023-04-11#1...
+Elapsed time to handle stb:arm64-osx: 5.34 ms
+stb:arm64-osx package ABI: b94aa93aa21d280d7284dc9053b7b1b5b335404c378f939cce793acc554f615a
+Installing 4/16 egl-registry:arm64-osx@2024-01-25...
+Elapsed time to handle egl-registry:arm64-osx: 2.35 ms
+egl-registry:arm64-osx package ABI: 79fa9a3139328472f4832a317e6e5fd2bdb919cf100ae84dace93d28ddcde657
+Installing 5/16 opengl-registry:arm64-osx@2024-02-10#1...
+Elapsed time to handle opengl-registry:arm64-osx: 7.5 ms
+opengl-registry:arm64-osx package ABI: 0b71f1c6f751d3663b45ffe3f36c721bf846d73202db28ece7742ed52d20f331
+Installing 6/16 opengl:arm64-osx@2022-12-04#3...
+Elapsed time to handle opengl:arm64-osx: 1.29 ms
+opengl:arm64-osx package ABI: df8d742d991a871beb8f000ff31bdea4690c919db46e90ba83d7d7d8a583d799
+Installing 7/16 openal-soft:arm64-osx@1.23.1...
+Elapsed time to handle openal-soft:arm64-osx: 6.27 ms
+openal-soft:arm64-osx package ABI: 08e1ed139689d05ea55719aabfb5f775600aabbbdde347fde3c0d49c561b04b3
+Installing 8/16 libogg:arm64-osx@1.3.5#1...
+Elapsed time to handle libogg:arm64-osx: 3.87 ms
+libogg:arm64-osx package ABI: 1855bec3d29bda2d5ef3d4086013de7f016d456aedcec8457c5a63c1939b1832
+Installing 9/16 libvorbis:arm64-osx@1.3.7#2...
+Elapsed time to handle libvorbis:arm64-osx: 6.51 ms
+libvorbis:arm64-osx package ABI: eff26725ad10f632ed4c642a581030bb5de03b0495792e8d145fe55ea0cc07f8
+Installing 10/16 libflac[core,stack-protector]:arm64-osx@1.4.3#2...
+Elapsed time to handle libflac:arm64-osx: 7.25 ms
+libflac:arm64-osx package ABI: 1ab5167f7e5b764180dcd610996dd3960e3d418a2670297a3a0ca1f7155f5c07
+Installing 11/16 zlib:arm64-osx@1.3.1...
+Elapsed time to handle zlib:arm64-osx: 2.97 ms
+zlib:arm64-osx package ABI: c1c58a730f71a86f657f6c1faefb25f2b37556949c8abacb89ededbc86050c7a
+Installing 12/16 libpng:arm64-osx@1.6.43#1...
+Elapsed time to handle libpng:arm64-osx: 9.68 ms
+libpng:arm64-osx package ABI: 5f6b49e5e61c409524348d2fa141ffb52473f86267ed3dd4a2b3411c8b295312
+Installing 13/16 bzip2[core,tool]:arm64-osx@1.0.8#5...
+Elapsed time to handle bzip2:arm64-osx: 3.39 ms
+bzip2:arm64-osx package ABI: 3fa9d78c97b7882bb214f885b6cd0bbba191c25894a5020bb432886ac6eb2714
+Installing 14/16 brotli:arm64-osx@1.1.0#1...
+Elapsed time to handle brotli:arm64-osx: 6.37 ms
+brotli:arm64-osx package ABI: 77335f7f32616722734c03420d1dc7a1cfac4863a2cfe4dffa86d39964f1868b
+Installing 15/16 freetype[brotli,bzip2,core,png,zlib]:arm64-osx@2.13.2#1...
+Elapsed time to handle freetype:arm64-osx: 14.6 ms
+freetype:arm64-osx package ABI: d4dd41ddc02cdf0c3fad5f3ab4ad39a354385bbd64af5707cea687b81943b5b0
+Installing 16/16 sfml:arm64-osx@2.6.1...
+Elapsed time to handle sfml:arm64-osx: 25 ms
+sfml:arm64-osx package ABI: fb4728b4ed0ef860969f95e82d0fc488fd5a3b73305f44a0b56a8a8290738d89
+Total install time: 107 ms
+The package sfml provides CMake targets:
+
+    find_package(SFML COMPONENTS system window graphics CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE sfml-system sfml-network sfml-graphics sfml-window)
+
+    # If you want SFML to provide an implementation of main():
+    target_link_libraries(main PRIVATE sfml-main)
+
