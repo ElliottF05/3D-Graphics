@@ -233,7 +233,7 @@ Triangle::Triangle() {}
 // METHODS
 void Triangle::draw(const Camera& cam, Window& window) {
     Vec3 toCam = cam.pos - p1.absolutePos;
-    if (absoluteNormal.dot(cam.pos) < 0) {
+    if (absoluteNormal.dot(toCam) < 0) {
         absoluteNormal *= -1;
     }
     p1.calculateCameraPos(cam);
