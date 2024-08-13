@@ -70,6 +70,11 @@ extern "C" {
             l.fillZBuffer(graphics::Triangle::triangles);
         }
 
+        cam.pos.y = -3.5;
+        cam.pos.z = 1.5;
+        cam.rotate(M_PI / 3.0, -M_PI / 9.0);
+
+
         window.clear();
         for (graphics::Triangle &t : graphics::Triangle::triangles) {
             t.draw(cam, window);
