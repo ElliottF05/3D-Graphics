@@ -6,3 +6,6 @@
 3	155	1723517639364982295	build.ninja	af3ba48f5349e11f
 5	535	1723436699913630460	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	6a37545c50fe384d
 8	437	1721254876012392701	CMakeFiles/3D-Graphics-Engine.dir/2d.cpp.o	2ff6a9744ff62e21
+2	339	1723518081455469728	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	6a37545c50fe384d
+2	397	1723518081455167433	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	bc32469e20b458e0
+397	487	1723518081850782563	3D-Graphics-Engine	39085658c68e6b78
