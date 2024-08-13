@@ -101,7 +101,7 @@ int main(int, char**){
                         prev = curr;
                         curr.clear();
                         for (float thetaZ = 0; thetaZ <= 2 * M_PI; thetaZ += 2 * M_PI / iterations) {
-                            graphics::Vec3 v(std::cos(thetaY) * std::cos(thetaZ), std::cos(thetaY) * std::sin(thetaZ), std::sin(thetaY));
+                            graphics::Vec3 v(std::cos(thetaY) * std::cos(thetaZ) + 2 * cam.floorDirection.x, std::cos(thetaY) * std::sin(thetaZ) + 2 * cam.floorDirection.y, std::sin(thetaY));
                             v += cam.pos;
                             curr.push_back(v);
                         }
