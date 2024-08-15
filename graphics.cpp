@@ -243,28 +243,36 @@ void Triangle::draw(const Camera& cam, Window& window) {
     p2.calculateProjectedPos();
     p3.calculateProjectedPos();
 
-    std::vector<Point*> front;
-    std::vector<Point*> behind;
+    std::array<Point*, 3> front;
+    int frontSize = 0;
+    std::array<Point*, 3> behind;
+    int behindSize = 0;
 
     if (p1.projectedPos.z > 0) {
-        front.push_back(&p1);
+        front[frontSize] = &p1;
+        ++frontSize;
     } else {
-        behind.push_back(&p1);
+        behind[behindSize] = &p1;
+        ++behindSize;
     }
     if (p2.projectedPos.z > 0) {
-        front.push_back(&p2);
+        front[frontSize] = &p2;
+        ++frontSize;
     } else {
-        behind.push_back(&p2);
+        behind[behindSize] = &p2;
+        ++behindSize;
     }
     if (p3.projectedPos.z > 0) {
-        front.push_back(&p3);
+        front[frontSize] = &p3;
+        ++frontSize;
     } else {
-        behind.push_back(&p3);
+        behind[behindSize] = &p3;
+        ++behindSize;
     }
 
-    if (front.size() == 0) {
+    if (frontSize == 0) {
         return;
-    } else if (front.size() == 1) {
+    } else if (frontSize == 1) {
         behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
         behind[0]->projectedPos.z = 1;
         behind[1]->projectedPos += 100 * (front[0]->projectedPos - behind[1]->projectedPos);
@@ -275,7 +283,7 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[1]->calculateScreenPos(cam, window);
 
         window.drawTriangle(*this, cam);
-    } else if (front.size() == 2) {
+    } else if (frontSize == 2) {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
 
@@ -725,28 +733,36 @@ void Light::getTrianglePerspectiveFromLight(Triangle triangle) {
     triangle.p2.calculateProjectedPos();
     triangle.p3.calculateProjectedPos();
 
-    std::vector<Point*> front;
-    std::vector<Point*> behind;
+    std::array<Point*, 3> front;
+    int frontSize = 0;
+    std::array<Point*, 3> behind;
+    int behindSize = 0;
 
     if (triangle.p1.projectedPos.z > 0) {
-        front.push_back(&triangle.p1);
+        front[frontSize] = &triangle.p1;
+        ++frontSize;
     } else {
-        behind.push_back(&triangle.p1);
+        behind[behindSize] = &triangle.p1;
+        ++behindSize;
     }
     if (triangle.p2.projectedPos.z > 0) {
-        front.push_back(&triangle.p2);
+        front[frontSize] = &triangle.p2;
+        ++frontSize;
     } else {
-        behind.push_back(&triangle.p2);
+        behind[behindSize] = &triangle.p2;
+        ++behindSize;
     }
     if (triangle.p3.projectedPos.z > 0) {
-        front.push_back(&triangle.p3);
+        front[frontSize] = &triangle.p3;
+        ++frontSize;
     } else {
-        behind.push_back(&triangle.p3);
+        behind[behindSize] = &triangle.p3;
+        ++behindSize;
     }
 
-    if (front.size() == 0) {
+    if (frontSize == 0) {
         return;
-    } else if (front.size() == 1) {
+    } else if (frontSize == 1) {
         behind[0]->projectedPos += 100 * (front[0]->projectedPos - behind[0]->projectedPos);
         behind[0]->projectedPos.z = 1;
         behind[1]->projectedPos += 100 * (front[0]->projectedPos - behind[1]->projectedPos);
@@ -757,7 +773,7 @@ void Light::getTrianglePerspectiveFromLight(Triangle triangle) {
         behind[1]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
 
         addTriangleToZBuffer(triangle);
-    } else if (front.size() == 2) {
+    } else if (frontSize == 2) {
         front[0]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
         front[1]->calculateScreenPos(cam, zBuffer.width, zBuffer.height);
 
