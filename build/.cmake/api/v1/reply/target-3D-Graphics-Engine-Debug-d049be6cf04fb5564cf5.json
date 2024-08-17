@@ -10,7 +10,9 @@
 	{
 		"commands" : 
 		[
-			"add_executable"
+			"add_executable",
+			"target_link_options",
+			"target_compile_options"
 		],
 		"files" : 
 		[
@@ -26,6 +28,18 @@
 				"file" : 0,
 				"line" : 7,
 				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 16,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 15,
+				"parent" : 0
 			}
 		]
 	},
@@ -35,7 +49,15 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-sALLOW_MEMORY_GROWTH -g -std=gnu++17"
+					"fragment" : "-g -std=gnu++17"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sALLOW_MEMORY_GROWTH"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sUSE_PTHREADS"
 				}
 			],
 			"language" : "CXX",
@@ -67,11 +89,21 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-sALLOW_MEMORY_GROWTH -g",
+				"fragment" : "-g",
 				"role" : "flags"
 			},
 			{
 				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sALLOW_MEMORY_GROWTH",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sUSE_PTHREADS",
 				"role" : "flags"
 			}
 		],

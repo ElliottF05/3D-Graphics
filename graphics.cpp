@@ -393,12 +393,32 @@ float Camera::getCameraZFromPixel(int y, int height) const {
 
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "PixelArray"
+PixelArrayData::PixelArrayData(int r, int g, int b) {
+    this->r = r;
+    this->g = g;
+    this->b = b;
+}
+PixelArrayData::PixelArrayData(int color) {
+    this->r = color;
+    this->g = color;
+    this->b = color;
+}
+PixelArrayData::PixelArrayData(const PixelArrayData& other) {
+    this->r = other.r;
+    this->g = other.g;
+    this->b = other.b;
+}
+PixelArrayData::PixelArrayData() {
+    this->r = 0;
+    this->g = 0;
+    this->b = 0;
+}
 
 // CONSTRUCTOR
 PixelArray::PixelArray(int width, int height) {
     this->width = width;
     this->height = height;
-    this->data = std::vector<int>(width * height * 3, 0);
+    data = std::vector<PixelArrayData>(width * height);
 }
 
 // METHODS
@@ -408,7 +428,7 @@ int PixelArray::getIndex(int x, int y) {
         ", y = " << y << std::endl; 
         throw "pixel coordinates out of bounds";
     }
-    return ((this->width * y) + x) * 3;
+    return (width * y) + x;
 }
 void PixelArray::setPixel(int x, int y, int color) {
     if (color < 0 || color > 255) {
@@ -416,9 +436,11 @@ void PixelArray::setPixel(int x, int y, int color) {
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
-    this->data[index] = color;
-    this->data[index+1] = color;
-    this->data[index+2] = color;
+    data[index].mutex.lock();
+    data[index].r = color;
+    data[index].g = color;
+    data[index].b = color;
+    data[index].mutex.unlock();
 }
 void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
@@ -426,34 +448,38 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
-    this->data[index] = r;
-    this->data[index+1] = g;
-    this->data[index+2] = b;
-}
-int PixelArray::getPixelMonocolor(int x, int y) {
-    int index = this->getIndex(x, y);
-    return this->data[index];
-}
-std::vector<int> PixelArray::getPixel(int x, int y) {
-    int index = this->getIndex(x, y);
-    std::vector<int> v = {this->data[index], this->data[index+1], this->data[index+2]};
-    return v;
+    data[index].mutex.lock();
+    data[index].r = r;
+    data[index].g = g;
+    data[index].b = b;
+    data[index].mutex.unlock();
 }
 void PixelArray::clear() {
     for (int i = 0; i < data.size(); i++) {
-        data[i] = 0;
+        data[i].r = 0;
+        data[i].g = 0;
+        data[i].b = 0;
     }
 }
 
 
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "ZBuffer"
+ZBufferData::ZBufferData(float depth) {
+    this->depth = depth;
+}
+ZBufferData::ZBufferData(const ZBufferData& other) {
+    this->depth = other.depth;
+}
+ZBufferData::ZBufferData() {
+    this->depth = 99999;
+}
 
 // CONSTRUCTOR
 ZBuffer::ZBuffer(int width, int height) {
     this->width = width;
     this->height = height;
-    data = std::vector<float>(width * height, 99999);
+    data = std::vector<ZBufferData>(width * height);
 }
 
 // METHODS
@@ -471,15 +497,17 @@ void ZBuffer::setDepth(int x, int y, float depth) {
         throw "invalid depth";
     }
     int index = getIndex(x, y);
-    data[index] = depth;
+    data[index].mutex.lock();
+    data[index].depth = depth;
+    data[index].mutex.unlock();
 }
 float ZBuffer::getDepth(int x, int y) {
     int index = getIndex(x, y);
-    return data[index];
+    return data[index].depth;
 }
 void ZBuffer::clear() {
     for (int i = 0; i < data.size(); i++) {
-        data[i] = 99999;
+        data[i].depth = 99999;
     }
 }
 
@@ -723,15 +751,15 @@ void Window::draw() {
     // std::cout << "inside graphics - pixel time: " << pixelTime.count() << ", sprite time: " << spriteTime.count() << "\n";
 }
 void Window::getUint8Pointer(uint8_t* buffer) {
-    int i = 0;
-    int j = 0;
-    while (i + 2 < pixelArray.data.size() && j + 3 < width * height * 4) {
-        buffer[j] = pixelArray.data[i];
-        buffer[j + 1] = pixelArray.data[i + 1];
-        buffer[j + 2] = pixelArray.data[i + 2];
+    for (int i = 0, j = 0; i < pixelArray.data.size(); i++, j += 4) {
+        if (j + 3 >= width * height * 4) {
+            std::cout << "ERROR: getUint8Pointer FAILED, j + 3 >= width * height * 4, j = " << j << std::endl;
+            throw "getUint8Pointer failed";
+        }
+        buffer[j] = pixelArray.data[i].r;
+        buffer[j + 1] = pixelArray.data[i].g;
+        buffer[j + 2] = pixelArray.data[i].b;
         buffer[j + 3] = 255;
-        i += 3;
-        j += 4;
     }
 }
 

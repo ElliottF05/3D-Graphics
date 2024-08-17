@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 
 namespace graphics {
 
@@ -145,26 +146,41 @@ struct World { // TODO: incomplete and unused
 
 //---------------------------------------------------------------------------
 // DECLARING "PixelArray"
+struct PixelArrayData {
+    int r, g ,b;
+    std::mutex mutex;
+
+    PixelArrayData(int r, int g, int b);
+    PixelArrayData(int color);
+    PixelArrayData(const PixelArrayData& other);
+    PixelArrayData();
+};
 struct PixelArray {
     int width, height;
-    std::vector<int> data;
+    std::vector<PixelArrayData> data;
 
     PixelArray(int width, int height);
 
     int getIndex(int x, int y);
     void setPixel(int x, int y, int color);
     void setPixel(int x, int y, int r, int g, int b);
-    int getPixelMonocolor(int x, int y);
-    std::vector<int> getPixel(int x, int y);
     void clear();
 };
 
 
 //---------------------------------------------------------------------------
 // DECLARING "ZBuffer"
+struct ZBufferData {
+    float depth;
+    std::mutex mutex;
+
+    ZBufferData(float depth);
+    ZBufferData(const ZBufferData& other);
+    ZBufferData();
+};
 struct ZBuffer {
     int width, height;
-    std::vector<float> data;
+    std::vector<ZBufferData> data;
 
     ZBuffer(int width, int height);
 
