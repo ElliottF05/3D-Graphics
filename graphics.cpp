@@ -106,6 +106,22 @@ void Vec3::rotate(float thetaZ, float thetaY) {
     rotateZ(thetaZ);
     rotateY(thetaY);
 }
+void Vec3::rotateZKnownTrig(float sinthetaZ, float costhetaZ) {
+    Vec3 orig = *this;
+
+    this->x = orig.x * costhetaZ - orig.y * sinthetaZ;
+    this->y = orig.x * sinthetaZ + orig.y * costhetaZ;
+}
+void Vec3::rotateYKnownTrig(float sinthetaY, float costhetaY) {
+    Vec3 orig = *this;
+
+    this->x = orig.x * costhetaY - orig.z * sinthetaY;
+    this->z = orig.x * sinthetaY + orig.z * costhetaY;
+}
+void Vec3::rotateKnownTrig(float sinthetaZ, float costhetaZ, float sinthetaY, float costhetaY) {
+    rotateZKnownTrig(sinthetaZ, costhetaZ);
+    rotateYKnownTrig(sinthetaY, costhetaY);
+}
 
 // TO STRING
 std::string Vec3::toString() {
@@ -129,7 +145,8 @@ Point::Point() {}
 // METHODS
 void Point::calculateCameraPos(const Camera &cam) {
     cameraPos = absolutePos - cam.pos;
-    cameraPos.rotate(-cam.thetaZ, -cam.thetaY);
+    // cameraPos.rotate(-cam.thetaZ, -cam.thetaY);
+    cameraPos.rotateKnownTrig(-cam.sinthetaZ, cam.costhetaZ, -cam.sinthetaY, cam.costhetaY);
     distToCamera = cameraPos.mag();
 }
 void Point::calculateProjectedPos() {
@@ -206,19 +223,20 @@ void Line::draw(const Camera& cam, Window& window) {
 // IMPLEMENTATION OF "Triangle"
 
 // CONSTRUCTOR
+// NOTE: When points are given in clockwise order, the normal vector points towards the camera
 std::vector<Triangle> Triangle::triangles; // defining the static variable, TODO: check if this is right
 Triangle::Triangle(Point p1, Point p2, Point p3) {
     this->p1 = p1;
     this->p2 = p2;
     this->p3 = p3;
-    this->absoluteNormal = (p2.absolutePos - p1.absolutePos).cross(p3.absolutePos - p1.absolutePos);
+    this->absoluteNormal = (p3.absolutePos - p1.absolutePos).cross(p2.absolutePos - p1.absolutePos);
     absoluteNormal.normalize();
     this->r = std::rand() % 256;
     this->g = std::rand() % 256;
     this->b = std::rand() % 256;
 }
 Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {
-    absoluteNormal = (p2 - p1).cross(p3 - p1);
+    absoluteNormal = (p3 - p1).cross(p2 - p1);
     absoluteNormal.normalize();
     this->r = std::rand() % 256;
     this->g = std::rand() % 256;
@@ -230,7 +248,7 @@ Triangle::Triangle() {}
 void Triangle::draw(const Camera& cam, Window& window) {
     Vec3 toCam = cam.pos - p1.absolutePos;
     if (absoluteNormal.dot(toCam) < 0) {
-        absoluteNormal *= -1;
+        return;
     }
     p1.calculateCameraPos(cam);
     p2.calculateCameraPos(cam);
@@ -333,6 +351,10 @@ Camera::Camera(Vec3 pos, float thetaZ, float thetaY, float fov) {
     Vec3 b(1,0,0);
     b.rotate(thetaZ, 0);
     this->floorDirection = b;
+    this->sinthetaY = sin(thetaY);
+    this->sinthetaZ = sin(thetaZ);
+    this->costhetaY = cos(thetaY);
+    this->costhetaZ = cos(thetaZ);
 }
 Camera::Camera() {
     this->fov = 90;
@@ -356,6 +378,10 @@ void Camera::rotate(float thetaZ, float thetaY) {
     this->thetaY = std::min(this->thetaY, (float) M_PI / 2);
     direction.rotate(thetaZ, thetaY);
     floorDirection.rotate(thetaZ, 0);
+    this->sinthetaY = sin(this->thetaY);
+    this->sinthetaZ = sin(this->thetaZ);
+    this->costhetaY = cos(this->thetaY);
+    this->costhetaZ = cos(this->thetaZ);
 }
 float Camera::getCameraYFromPixel(int x, int width) const {
     return - maxPlaneCoord * (x - (0.5 * width) + 0.5) / (0.5 * width);
@@ -619,8 +645,10 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 Vec3 vec(cameraX, cameraY, cameraZ);
                 vec.normalize();
                 vec *= depth;
-                vec.rotateY(cam.thetaY);
-                vec.rotateZ(cam.thetaZ);
+                // vec.rotateY(cam.thetaY);
+                vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+                // vec.rotateZ(cam.thetaZ);
+                vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
                 vec += cam.pos;
 
                 float proportionInShadow = Light::lights[0].amountLit(vec);
@@ -658,8 +686,10 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
                 Vec3 vec(cameraX, cameraY, cameraZ);
                 vec.normalize();
                 vec *= depth;
-                vec.rotateY(cam.thetaY);
-                vec.rotateZ(cam.thetaZ);
+                // vec.rotateY(cam.thetaY);
+                vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+                // vec.rotateZ(cam.thetaZ);
+                vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
                 vec += cam.pos;
 
                 float proportionInShadow = Light::lights[0].amountLit(vec);
@@ -722,6 +752,10 @@ Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(4000, 4000) {
 
 // METHODS
 void Light::getTrianglePerspectiveFromLight(Triangle triangle) {
+    Vec3 toCam = cam.pos - triangle.p1.absolutePos;
+    if (triangle.absoluteNormal.dot(toCam) > 0) {
+        return;
+    }
     triangle.p1.calculateCameraPos(cam);
     triangle.p2.calculateCameraPos(cam);
     triangle.p3.calculateCameraPos(cam);

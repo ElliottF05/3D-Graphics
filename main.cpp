@@ -22,7 +22,7 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setup_scene() {
         graphics::Point p1(-5, 10, -1), p2(-5, -10, -1), p3(15, 0, -1), p4(1, -5, -1);
-        graphics::Triangle t1(p1, p2, p3);
+        graphics::Triangle t1(p1, p3, p2);
         t1.g = 255;
         t1.b = 230;
         graphics::Triangle::triangles.push_back(t1);
@@ -36,7 +36,7 @@ extern "C" {
         }
 
         // Spawn sphere logic
-        int iterations = 100;
+        int iterations = 50;
         std::vector<graphics::Vec3> prev(iterations);
         std::vector<graphics::Vec3> curr(iterations);
         bool onFirst = true;
@@ -53,8 +53,8 @@ extern "C" {
                 continue;
             }
             for (int i = 0; i < prev.size(); i++) {
-                graphics::Triangle t1(curr[i], prev[i], curr[(i + 1) % iterations]);
-                graphics::Triangle t2(prev[i], prev[(i + 1) % iterations], curr[(i + 1) % iterations]);
+                graphics::Triangle t1(prev[i], curr[i], curr[(i + 1) % iterations]);
+                graphics::Triangle t2(prev[(i + 1) % iterations], prev[i], curr[(i + 1) % iterations]);
                 t1.r = 255;
                 t1.g = 255;
                 t1.b = 255;

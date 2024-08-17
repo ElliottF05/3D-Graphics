@@ -49,6 +49,9 @@ struct Vec3 {
     // specific functions
     void rotateZ(float thetaZ);
     void rotateY(float thetaY);
+    void rotateZKnownTrig(float sinthetaZ, float costhetaZ);
+    void rotateYKnownTrig(float sinthetaY, float costhetaY);
+    void rotateKnownTrig(float sinthetaZ, float costhetaZ, float sinthetaY, float costhetaY);
     void rotate(float thetaZ, float thetaY);
 
     std::string toString();
@@ -117,7 +120,7 @@ struct Triangle {
 // DECLARING "Camera"
 struct Camera {
     Vec3 pos;
-    float thetaZ, thetaY, fov, fov_rad, maxPlaneCoord;
+    float thetaZ, thetaY, sinthetaZ, sinthetaY, costhetaZ, costhetaY, fov, fov_rad, maxPlaneCoord;
     Vec3 direction;
     Vec3 floorDirection;
 
