@@ -66,9 +66,9 @@ document.addEventListener('keydown', (event) => {
 
 function setCanvasImage() {
     console.log("Setting canvas image");
-    const imageData = canvasContext.createImageData(800, 800);
+    const imageData = canvasContext.createImageData(500, 500);
     const buffer_data = _get_buffer();
-    var uint8array = new Uint8ClampedArray(Module.HEAPU8.buffer, buffer_data, 800 * 800 * 4);
+    var uint8array = new Uint8ClampedArray(Module.HEAPU8.buffer, buffer_data, 500 * 500 * 4);
     imageData.data.set(uint8array);
     canvasContext.putImageData(imageData, 0, 0);
 }

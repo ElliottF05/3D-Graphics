@@ -13,7 +13,7 @@
 
 // Setting up simulation necessities
 static bool running = true;
-static graphics::Window window(800, 800);
+static graphics::Window window(500, 500);
 static graphics::Camera cam;
 
 // Setting up buffer
@@ -87,8 +87,11 @@ extern "C" {
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
     uint8_t* get_buffer() {
-        window.clear();
         auto start = std::chrono::high_resolution_clock::now();
+        window.clear();
+        while (threads::threadPool.getNumberOfActiveTasks() > 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(200));
+        }
         for (graphics::Triangle &t : graphics::Triangle::triangles) {
             threads::threadPool.addTask([&t] {
                 t.draw(cam, window);
@@ -96,13 +99,15 @@ extern "C" {
             // t.draw(cam, window);
         }
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
-        std::cout << "Elapsed time: " << elapsed.count() << "s" << std::endl;
         window.getUint8Pointer(buffer);
-        std::cout << "returning buffer" << std::endl;
+        while (threads::threadPool.getNumberOfActiveTasks() > 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(200));
+        }
+        std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
         return &buffer[0];
     }
 }

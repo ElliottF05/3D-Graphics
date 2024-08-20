@@ -504,6 +504,16 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     data[index].mutex.unlock();
 }
 void PixelArray::clear() {
+    for (int i = 0; i < data.size(); i += width) {
+        threads::threadPool.addTask([i, this] {
+            for (int j = i; j < i + width; j++) {
+                data[j].r = 0;
+                data[j].g = 0;
+                data[j].b = 0;   
+            }
+        });
+    }
+
     for (int i = 0; i < data.size(); i++) {
         data[i].r = 0;
         data[i].g = 0;
@@ -555,8 +565,12 @@ float ZBuffer::getDepth(int x, int y) {
     return data[index].depth;
 }
 void ZBuffer::clear() {
-    for (int i = 0; i < data.size(); i++) {
-        data[i].depth = 99999;
+    for (int i = 0; i < data.size(); i += width) {
+        threads::threadPool.addTask([i, this] {
+            for (int j = i; j < i + width; j++) {
+                data[j].depth = 99999;
+            }
+        });
     }
 }
 
@@ -664,12 +678,7 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     c = triangle.p3;
 
     // equation for plane
-    Vec3 normal = (a.cameraPos - b.cameraPos).cross(a.cameraPos - c.cameraPos);
-    if (normal.x < 0) {
-        normal *= -1;
-    }
-    normal.normalize();
-    float d1 = normal.x * a.cameraPos.x + normal.y * a.cameraPos.y + normal.z * a.cameraPos.z;
+    float d1 = triangle.cameraNormal.x * a.cameraPos.x + triangle.cameraNormal.y * a.cameraPos.y + triangle.cameraNormal.z * a.cameraPos.z;
 
     // first make a = leftmost, b = middle, c = rightmost point
     if (a.screenPos.x > b.screenPos.x) {
@@ -811,16 +820,26 @@ void Window::draw() {
     // std::cout << "inside graphics - pixel time: " << pixelTime.count() << ", sprite time: " << spriteTime.count() << "\n";
 }
 void Window::getUint8Pointer(uint8_t* buffer) {
-    for (int i = 0, j = 0; i < pixelArray.data.size(); i++, j += 4) {
-        if (j + 3 >= width * height * 4) {
-            std::cout << "ERROR: getUint8Pointer FAILED, j + 3 >= width * height * 4, j = " << j << std::endl;
-            throw "getUint8Pointer failed";
-        }
-        buffer[j] = pixelArray.data[i].r;
-        buffer[j + 1] = pixelArray.data[i].g;
-        buffer[j + 2] = pixelArray.data[i].b;
-        buffer[j + 3] = 255;
+    for (int i = 0; i < pixelArray.data.size(); i += width) {
+        threads::threadPool.addTask([i, this, buffer] {
+            for (int j = i, k = 4 * i; j < i + width; j++, k += 4) {
+                buffer[k] = pixelArray.data[j].r;
+                buffer[k + 1] = pixelArray.data[j].g;
+                buffer[k + 2] = pixelArray.data[j].b;
+                buffer[k + 3] = 255;
+            }
+        });
     }
+    // for (int i = 0, j = 0; i < pixelArray.data.size(); i++, j += 4) {
+    //     if (j + 3 >= width * height * 4) {
+    //         std::cout << "ERROR: getUint8Pointer FAILED, j + 3 >= width * height * 4, j = " << j << std::endl;
+    //         throw "getUint8Pointer failed";
+    //     }
+    //     buffer[j] = pixelArray.data[i].r;
+    //     buffer[j + 1] = pixelArray.data[i].g;
+    //     buffer[j + 2] = pixelArray.data[i].b;
+    //     buffer[j + 3] = 255;
+    // }
 }
 
 
