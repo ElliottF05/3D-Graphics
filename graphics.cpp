@@ -1,10 +1,16 @@
 #include "graphics.h"
+#include "threads.h"
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <vector>
+#include <mutex>
 
 using namespace graphics;
+
+static std::mutex mutex;
 
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "Vec3"
@@ -315,21 +321,64 @@ void Triangle::draw(const Camera& cam, Window& window) {
         // needed to preserve the 3 original cameraPos values to be used in plane-calculation for depth buffer
         behind2.cameraPos = front[0]->cameraPos;
 
-        Triangle t(*front[1], *behind[0], behind2);
-        t.absoluteNormal = absoluteNormal;
-        t.cameraNormal = cameraNormal;
-        t.r = r;
-        t.g = g;
-        t.b = b;
+        std::shared_ptr<Triangle> t = std::shared_ptr<Triangle>(new Triangle(*front[1], *behind[0], behind2));
+        t->absoluteNormal = absoluteNormal;
+        t->cameraNormal = cameraNormal;
+        t->r = r;
+        t->g = g;
+        t->b = b;
 
         window.drawTriangle(*this, cam);
-        window.drawTriangle(t, cam);
+        window.drawTriangle(*t, cam);
     } else {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
         front[2]->calculateScreenPos(cam, window);
 
         window.drawTriangle(*this, cam);
+    }
+}
+void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const Triangle &triangle, int x, float y1, float y2, float d1) {
+    // mutex.lock();
+    // std::cout << "drawing vertical screen line" << std::endl;
+    // std::cout << threads::threadPool.getNumberOfActiveTasks() << std::endl;
+    // mutex.unlock();
+    int bottom = round(y1);
+    int top = round(y2);
+    utils::sortAndClamp(bottom, top, window.height - 1);
+    float cameraY = cam.getCameraYFromPixel(x, window.width);
+    float depth;
+    for (int y = bottom; y <= top; y++) {
+        // calculate depth
+        float cameraZ = cam.getCameraZFromPixel(y, window.height);
+        float cameraX = 1;
+        depth = (d1 / (triangle.cameraNormal.x * cameraX + triangle.cameraNormal.y * cameraY + triangle.cameraNormal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        if (depth < 0) {
+            if (depth < -0.1) {
+                // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
+            }
+            depth = 0;
+        }
+        if (depth < window.zBuffer.getDepth(x, y)) {
+            window.zBuffer.setDepth(x, y, depth);
+
+            Vec3 vec(cameraX, cameraY, cameraZ);
+            vec.normalize();
+            vec *= depth;
+            // vec.rotateY(cam.thetaY);
+            vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+            // vec.rotateZ(cam.thetaZ);
+            vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
+            vec += cam.pos;
+
+            float proportionInShadow = Light::lights[0].amountLit(vec);
+            float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
+            if (angleLighting < 0) {
+                angleLighting = 0;
+            }
+            float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+            window.pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
+        }
     }
 }
 
@@ -651,43 +700,50 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
     y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
     for (float x = left; x < mid; x++) {
-        bottom = round(y1);
-        top = round(y2);
-        utils::sortAndClamp(bottom, top, height - 1);
-        float cameraY = cam.getCameraYFromPixel(x, width);
-        float depth;
-        for (int y = bottom; y <= top; y++) {
-            // calculate depth
-            float cameraZ = cam.getCameraZFromPixel(y, height);
-            float cameraX = 1;
-            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-            if (depth < 0) {
-                if (depth < -0.1) {
-                    // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
-                }
-                depth = 0;
-            }
-            if (depth < zBuffer.getDepth(x, y)) {
-                zBuffer.setDepth(x, y, depth);
+        // mutex.lock();
+        // std::cout << "creating thread" << std::endl;
+        // mutex.unlock();
+        // Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        });
+        // bottom = round(y1);
+        // top = round(y2);
+        // utils::sortAndClamp(bottom, top, height - 1);
+        // float cameraY = cam.getCameraYFromPixel(x, width);
+        // float depth;
+        // for (int y = bottom; y <= top; y++) {
+        //     // calculate depth
+        //     float cameraZ = cam.getCameraZFromPixel(y, height);
+        //     float cameraX = 1;
+        //     depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        //     if (depth < 0) {
+        //         if (depth < -0.1) {
+        //             // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
+        //         }
+        //         depth = 0;
+        //     }
+        //     if (depth < zBuffer.getDepth(x, y)) {
+        //         zBuffer.setDepth(x, y, depth);
 
-                Vec3 vec(cameraX, cameraY, cameraZ);
-                vec.normalize();
-                vec *= depth;
-                // vec.rotateY(cam.thetaY);
-                vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
-                // vec.rotateZ(cam.thetaZ);
-                vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
-                vec += cam.pos;
+        //         Vec3 vec(cameraX, cameraY, cameraZ);
+        //         vec.normalize();
+        //         vec *= depth;
+        //         // vec.rotateY(cam.thetaY);
+        //         vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+        //         // vec.rotateZ(cam.thetaZ);
+        //         vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
+        //         vec += cam.pos;
 
-                float proportionInShadow = Light::lights[0].amountLit(vec);
-                float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
-                if (angleLighting < 0) {
-                    angleLighting = 0;
-                }
-                float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
-                pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
-            }
-        }
+        //         float proportionInShadow = Light::lights[0].amountLit(vec);
+        //         float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
+        //         if (angleLighting < 0) {
+        //             angleLighting = 0;
+        //         }
+        //         float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+        //         pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
+        //     }
+        // }
         y1 += dy1;
         y2 += dy_long;
     }
@@ -695,40 +751,44 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
     y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
     for (float x = mid; x < right; x++) {
-        bottom = round(y1);
-        top = round(y2);
-        utils::sortAndClamp(bottom, top, height - 1);
-        float cameraY = cam.getCameraYFromPixel(x, width);
-        float depth;
-        for (int y = bottom; y <= top; y++) {
-            // calculate depth
-            float cameraZ = cam.getCameraZFromPixel(y, height);
-            float cameraX = 1;
-            depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-            if (depth < 0) {
-                depth = 0;
-            }
-            if (depth < zBuffer.getDepth(x, y)) {
-                zBuffer.setDepth(x, y, depth);
+        // Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        });
+        // bottom = round(y1);
+        // top = round(y2);
+        // utils::sortAndClamp(bottom, top, height - 1);
+        // float cameraY = cam.getCameraYFromPixel(x, width);
+        // float depth;
+        // for (int y = bottom; y <= top; y++) {
+        //     // calculate depth
+        //     float cameraZ = cam.getCameraZFromPixel(y, height);
+        //     float cameraX = 1;
+        //     depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        //     if (depth < 0) {
+        //         depth = 0;
+        //     }
+        //     if (depth < zBuffer.getDepth(x, y)) {
+        //         zBuffer.setDepth(x, y, depth);
 
-                Vec3 vec(cameraX, cameraY, cameraZ);
-                vec.normalize();
-                vec *= depth;
-                // vec.rotateY(cam.thetaY);
-                vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
-                // vec.rotateZ(cam.thetaZ);
-                vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
-                vec += cam.pos;
+        //         Vec3 vec(cameraX, cameraY, cameraZ);
+        //         vec.normalize();
+        //         vec *= depth;
+        //         // vec.rotateY(cam.thetaY);
+        //         vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+        //         // vec.rotateZ(cam.thetaZ);
+        //         vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
+        //         vec += cam.pos;
 
-                float proportionInShadow = Light::lights[0].amountLit(vec);
-                float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
-                if (angleLighting < 0) {
-                    angleLighting = 0;
-                }
-                float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
-                pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
-            }
-        }
+        //         float proportionInShadow = Light::lights[0].amountLit(vec);
+        //         float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
+        //         if (angleLighting < 0) {
+        //             angleLighting = 0;
+        //         }
+        //         float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+        //         pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
+        //     }
+        // }
         y1 += dy2;
         y2 += dy_long;
     }

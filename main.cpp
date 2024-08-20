@@ -37,7 +37,7 @@ extern "C" {
         }
 
         // Spawn sphere logic
-        int iterations = 10;
+        int iterations = 20;
         std::vector<graphics::Vec3> prev(iterations);
         std::vector<graphics::Vec3> curr(iterations);
         bool onFirst = true;
@@ -71,15 +71,15 @@ extern "C" {
             l.fillZBuffer(graphics::Triangle::triangles);
         }
 
-        cam.pos.y = -3.5;
-        cam.pos.z = -1.2;
-        cam.rotate(M_PI / 3.0, 0.1);
+        cam.pos.y = -2;
+        cam.pos.z = 1;
+        cam.rotate(M_PI / 6.0, -M_PI / 8.0);
 
 
-        window.clear();
-        for (graphics::Triangle &t : graphics::Triangle::triangles) {
-            t.draw(cam, window);
-        }
+        // window.clear();
+        // for (graphics::Triangle &t : graphics::Triangle::triangles) {
+        //     t.draw(cam, window);
+        // }
     }
 }
 
@@ -93,6 +93,7 @@ extern "C" {
             threads::threadPool.addTask([&t] {
                 t.draw(cam, window);
             });
+            // t.draw(cam, window);
         }
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));

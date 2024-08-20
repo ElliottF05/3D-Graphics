@@ -1,8 +1,10 @@
 #include "threads.h"
+#include <atomic>
 #include <functional>
 #include <thread>
 #include <mutex>
 #include <utility>
+#include <iostream>
 
 using namespace threads;
 
@@ -41,7 +43,7 @@ ThreadPool::ThreadPool(int num_threads) : stop_(false), active_tasks_(0) {
                     tasks_.pop(); 
                 } 
 
-                task(); 
+                task();
                 active_tasks_--;
             } 
         }); 
@@ -70,6 +72,7 @@ ThreadPool::~ThreadPool() {
 // Enqueue task for execution by the thread pool 
 void ThreadPool::addTask(std::function<void()> task) { 
     active_tasks_++;
+    // std::cout << active_tasks_ << std::endl;
     { 
         std::unique_lock<std::mutex> lock(queue_mutex_); 
         tasks_.emplace(std::move(task)); 
@@ -78,5 +81,6 @@ void ThreadPool::addTask(std::function<void()> task) {
 } 
 
 int ThreadPool::getNumberOfActiveTasks() {
-    return active_tasks_.load(); // Using .load() to safely access the atomic value
+    // std::cout << "Active tasks: " << active_tasks_.load(std::memory_order_seq_cst) << std::endl;
+    return active_tasks_.load(std::memory_order_seq_cst);
 }

@@ -66,10 +66,6 @@
 				{
 					"backtrace" : 3,
 					"fragment" : "-pthread"
-				},
-				{
-					"backtrace" : 3,
-					"fragment" : "-sPROXY_TO_PTHREAD"
 				}
 			],
 			"language" : "CXX",
@@ -127,11 +123,6 @@
 			{
 				"backtrace" : 2,
 				"fragment" : "-pthread",
-				"role" : "flags"
-			},
-			{
-				"backtrace" : 2,
-				"fragment" : "-sPROXY_TO_PTHREAD",
 				"role" : "flags"
 			}
 		],

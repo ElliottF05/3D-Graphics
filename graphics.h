@@ -113,6 +113,8 @@ struct Triangle {
     Triangle();
 
     void draw(const Camera& cam, Window& window);
+
+    static void drawVerticalScreenLine(const Camera& cam, Window& window, const Triangle& triangle, int x, float y1, float y2, float d1);
 };
 
 
