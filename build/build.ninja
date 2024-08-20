@@ -51,13 +51,19 @@ build cmake_object_order_depends_target_3D-Graphics-Engine: phony || .
 
 build CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/main.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o.d
-  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS
+  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread -sPROXY_TO_PTHREAD
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
 
 build CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
   DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o.d
-  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS
+  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread -sPROXY_TO_PTHREAD
+  OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
+
+build CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o: CXX_COMPILER__3D-Graphics-Engine_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/threads.cpp || cmake_object_order_depends_target_3D-Graphics-Engine
+  DEP_FILE = CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o.d
+  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread -sPROXY_TO_PTHREAD
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics-Engine.dir
 
@@ -69,9 +75,9 @@ build CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o: CXX_COMPILER__3D-Graphic
 #############################################
 # Link the executable 3D-Graphics-Engine.js
 
-build 3D-Graphics-Engine.js: CXX_EXECUTABLE_LINKER__3D-Graphics-Engine_Debug CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o
+build 3D-Graphics-Engine.js: CXX_EXECUTABLE_LINKER__3D-Graphics-Engine_Debug CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o
   FLAGS = -g
-  LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS
+  LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread -sPROXY_TO_PTHREAD
   OBJECT_DIR = CMakeFiles/3D-Graphics-Engine.dir
   POST_BUILD = :
   PRE_LINK = :

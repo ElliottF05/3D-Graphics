@@ -6,9 +6,10 @@ let sceneSet = false;
 Module.onRuntimeInitialized = () => {
     console.log('Module loading...');
     _setup_scene();
-    console.log("Module loaded, now drawing image...");
-    setCanvasImage();
-    console.log("First image drawn.");
+    console.log("Module loaded and scene set up.");
+    // console.log("Now drawing image...");
+    // setCanvasImage();
+    // console.log("First image drawn.");
 }
 
 document.addEventListener('keydown', (event) => {

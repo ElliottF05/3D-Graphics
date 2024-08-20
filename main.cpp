@@ -3,9 +3,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <chrono>
+#include <pthread.h>
 #include <thread>
 #include <vector>
 #include "graphics.h"
+#include "threads.h"
 #include <emscripten.h>
 
 
@@ -16,7 +18,6 @@ static graphics::Camera cam;
 
 // Setting up buffer
 static uint8_t* buffer = new uint8_t[window.width * window.height * 4];
-
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
@@ -36,7 +37,7 @@ extern "C" {
         }
 
         // Spawn sphere logic
-        int iterations = 50;
+        int iterations = 10;
         std::vector<graphics::Vec3> prev(iterations);
         std::vector<graphics::Vec3> curr(iterations);
         bool onFirst = true;
@@ -71,8 +72,8 @@ extern "C" {
         }
 
         cam.pos.y = -3.5;
-        cam.pos.z = 1.5;
-        cam.rotate(M_PI / 3.0, -M_PI / 9.0);
+        cam.pos.z = -1.2;
+        cam.rotate(M_PI / 3.0, 0.1);
 
 
         window.clear();
@@ -87,10 +88,20 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     uint8_t* get_buffer() {
         window.clear();
+        auto start = std::chrono::high_resolution_clock::now();
         for (graphics::Triangle &t : graphics::Triangle::triangles) {
-            t.draw(cam, window);
+            threads::threadPool.addTask([&t] {
+                t.draw(cam, window);
+            });
         }
+        while (threads::threadPool.getNumberOfActiveTasks() > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "Elapsed time: " << elapsed.count() << "s" << std::endl;
         window.getUint8Pointer(buffer);
+        std::cout << "returning buffer" << std::endl;
         return &buffer[0];
     }
 }

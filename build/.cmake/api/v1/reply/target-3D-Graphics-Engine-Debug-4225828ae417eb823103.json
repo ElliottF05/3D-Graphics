@@ -58,6 +58,18 @@
 				{
 					"backtrace" : 3,
 					"fragment" : "-sUSE_PTHREADS"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sPTHREAD_POOL_SIZE=300"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-pthread"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sPROXY_TO_PTHREAD"
 				}
 			],
 			"language" : "CXX",
@@ -72,7 +84,8 @@
 			"sourceIndexes" : 
 			[
 				0,
-				1
+				1,
+				2
 			]
 		}
 	],
@@ -105,6 +118,21 @@
 				"backtrace" : 2,
 				"fragment" : "-sUSE_PTHREADS",
 				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sPTHREAD_POOL_SIZE=300",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-pthread",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sPROXY_TO_PTHREAD",
+				"role" : "flags"
 			}
 		],
 		"language" : "CXX"
@@ -123,7 +151,8 @@
 			"sourceIndexes" : 
 			[
 				0,
-				1
+				1,
+				2
 			]
 		}
 	],
@@ -139,6 +168,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "graphics.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "threads.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],
