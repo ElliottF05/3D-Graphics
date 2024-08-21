@@ -363,10 +363,10 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
             vec += cam.pos;
 
             float proportionInShadow = Light::lights[0].amountLit(vec);
-            float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
-            if (angleLighting < 0) {
-                angleLighting = 0;
-            }
+            Vec3 vecToLight = Light::lights[0].cam.pos - vec;
+            vecToLight.normalize();
+            float angleLighting = vecToLight.dot(triangle.absoluteNormal);
+            angleLighting = std::max(angleLighting, 0.0f);
             float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
             window.pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
         }
@@ -397,10 +397,10 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
             vec += cam.pos;
 
             float proportionInShadow = Light::lights[0].amountLit(vec);
-            float angleLighting = Light::lights[0].cam.direction.dot(triangle->absoluteNormal * -1);
-            if (angleLighting < 0) {
-                angleLighting = 0;
-            }
+            Vec3 vecToLight = Light::lights[0].cam.pos - vec;
+            vecToLight.normalize();
+            float angleLighting = vecToLight.dot(triangle->absoluteNormal);
+            angleLighting = std::max(angleLighting, 0.0f);
             float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
             window.pixelArray.setPixel(x, y, multiplier * triangle->r, multiplier * triangle->g, multiplier * triangle->b);
         }
