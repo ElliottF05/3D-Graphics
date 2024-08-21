@@ -61,11 +61,19 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-sPTHREAD_POOL_SIZE=300"
+					"fragment" : "-sPTHREAD_POOL_SIZE=30"
 				},
 				{
 					"backtrace" : 3,
 					"fragment" : "-pthread"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-O2"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-flto"
 				}
 			],
 			"language" : "CXX",
@@ -117,12 +125,22 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-sPTHREAD_POOL_SIZE=300",
+				"fragment" : "-sPTHREAD_POOL_SIZE=30",
 				"role" : "flags"
 			},
 			{
 				"backtrace" : 2,
 				"fragment" : "-pthread",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-O2",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-flto",
 				"role" : "flags"
 			}
 		],

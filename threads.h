@@ -36,5 +36,5 @@ namespace threads {
         // Atomic counter to keep track of number of active tasks
         std::atomic<int> active_tasks_;
     };
-    inline ThreadPool threadPool(20);
+    inline ThreadPool threadPool = ThreadPool(20);
 }

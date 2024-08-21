@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Site BuildName="Darwin-clang++"
-	BuildStamp="20240820-1514-Experimental"
+	BuildStamp="20240821-0241-Experimental"
 	Name="Elliotts-MacBook-Air.local"
 	Generator="ctest-3.29.3"
 	CompilerName="/usr/bin/clang++"
@@ -18,17 +18,17 @@
 	ProcessorCacheSize="131072"
 	NumberOfLogicalCPU="8"
 	NumberOfPhysicalCPU="8"
-	TotalVirtualMemory="3072"
+	TotalVirtualMemory="2048"
 	TotalPhysicalMemory="16384"
 	LogicalProcessorsPerPhysical="8"
 	ProcessorClockFrequency="0"
 	>
 	<Testing>
-		<StartDateTime>Aug 20 18:06 EDT</StartDateTime>
-		<StartTestTime>1724191589</StartTestTime>
+		<StartDateTime>Aug 20 23:07 EDT</StartDateTime>
+		<StartTestTime>1724209667</StartTestTime>
 		<TestList/>
-		<EndDateTime>Aug 20 18:06 EDT</EndDateTime>
-		<EndTestTime>1724191589</EndTestTime>
+		<EndDateTime>Aug 20 23:07 EDT</EndDateTime>
+		<EndTestTime>1724209667</EndTestTime>
 		<ElapsedMinutes>0</ElapsedMinutes>
 	</Testing>
 </Site>

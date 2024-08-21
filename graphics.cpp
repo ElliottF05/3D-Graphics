@@ -329,7 +329,7 @@ void Triangle::draw(const Camera& cam, Window& window) {
         t->b = b;
 
         window.drawTriangle(*this, cam);
-        window.drawTriangle(*t, cam);
+        window.drawTriangle(t, cam);
     } else {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
@@ -339,10 +339,6 @@ void Triangle::draw(const Camera& cam, Window& window) {
     }
 }
 void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const Triangle &triangle, int x, float y1, float y2, float d1) {
-    // mutex.lock();
-    // std::cout << "drawing vertical screen line" << std::endl;
-    // std::cout << threads::threadPool.getNumberOfActiveTasks() << std::endl;
-    // mutex.unlock();
     int bottom = round(y1);
     int top = round(y2);
     utils::sortAndClamp(bottom, top, window.height - 1);
@@ -353,12 +349,7 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
         float cameraZ = cam.getCameraZFromPixel(y, window.height);
         float cameraX = 1;
         depth = (d1 / (triangle.cameraNormal.x * cameraX + triangle.cameraNormal.y * cameraY + triangle.cameraNormal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-        if (depth < 0) {
-            if (depth < -0.1) {
-                // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
-            }
-            depth = 0;
-        }
+        depth = std::max(depth, 0.0f);
         if (depth < window.zBuffer.getDepth(x, y)) {
             window.zBuffer.setDepth(x, y, depth);
 
@@ -378,6 +369,40 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
             }
             float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
             window.pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
+        }
+    }
+}
+void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, int x, float y1, float y2, float d1) {
+    int bottom = round(y1);
+    int top = round(y2);
+    utils::sortAndClamp(bottom, top, window.height - 1);
+    float cameraY = cam.getCameraYFromPixel(x, window.width);
+    float depth;
+    for (int y = bottom; y <= top; y++) {
+        // calculate depth
+        float cameraZ = cam.getCameraZFromPixel(y, window.height);
+        float cameraX = 1;
+        depth = (d1 / (triangle->cameraNormal.x * cameraX + triangle->cameraNormal.y * cameraY + triangle->cameraNormal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        depth = std::max(depth, 0.0f);
+        if (depth < window.zBuffer.getDepth(x, y)) {
+            window.zBuffer.setDepth(x, y, depth);
+
+            Vec3 vec(cameraX, cameraY, cameraZ);
+            vec.normalize();
+            vec *= depth;
+            // vec.rotateY(cam.thetaY);
+            vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
+            // vec.rotateZ(cam.thetaZ);
+            vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
+            vec += cam.pos;
+
+            float proportionInShadow = Light::lights[0].amountLit(vec);
+            float angleLighting = Light::lights[0].cam.direction.dot(triangle->absoluteNormal * -1);
+            if (angleLighting < 0) {
+                angleLighting = 0;
+            }
+            float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+            window.pixelArray.setPixel(x, y, multiplier * triangle->r, multiplier * triangle->g, multiplier * triangle->b);
         }
     }
 }
@@ -709,50 +734,9 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
     y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
     for (float x = left; x < mid; x++) {
-        // mutex.lock();
-        // std::cout << "creating thread" << std::endl;
-        // mutex.unlock();
-        // Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
         threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
             Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
         });
-        // bottom = round(y1);
-        // top = round(y2);
-        // utils::sortAndClamp(bottom, top, height - 1);
-        // float cameraY = cam.getCameraYFromPixel(x, width);
-        // float depth;
-        // for (int y = bottom; y <= top; y++) {
-        //     // calculate depth
-        //     float cameraZ = cam.getCameraZFromPixel(y, height);
-        //     float cameraX = 1;
-        //     depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-        //     if (depth < 0) {
-        //         if (depth < -0.1) {
-        //             // std::cout << "ERROR: depth < -0.1, depth = " << depth << std::endl;
-        //         }
-        //         depth = 0;
-        //     }
-        //     if (depth < zBuffer.getDepth(x, y)) {
-        //         zBuffer.setDepth(x, y, depth);
-
-        //         Vec3 vec(cameraX, cameraY, cameraZ);
-        //         vec.normalize();
-        //         vec *= depth;
-        //         // vec.rotateY(cam.thetaY);
-        //         vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
-        //         // vec.rotateZ(cam.thetaZ);
-        //         vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
-        //         vec += cam.pos;
-
-        //         float proportionInShadow = Light::lights[0].amountLit(vec);
-        //         float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
-        //         if (angleLighting < 0) {
-        //             angleLighting = 0;
-        //         }
-        //         float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
-        //         pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
-        //     }
-        // }
         y1 += dy1;
         y2 += dy_long;
     }
@@ -760,48 +744,67 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
     y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
     for (float x = mid; x < right; x++) {
-        // Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
         threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
             Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
         });
-        // bottom = round(y1);
-        // top = round(y2);
-        // utils::sortAndClamp(bottom, top, height - 1);
-        // float cameraY = cam.getCameraYFromPixel(x, width);
-        // float depth;
-        // for (int y = bottom; y <= top; y++) {
-        //     // calculate depth
-        //     float cameraZ = cam.getCameraZFromPixel(y, height);
-        //     float cameraX = 1;
-        //     depth = (d1 / (normal.x * cameraX + normal.y * cameraY + normal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
-        //     if (depth < 0) {
-        //         depth = 0;
-        //     }
-        //     if (depth < zBuffer.getDepth(x, y)) {
-        //         zBuffer.setDepth(x, y, depth);
-
-        //         Vec3 vec(cameraX, cameraY, cameraZ);
-        //         vec.normalize();
-        //         vec *= depth;
-        //         // vec.rotateY(cam.thetaY);
-        //         vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
-        //         // vec.rotateZ(cam.thetaZ);
-        //         vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
-        //         vec += cam.pos;
-
-        //         float proportionInShadow = Light::lights[0].amountLit(vec);
-        //         float angleLighting = Light::lights[0].cam.direction.dot(triangle.absoluteNormal * -1);
-        //         if (angleLighting < 0) {
-        //             angleLighting = 0;
-        //         }
-        //         float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
-        //         pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
-        //     }
-        // }
         y1 += dy2;
         y2 += dy_long;
     }
+}
+void Window::drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam) {
+    Point a, b, c;
+    a = triangle->p1;
+    b = triangle->p2;
+    c = triangle->p3;
 
+    // equation for plane
+    float d1 = triangle->cameraNormal.x * a.cameraPos.x + triangle->cameraNormal.y * a.cameraPos.y + triangle->cameraNormal.z * a.cameraPos.z;
+
+    // first make a = leftmost, b = middle, c = rightmost point
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+    if (b.screenPos.x > c.screenPos.x) {
+        std::swap(b, c);
+    }
+    if (a.screenPos.x > b.screenPos.x) {
+        std::swap(a, b);
+    }
+
+    float dy_long = (c.screenPos.y - a.screenPos.y) / (c.screenPos.x - a.screenPos.x);
+    float dy1 = (b.screenPos.y - a.screenPos.y) / (b.screenPos.x - a.screenPos.x);
+    float dy2 = (c.screenPos.y - b.screenPos.y) / (c.screenPos.x - b.screenPos.x);
+
+    float left = a.screenPos.x;
+    float  mid = b.screenPos.x;
+    float right = c.screenPos.x;
+    utils::clampToRange(left, width - 1);
+    utils::clampToRange(mid, width - 1);
+    utils::clampToRange(right, width - 1);
+
+    // std::cout << left << ", " << mid << ", " << right << "\n";
+
+    float y1, y2; // y1 for shorter line segment, y2 for longer line segment
+    int bottom, top;
+    y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
+    for (float x = left; x < mid; x++) {
+        threads::threadPool.addTask([&cam, this, triangle, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        });
+        y1 += dy1;
+        y2 += dy_long;
+    }
+
+    y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
+    y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
+    for (float x = mid; x < right; x++) {
+        threads::threadPool.addTask([&cam, this, triangle, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        });
+        y1 += dy2;
+        y2 += dy_long;
+    }
 }
 void Window::clear() {
     pixelArray.clear();
@@ -830,16 +833,6 @@ void Window::getUint8Pointer(uint8_t* buffer) {
             }
         });
     }
-    // for (int i = 0, j = 0; i < pixelArray.data.size(); i++, j += 4) {
-    //     if (j + 3 >= width * height * 4) {
-    //         std::cout << "ERROR: getUint8Pointer FAILED, j + 3 >= width * height * 4, j = " << j << std::endl;
-    //         throw "getUint8Pointer failed";
-    //     }
-    //     buffer[j] = pixelArray.data[i].r;
-    //     buffer[j + 1] = pixelArray.data[i].g;
-    //     buffer[j + 2] = pixelArray.data[i].b;
-    //     buffer[j + 3] = 255;
-    // }
 }
 
 

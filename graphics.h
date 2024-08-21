@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <mutex>
 
@@ -115,6 +116,7 @@ struct Triangle {
     void draw(const Camera& cam, Window& window);
 
     static void drawVerticalScreenLine(const Camera& cam, Window& window, const Triangle& triangle, int x, float y1, float y2, float d1);
+    static void drawVerticalScreenLine(const Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, int x, float y1, float y2, float d1);
 };
 
 
@@ -205,6 +207,7 @@ struct Window {
     void drawPoint(Point& point);
     void drawLine(Line& line);
     void drawTriangle(Triangle& triangle, const Camera& cam);
+    void drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam);
     void draw(); // implementation specific
     void getUint8Pointer(uint8_t* buffer); // implementation specific
     void clear();

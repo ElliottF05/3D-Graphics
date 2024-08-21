@@ -12,5 +12,5 @@ if (CMAKE_SYSTEM_NAME STREQUAL Emscripten)
     set(CMAKE_EXECUTABLE_SUFFIX .js)
 endif()
 
-target_compile_options(3D-Graphics-Engine PRIVATE -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread)
-target_link_options(3D-Graphics-Engine PRIVATE -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=300 -pthread)
+target_compile_options(3D-Graphics-Engine PRIVATE -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O2 -flto)
+target_link_options(3D-Graphics-Engine PRIVATE -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O2 -flto)
