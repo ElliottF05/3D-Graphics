@@ -69,11 +69,43 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-O2"
+					"fragment" : "-O3"
 				},
 				{
 					"backtrace" : 3,
 					"fragment" : "-flto"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fapprox-func"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fno-math-errno"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fassociative-math"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-freciprocal-math"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fno-signed-zeros"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fno-trapping-math"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fno-rounding-math"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-ffp-contract=fast"
 				}
 			],
 			"language" : "CXX",
@@ -135,12 +167,52 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-O2",
+				"fragment" : "-O3",
 				"role" : "flags"
 			},
 			{
 				"backtrace" : 2,
 				"fragment" : "-flto",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fapprox-func",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fno-math-errno",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fassociative-math",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-freciprocal-math",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fno-signed-zeros",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fno-trapping-math",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-fno-rounding-math",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-ffp-contract=fast",
 				"role" : "flags"
 			}
 		],

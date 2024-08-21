@@ -1,19 +1,19 @@
 [
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O2 -flto -o CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/main.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/main.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/main.cpp",
   "output": "CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O2 -flto -o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/graphics.cpp",
   "output": "CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O2 -flto -o CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/threads.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/threads.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/threads.cpp",
   "output": "CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o"
 }

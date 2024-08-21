@@ -1,11 +1,11 @@
 # ninja log v6
-3	155	1724215056570201762	build.ninja	af3ba48f5349e11f
-2	2279	1724214907486712531	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	43828bdbf1ab2679
-2280	6822	1724214909763989481	3D-Graphics-Engine.js	c49b01e50c547799
-3	1423	1724214907486883449	CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o	e111980826e3c201
+3	155	1724219102041295645	build.ninja	af3ba48f5349e11f
+4	1485	1724219058779628549	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	515e251887e289c6
+1485	4751	1724219060260512340	3D-Graphics-Engine.js	fa775bf9f85ad9c7
+3	1162	1724216841836243171	CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o	88ff4f6a03594a6c
 402	501	1723518160636080886	3D-Graphics-Engine	39085658c68e6b78
-2	1456	1724214907486450030	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	454b4b0ebc74641a
-4	1094	1724215057506439173	CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o	7c6002948404fd28
-3	1133	1724215057505386251	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	31e160ba11702283
-4	1466	1724215057505886569	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	769cf195b6d62df9
-1466	4739	1724215058967851242	3D-Graphics-Engine.js	31246f580701a540
+4	1338	1724219058779281917	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	a80d7704519cb8bd
+6	1553	1724219102756872619	CMakeFiles/3D-Graphics-Engine.dir/threads.cpp.o	de973c2445d1e875
+5	1629	1724219102756056519	CMakeFiles/3D-Graphics-Engine.dir/main.cpp.o	659e529c3e8a1a48
+6	2195	1724219102756631406	CMakeFiles/3D-Graphics-Engine.dir/graphics.cpp.o	b42bd3d6b2b42d33
+2195	6272	1724219104945523313	3D-Graphics-Engine.js	5e411aa5742d9974

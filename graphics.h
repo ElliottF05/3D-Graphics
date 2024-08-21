@@ -125,7 +125,7 @@ struct Triangle {
 // DECLARING "Camera"
 struct Camera {
     Vec3 pos;
-    float thetaZ, thetaY, sinthetaZ, sinthetaY, costhetaZ, costhetaY, fov, fov_rad, maxPlaneCoord;
+    float thetaZ, thetaY, sinthetaZ, sinthetaY, costhetaZ, costhetaY, fov, fov_rad, maxPlaneCoord, maxPlaneCoordInv;
     Vec3 direction;
     Vec3 floorDirection;
 
@@ -136,6 +136,8 @@ struct Camera {
     void rotate(float thetaZ, float thetaY);
     float getCameraYFromPixel(int x, int width) const;
     float getCameraZFromPixel(int y, int height) const;
+    float getCameraYFromPixelFast(int x, float widthInv) const;
+    float getCameraZFromPixelFast(int y, float heightInv) const;
 };
 
 
@@ -199,6 +201,7 @@ struct ZBuffer {
 // DECLARING "Window"
 struct Window {
     int width, height;
+    float widthInv, heightInv;
     PixelArray pixelArray;
     ZBuffer zBuffer;
 

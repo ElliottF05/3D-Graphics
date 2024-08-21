@@ -167,12 +167,12 @@ void Point::calculateProjectedPos() {
     }
 }
 void Point::calculateScreenPos(const Camera& cam, const Window &window) {
-    screenPos.x = (0.5 * window.width) * (1 - projectedPos.x / cam.maxPlaneCoord) - 0.5;
-    screenPos.y = (0.5 * window.height - projectedPos.y / cam.maxPlaneCoord * 0.5 * window.width) - 0.5;
+    screenPos.x = (0.5 * window.width) * (1 - projectedPos.x * cam.maxPlaneCoordInv) - 0.5;
+    screenPos.y = 0.5 * (window.height - projectedPos.y * cam.maxPlaneCoordInv * window.width) - 0.5;
 }
 void Point::calculateScreenPos(const Camera& cam, const int width, const int height) {
-    screenPos.x = (0.5 * width) * (1 - projectedPos.x / cam.maxPlaneCoord) - 0.5;
-    screenPos.y = (0.5 * height - projectedPos.y / cam.maxPlaneCoord * 0.5 * width) - 0.5;
+    screenPos.x = (0.5 * width) * (1 - projectedPos.x * cam.maxPlaneCoordInv) - 0.5;
+    screenPos.y = 0.5 * (height - projectedPos.y * cam.maxPlaneCoordInv * width) - 0.5;
 }
 void Point::calculateAll(const Camera& cam, const Window& window) {
     calculateCameraPos(cam);
@@ -342,19 +342,21 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
     int bottom = round(y1);
     int top = round(y2);
     utils::sortAndClamp(bottom, top, window.height - 1);
-    float cameraY = cam.getCameraYFromPixel(x, window.width);
+    float cameraY = cam.getCameraYFromPixelFast(x, window.widthInv);
     float depth;
     for (int y = bottom; y <= top; y++) {
         // calculate depth
-        float cameraZ = cam.getCameraZFromPixel(y, window.height);
+        float cameraZ = cam.getCameraZFromPixelFast(y, window.heightInv);
         float cameraX = 1;
-        depth = (d1 / (triangle.cameraNormal.x * cameraX + triangle.cameraNormal.y * cameraY + triangle.cameraNormal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        float denom = triangle.cameraNormal.x * cameraX + triangle.cameraNormal.y * cameraY + triangle.cameraNormal.z * cameraZ;
+        float cameraVecLength = sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        depth = (d1 / denom) * cameraVecLength;
         depth = std::max(depth, 0.0f);
         if (depth < window.zBuffer.getDepth(x, y)) {
             window.zBuffer.setDepth(x, y, depth);
 
             Vec3 vec(cameraX, cameraY, cameraZ);
-            vec.normalize();
+            vec /= cameraVecLength;
             vec *= depth;
             // vec.rotateY(cam.thetaY);
             vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
@@ -376,19 +378,21 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
     int bottom = round(y1);
     int top = round(y2);
     utils::sortAndClamp(bottom, top, window.height - 1);
-    float cameraY = cam.getCameraYFromPixel(x, window.width);
+    float cameraY = cam.getCameraYFromPixelFast(x, window.widthInv);
     float depth;
     for (int y = bottom; y <= top; y++) {
         // calculate depth
-        float cameraZ = cam.getCameraZFromPixel(y, window.height);
+        float cameraZ = cam.getCameraZFromPixelFast(y, window.heightInv);
         float cameraX = 1;
-        depth = (d1 / (triangle->cameraNormal.x * cameraX + triangle->cameraNormal.y * cameraY + triangle->cameraNormal.z * cameraZ)) * sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        float denom = triangle->cameraNormal.x * cameraX + triangle->cameraNormal.y * cameraY + triangle->cameraNormal.z * cameraZ;
+        float cameraVecLength = sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
+        depth = (d1 / denom) * cameraVecLength;
         depth = std::max(depth, 0.0f);
         if (depth < window.zBuffer.getDepth(x, y)) {
             window.zBuffer.setDepth(x, y, depth);
 
             Vec3 vec(cameraX, cameraY, cameraZ);
-            vec.normalize();
+            vec /= cameraVecLength;
             vec *= depth;
             // vec.rotateY(cam.thetaY);
             vec.rotateYKnownTrig(cam.sinthetaY, cam.costhetaY);
@@ -429,6 +433,7 @@ Camera::Camera(Vec3 pos, float thetaZ, float thetaY, float fov) {
     this->sinthetaZ = sin(thetaZ);
     this->costhetaY = cos(thetaY);
     this->costhetaZ = cos(thetaZ);
+    this->maxPlaneCoordInv = 1 / this->maxPlaneCoord;
 }
 Camera::Camera() {
     this->fov = 90;
@@ -436,6 +441,11 @@ Camera::Camera() {
     this->maxPlaneCoord = tan(fov_rad / 2);
     this->direction = Vec3(1,0,0);
     this->floorDirection = Vec3(1,0,0);
+    this->maxPlaneCoordInv = 1 / this->maxPlaneCoord;
+    this->sinthetaY = 0;
+    this->sinthetaZ = 0;
+    this->costhetaY = 1;
+    this->costhetaZ = 1;
 }
 
 // METHODS
@@ -462,6 +472,12 @@ float Camera::getCameraYFromPixel(int x, int width) const {
 }
 float Camera::getCameraZFromPixel(int y, int height) const {
     return - maxPlaneCoord * (y - (0.5 * height) + 0.5) / (0.5 * height);
+}
+float Camera::getCameraYFromPixelFast(int x, float widthInv) const {
+    return - maxPlaneCoord * ((2 * x + 1.0) * widthInv - 1);
+}
+float Camera::getCameraZFromPixelFast(int y, float heightInv) const {
+    return - maxPlaneCoord * ((2 * y + 1.0) * heightInv - 1);
 }
 
 
@@ -608,6 +624,8 @@ Window::Window(int width, int height)
  : pixelArray(width, height), zBuffer(width, height) {
     this->width = width;
     this->height = height;
+    this->widthInv = 1.0 / width;
+    this->heightInv = 1.0 / height;
 }
 
 void Window::drawPoint(Point& point) {
