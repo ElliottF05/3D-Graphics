@@ -222,17 +222,19 @@ struct Window {
 struct Light {
     Camera cam;
     ZBuffer zBuffer;
+    int filteringRadius;
+    float luminosity, filteringAreaInv;
 
     static std::vector<Light> lights;
 
-    Light(Point pos, float thetaZ, float thetaY);
-    Light(Vec3 pos, float thetaZ, float thetaY);
+    Light(Point pos, float thetaZ, float thetaY, float luminosity);
+    Light(Vec3 pos, float thetaZ, float thetaY, float luminosity);
 
     void getTrianglePerspectiveFromLight(Triangle triangle);
     void addTriangleToZBuffer(Triangle& triangle);
     void fillZBuffer(std::vector<Triangle>& triangles);
 
-    float amountLit(Vec3& vec);
+    float amountLit(Vec3& vec, float& vecToLightMagInv);
 
 };
 

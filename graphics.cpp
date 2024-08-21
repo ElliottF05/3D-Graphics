@@ -364,12 +364,13 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
             vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
             vec += cam.pos;
 
-            float proportionInShadow = Light::lights[0].amountLit(vec);
             Vec3 vecToLight = Light::lights[0].cam.pos - vec;
-            vecToLight.normalize();
+            float vecToLightMagInv = 1.0 / vecToLight.mag();
+            vecToLight *= vecToLightMagInv;
+            float shadowMapLightingAmount = Light::lights[0].amountLit(vec, vecToLightMagInv);
             float angleLighting = vecToLight.dot(triangle.absoluteNormal);
             angleLighting = std::max(angleLighting, 0.0f);
-            float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+            float multiplier = 0.1 + 0.9 * shadowMapLightingAmount * angleLighting;
             window.pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
         }
     }
@@ -400,12 +401,13 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
             vec.rotateZKnownTrig(cam.sinthetaZ, cam.costhetaZ);
             vec += cam.pos;
 
-            float proportionInShadow = Light::lights[0].amountLit(vec);
             Vec3 vecToLight = Light::lights[0].cam.pos - vec;
-            vecToLight.normalize();
+            float vecToLightMagInv = 1.0 / vecToLight.mag();
+            vecToLight *= vecToLightMagInv;
+            float shadowMapLightingAmount = Light::lights[0].amountLit(vec, vecToLightMagInv);
             float angleLighting = vecToLight.dot(triangle->absoluteNormal);
             angleLighting = std::max(angleLighting, 0.0f);
-            float multiplier = 0.2 + 0.8 * proportionInShadow * angleLighting;
+            float multiplier = 0.1 + 0.9 * shadowMapLightingAmount * angleLighting;
             window.pixelArray.setPixel(x, y, multiplier * triangle->r, multiplier * triangle->g, multiplier * triangle->b);
         }
     }
@@ -859,13 +861,19 @@ void Window::getUint8Pointer(uint8_t* buffer) {
 std::vector<Light> Light::lights;
 
 // CONSTRUCTORS
-Light::Light(Point pos, float thetaZ, float thetaY) : zBuffer(4000, 4000) {
+Light::Light(Point pos, float thetaZ, float thetaY, float luminosity) : zBuffer(4000, 4000) {
     Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
+    this->luminosity = luminosity;
+    filteringRadius = 2;
+    filteringAreaInv = 1.0 / ( (2 * filteringRadius + 1) * (2 * filteringRadius + 1));
 }
-Light::Light(Vec3 pos, float thetaZ, float thetaY) : zBuffer(4000, 4000) {
+Light::Light(Vec3 pos, float thetaZ, float thetaY, float luminosity) : zBuffer(4000, 4000) {
     Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
     this->cam = camera;
+    this->luminosity = luminosity;
+    filteringRadius = 2;
+    filteringAreaInv = 1.0 / ( (2 * filteringRadius + 1) * (2 * filteringRadius + 1));
 }
 
 // METHODS
@@ -1052,7 +1060,7 @@ void Light::fillZBuffer(std::vector<Triangle> &triangles) {
         getTrianglePerspectiveFromLight(triangle);
     }
 }
-float Light::amountLit(Vec3 &vec) {
+float Light::amountLit(Vec3 &vec, float& vecToLightMagInv) {
     Point p(vec);
     p.calculateCameraPos(cam);
     p.calculateProjectedPos();
@@ -1071,7 +1079,10 @@ float Light::amountLit(Vec3 &vec) {
             }
         }
     }
-    lightingLevel /= (2 * offset + 1) * (2 * offset + 1);
+    lightingLevel *= filteringAreaInv;
+    lightingLevel *= luminosity;
+    lightingLevel *= vecToLightMagInv * vecToLightMagInv;
+    lightingLevel = std::min(lightingLevel, 1.0f);
     return lightingLevel;
 }
 

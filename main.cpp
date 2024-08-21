@@ -29,7 +29,7 @@ extern "C" {
         graphics::Triangle::triangles.push_back(t1);
 
         graphics::Vec3 not_used(-10, 0, 10);
-        graphics::Light l1(not_used, 0, -M_PI / 4.0);
+        graphics::Light l1(not_used, 0, -M_PI / 4.0, 200);
         graphics::Light::lights.push_back(l1);
 
         for (graphics::Light &l : graphics::Light::lights) {
