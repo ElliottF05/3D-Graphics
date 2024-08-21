@@ -3,6 +3,10 @@ const canvasContext = canvas.getContext('2d');
 
 let running = true;
 var pressedKeys = {};
+let mouseX = 0;
+let mouseY = 0;
+let mouseMultiplier = 1;
+let pointerLocked = false;
 window.onkeyup = function(e) { pressedKeys[e.key] = false; }
 window.onkeydown = function(e) { pressedKeys[e.key] = true; }
 
@@ -18,6 +22,24 @@ document.addEventListener('keydown', (event) => {
     if (event.key == 'p') {
         running = !running;
     }
+    if (event.key == 'Escape') {
+        console.log('Escape pressed');
+        document.exitPointerLock();
+        console.log(pointerLocked);
+    }
+});
+
+canvas.addEventListener('mousemove', (event) => {
+    if (running) {
+        mouseX += event.movementX;
+        mouseY += event.movementY;
+    }
+});
+
+document.addEventListener('click', () => {
+    canvas.requestPointerLock().then(() => {
+        pointerLocked = true;
+    });
 });
 
 function setCanvasImage() {
@@ -67,6 +89,11 @@ function processInput() {
     if (pressedKeys['ArrowDown']) {
         renderNeeded = true;
         _user_input(0, 0, 0, 0, -1);
+    }
+    if (pointerLocked) {
+        _user_input(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier);
+        mouseX = 0;
+        mouseY = 0;
     }
 }
 

@@ -117,7 +117,7 @@ extern "C" {
     void user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY) {
         float moveMultiplier = 0.1;
         cam.moveRelative(moveMultiplier * cameraMoveFoward, moveMultiplier * cameraMoveSide, moveMultiplier * cameraMoveUp);
-        float rotateMultiplier = 0.1;
+        float rotateMultiplier = 0.01;
         cam.rotate(rotateMultiplier * cameraRotateZ, rotateMultiplier * cameraRotateY);
     }
 }
