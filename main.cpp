@@ -81,7 +81,7 @@ extern "C" {
         }
 
         ghostTriangles.clear();
-        graphics::utils::buildCube(getPositionOfNewObject(), 1, ghostTriangles);
+        graphics::utils::buildCube(getPositionOfNewObject(), 1, ghostTriangles, 120, 120, 120);
         for (graphics::Triangle &t : ghostTriangles) {
             threads::threadPool.addTask([&t] {
                 t.draw(cam, window);

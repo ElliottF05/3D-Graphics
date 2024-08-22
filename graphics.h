@@ -109,6 +109,7 @@ struct Triangle {
     Vec3 cameraNormal;
     int r,g,b;
 
+    Triangle(Vec3 p1, Vec3 p2, Vec3 p3, int r, int g, int b);
     Triangle(Point p1, Point p2, Point p3);
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
     Triangle();

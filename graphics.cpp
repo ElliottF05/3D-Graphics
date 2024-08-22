@@ -229,6 +229,10 @@ void Line::draw(const Camera& cam, Window& window) {
 // CONSTRUCTOR
 // NOTE: When points are given in clockwise order, the normal vector points towards the camera
 std::vector<Triangle> Triangle::triangles; // defining the static variable, TODO: check if this is right
+Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3, int r, int g, int b) : p1(p1), p2(p2), p3(p3), r(r), g(g), b(b) {
+    this->absoluteNormal = (p3 - p1).cross(p2 - p1);
+    this->absoluteNormal.normalize();
+}
 Triangle::Triangle(Point p1, Point p2, Point p3) {
     this->p1 = p1;
     this->p2 = p2;
@@ -1150,7 +1154,7 @@ void utils::sortAndClamp(int &toLower, int &toHigher, int max) {
         toHigher = max;
     }
 }
-void utils::buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles) {
+void utils::buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles, int red, int green, int blue) {
     float halfSide = sideLength / 2;
     // start at "bottom right" corner and go counter clockwise
     Vec3 a(center.x - halfSide, center.y + halfSide, center.z - halfSide);
@@ -1164,30 +1168,33 @@ void utils::buildCube(Vec3 center, float sideLength, std::vector<Triangle>& tria
     Vec3 h(center.x - halfSide, center.y - halfSide, center.z + halfSide);
 
     // front face
-    triangles.push_back(Triangle(a, e, h));
-    triangles.push_back(Triangle(h, d, a));
+    triangles.push_back(Triangle(a, e, h, red, green, blue));
+    triangles.push_back(Triangle(h, d, a, red, green, blue));
 
     // back face
-    triangles.push_back(Triangle(c, g, f));
-    triangles.push_back(Triangle(f, b, c));
+    triangles.push_back(Triangle(c, g, f, red, green, blue));
+    triangles.push_back(Triangle(f, b, c, red, green, blue));
 
     // left face
-    triangles.push_back(Triangle(d, h, g));
-    triangles.push_back(Triangle(g, c, d));
+    triangles.push_back(Triangle(d, h, g, red, green, blue));
+    triangles.push_back(Triangle(g, c, d, red, green, blue));
 
     // right face
-    triangles.push_back(Triangle(b, f, e));
-    triangles.push_back(Triangle(e, a, b));
+    triangles.push_back(Triangle(b, f, e, red, green, blue));
+    triangles.push_back(Triangle(e, a, b, red, green, blue));
 
     // top face
-    triangles.push_back(Triangle(e, f, g));
-    triangles.push_back(Triangle(g, h, e));
+    triangles.push_back(Triangle(e, f, g, red, green, blue));
+    triangles.push_back(Triangle(g, h, e, red, green, blue));
 
     // bottom face
-    triangles.push_back(Triangle(c, b, a));
-    triangles.push_back(Triangle(a, d ,c));
+    triangles.push_back(Triangle(c, b, a, red, green, blue));
+    triangles.push_back(Triangle(a, d ,c, red, green, blue));
 }
-void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles) {
+void utils::buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles) {
+    buildCube(center, sideLength, triangles, 255, 255, 255);
+}
+void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles, int r, int g, int b) {
     std::vector<graphics::Vec3> prev(iterations);
     std::vector<graphics::Vec3> curr(iterations);
     bool onFirst = true;
@@ -1205,8 +1212,8 @@ void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<T
             continue;
         }
         for (int i = 0; i < prev.size(); i++) {
-            graphics::Triangle t1(prev[i], curr[i], curr[(i + 1) % iterations]);
-            graphics::Triangle t2(prev[(i + 1) % iterations], prev[i], curr[(i + 1) % iterations]);
+            graphics::Triangle t1(prev[i], curr[i], curr[(i + 1) % iterations], r, g, b);
+            graphics::Triangle t2(prev[(i + 1) % iterations], prev[i], curr[(i + 1) % iterations], r, g, b);
             t1.r = 255;
             t1.g = 255;
             t1.b = 255;
@@ -1217,4 +1224,7 @@ void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<T
             graphics::Triangle::triangles.push_back(t2);
         }
     }
+}
+void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle> &triangles) {
+    buildSphere(center, radius, iterations, triangles, 255, 255, 255);
 }
