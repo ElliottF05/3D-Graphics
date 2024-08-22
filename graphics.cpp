@@ -1029,7 +1029,8 @@ void Light::addTriangleToZBuffer(Triangle &triangle) {
                 depth = 0;
             }
             if (depth < zBuffer.getDepth(x, y)) {
-                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.003);
+                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.001);
+                depthBias = 0;
                 zBuffer.setDepth(x, y, depth + depthBias);
             }
         }
@@ -1054,7 +1055,8 @@ void Light::addTriangleToZBuffer(Triangle &triangle) {
                 depth = 0;
             }
             if (depth < zBuffer.getDepth(x, y)) {
-                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.003);
+                float depthBias = std::max(0.05 * (1 - abs(normal.x)), 0.001);
+                depthBias = 0;
                 zBuffer.setDepth(x, y, depth + depthBias);
             }
         }

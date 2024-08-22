@@ -29,6 +29,12 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+document.addEventListener('click', () => {
+    if (pointerLocked) {
+        _user_input(0,0,0,0,0, 1)
+    }
+});
+
 canvas.addEventListener('mousemove', (event) => {
     if (running) {
         mouseX += event.movementX;
@@ -36,7 +42,7 @@ canvas.addEventListener('mousemove', (event) => {
     }
 });
 
-document.addEventListener('click', () => {
+canvas.addEventListener('click', () => {
     canvas.requestPointerLock().then(() => {
         pointerLocked = true;
     });

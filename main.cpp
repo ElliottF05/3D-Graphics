@@ -32,10 +32,10 @@ extern "C" {
         graphics::Triangle::triangles.push_back(t1);
 
         graphics::Vec3 not_used(-10, 0, 10);
-        graphics::Light l1(not_used, 0, -M_PI / 4.0, 200);
+        graphics::Light l1(not_used, 0, -M_PI / 4.0, 400);
         graphics::Light::lights.push_back(l1);
 
-        graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, 0.5), 1, graphics::Triangle::triangles);
+        graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, -0.5), 1, graphics::Triangle::triangles);
 
         for (graphics::Light &l : graphics::Light::lights) {
             l.fillZBuffer(graphics::Triangle::triangles);
@@ -62,7 +62,6 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     uint8_t* get_buffer() {
         auto start = std::chrono::high_resolution_clock::now();
-        std::cout << cam.direction.toString() << std::endl;
 
         // CLEARING WINDOW
         window.clear();
@@ -97,7 +96,7 @@ extern "C" {
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
-        // std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
+        std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
         return &buffer[0];
     }
 }
@@ -109,6 +108,15 @@ extern "C" {
         cam.moveRelative(moveMultiplier * cameraMoveFoward, moveMultiplier * cameraMoveSide, moveMultiplier * cameraMoveUp);
         float rotateMultiplier = 0.01;
         cam.rotate(rotateMultiplier * cameraRotateZ, rotateMultiplier * cameraRotateY);
+
+        if (userInputCode == 1) {
+            for (graphics::Triangle &t : ghostTriangles) {
+                graphics::Triangle::triangles.push_back(t);
+            }
+            for (graphics::Light &l : graphics::Light::lights) {
+            l.fillZBuffer(ghostTriangles);
+            }
+        }
     }
 }
 
