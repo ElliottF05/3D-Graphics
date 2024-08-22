@@ -19,6 +19,9 @@ static graphics::Camera cam;
 // Setting up buffer
 static uint8_t* buffer = new uint8_t[window.width * window.height * 4];
 
+// Setting up ghost triangles
+static std::vector<graphics::Triangle> ghostTriangles;
+
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setup_scene() {
@@ -74,20 +77,25 @@ extern "C" {
         cam.pos.y = -2;
         cam.pos.z = 1;
         cam.rotate(M_PI / 6.0, -M_PI / 8.0);
-
-
-        // window.clear();
-        // for (graphics::Triangle &t : graphics::Triangle::triangles) {
-        //     t.draw(cam, window);
-        // }
     }
 }
 
+graphics::Vec3 getCenterOfScreen() {
+    return cam.pos + cam.direction * window.zBuffer.getDepth(window.width / 2, window.height / 2);
+}
+
+graphics::Vec3 getPositionOfNewObject() {
+    graphics::Vec3 newObjectPosition = getCenterOfScreen() - cam.direction;
+    newObjectPosition.x = round(newObjectPosition.x + 0.5) - 0.5;
+    newObjectPosition.y = round(newObjectPosition.y + 0.5) - 0.5;
+    newObjectPosition.z = round(newObjectPosition.z + 0.5) - 0.5;
+}
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
     uint8_t* get_buffer() {
         auto start = std::chrono::high_resolution_clock::now();
+        // graphics::Vec3 = getPositionOfNewObject();
         window.clear();
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
