@@ -4495,7 +4495,7 @@ var _setup_scene = Module["_setup_scene"] = () => (_setup_scene = Module["_setup
 
 var _get_buffer = Module["_get_buffer"] = () => (_get_buffer = Module["_get_buffer"] = wasmExports["get_buffer"])();
 
-var _user_input = Module["_user_input"] = (a0, a1, a2, a3, a4) => (_user_input = Module["_user_input"] = wasmExports["user_input"])(a0, a1, a2, a3, a4);
+var _user_input = Module["_user_input"] = (a0, a1, a2, a3, a4, a5) => (_user_input = Module["_user_input"] = wasmExports["user_input"])(a0, a1, a2, a3, a4, a5);
 
 var _main = Module["_main"] = (a0, a1) => (_main = Module["_main"] = wasmExports["__main_argc_argv"])(a0, a1);
 

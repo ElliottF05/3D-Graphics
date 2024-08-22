@@ -52,46 +52,46 @@ function setCanvasImage() {
 
 function processInput() {
     // INFO FOR _user_input:
-    // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY)
+    // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
     if (pressedKeys['w']) {
-        _user_input(1, 0, 0, 0, 0);
+        _user_input(1, 0, 0, 0, 0, 0);
     }
     if (pressedKeys['s']) {
-        _user_input(-1, 0, 0, 0, 0);
+        _user_input(-1, 0, 0, 0, 0, 0);
     }
     if (pressedKeys['a']) {
-        _user_input(0, -1, 0, 0, 0);
+        _user_input(0, -1, 0, 0, 0, 0);
     }
     if (pressedKeys['d']) {
-        _user_input(0, 1, 0, 0, 0);
+        _user_input(0, 1, 0, 0, 0, 0);
     }
     if (pressedKeys[' ']) {
         renderNeeded = true;
-        _user_input(0, 0, 1, 0, 0);
+        _user_input(0, 0, 1, 0, 0, 0);
     }
     if (pressedKeys['Shift']) {
         renderNeeded = true;
-        _user_input(0, 0, -1, 0, 0);
+        _user_input(0, 0, -1, 0, 0, 0);
     }
 
     if (pressedKeys['ArrowLeft']) {
         renderNeeded = true;
-        _user_input(0, 0, 0, 1, 0);
+        _user_input(0, 0, 0, 1, 0, 0);
     }
     if (pressedKeys['ArrowRight']) {
         renderNeeded = true;
-        _user_input(0, 0, 0, -1, 0);
+        _user_input(0, 0, 0, -1, 0, 0);
     }
     if (pressedKeys['ArrowUp']) {
         renderNeeded = true;
-        _user_input(0, 0, 0, 0, 1);
+        _user_input(0, 0, 0, 0, 1, 0);
     }
     if (pressedKeys['ArrowDown']) {
         renderNeeded = true;
-        _user_input(0, 0, 0, 0, -1);
+        _user_input(0, 0, 0, 0, -1, 0);
     }
     if (pointerLocked) {
-        _user_input(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier);
+        _user_input(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
         mouseX = 0;
         mouseY = 0;
     }

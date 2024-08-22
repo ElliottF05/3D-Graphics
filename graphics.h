@@ -252,6 +252,12 @@ namespace utils {
     void sortPair(int& toLower, int& toHigher);
     void clampToRange(int& value, int max);
     void sortAndClamp(int& toLower, int& toHigher, int max);
+
+    // Making new objects
+    void buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles, int r, int g, int b);
+    void buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles, int r, int g, int b);
+    void buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles);
+    void buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles);
 }
 
 }

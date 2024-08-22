@@ -10,8 +10,6 @@
 
 using namespace graphics;
 
-static std::mutex mutex;
-
 //-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "Vec3"
 
@@ -462,7 +460,12 @@ void Camera::rotate(float thetaZ, float thetaY) {
     this->thetaY += thetaY;
     this->thetaY = std::max(this->thetaY, (float) -M_PI / 2);
     this->thetaY = std::min(this->thetaY, (float) M_PI / 2);
-    direction.rotate(thetaZ, thetaY);
+    direction.x = 1;
+    direction.y = 0;
+    direction.z = 0;
+    direction.rotateY(this->thetaY);
+    direction.rotateZ(this->thetaZ);
+    // direction.rotate(this->thetaZ, this->thetaY);
     floorDirection.rotate(thetaZ, 0);
     this->sinthetaY = sin(this->thetaY);
     this->sinthetaZ = sin(this->thetaZ);
@@ -1145,5 +1148,73 @@ void utils::sortAndClamp(int &toLower, int &toHigher, int max) {
     }
     if (toHigher > max) {
         toHigher = max;
+    }
+}
+void utils::buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles) {
+    float halfSide = sideLength / 2;
+    // start at "bottom right" corner and go counter clockwise
+    Vec3 a(center.x - halfSide, center.y + halfSide, center.z - halfSide);
+    Vec3 b(center.x + halfSide, center.y + halfSide, center.z - halfSide);
+    Vec3 c(center.x + halfSide, center.y - halfSide, center.z - halfSide);
+    Vec3 d(center.x - halfSide, center.y - halfSide, center.z - halfSide);
+
+    Vec3 e(center.x - halfSide, center.y + halfSide, center.z + halfSide);
+    Vec3 f(center.x + halfSide, center.y + halfSide, center.z + halfSide);
+    Vec3 g(center.x + halfSide, center.y - halfSide, center.z + halfSide);
+    Vec3 h(center.x - halfSide, center.y - halfSide, center.z + halfSide);
+
+    // front face
+    triangles.push_back(Triangle(a, e, h));
+    triangles.push_back(Triangle(h, d, a));
+
+    // back face
+    triangles.push_back(Triangle(c, g, f));
+    triangles.push_back(Triangle(f, b, c));
+
+    // left face
+    triangles.push_back(Triangle(d, h, g));
+    triangles.push_back(Triangle(g, c, d));
+
+    // right face
+    triangles.push_back(Triangle(b, f, e));
+    triangles.push_back(Triangle(e, a, b));
+
+    // top face
+    triangles.push_back(Triangle(e, f, g));
+    triangles.push_back(Triangle(g, h, e));
+
+    // bottom face
+    triangles.push_back(Triangle(c, b, a));
+    triangles.push_back(Triangle(a, d ,c));
+}
+void utils::buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles) {
+    std::vector<graphics::Vec3> prev(iterations);
+    std::vector<graphics::Vec3> curr(iterations);
+    bool onFirst = true;
+    for (float thetaY = -M_PI / 2.0; thetaY <= M_PI / 2.0; thetaY += M_PI / iterations) {
+        prev = curr;
+        curr.clear();
+        for (float thetaZ = 0; thetaZ <= 2 * M_PI; thetaZ += 2 * M_PI / iterations) {
+            graphics::Vec3 v(std::cos(thetaY) * std::cos(thetaZ), std::cos(thetaY) * std::sin(thetaZ), std::sin(thetaY));
+            v *= radius / 2;
+            v += center;
+            curr.push_back(v);
+        }
+        if (onFirst) {
+            onFirst = false;
+            continue;
+        }
+        for (int i = 0; i < prev.size(); i++) {
+            graphics::Triangle t1(prev[i], curr[i], curr[(i + 1) % iterations]);
+            graphics::Triangle t2(prev[(i + 1) % iterations], prev[i], curr[(i + 1) % iterations]);
+            t1.r = 255;
+            t1.g = 255;
+            t1.b = 255;
+            t2.r = 255;
+            t2.g = 255;
+            t2.b = 255;
+            graphics::Triangle::triangles.push_back(t1);
+            graphics::Triangle::triangles.push_back(t2);
+        }
     }
 }
