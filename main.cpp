@@ -25,24 +25,51 @@ static std::vector<graphics::Triangle> ghostTriangles;
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setup_scene() {
-        graphics::Point p1(-5, 10, -1), p2(-5, -10, -1), p3(15, 0, -1), p4(1, -5, -1);
-        graphics::Triangle t1(p1, p3, p2);
-        t1.g = 255;
-        t1.b = 230;
-        graphics::Triangle::triangles.push_back(t1);
+        bool floorGridColor = true;
+        int floorGridSize = 12;
+        for (int i = -floorGridSize / 2; i < floorGridSize / 2; i++) {
+            floorGridColor = !floorGridColor;
+            for (int j = -floorGridSize / 2; j < floorGridSize / 2; j++) {
+                floorGridColor = !floorGridColor;
+                graphics::Point p1(i, j, 0);
+                graphics::Point p2(i+1, j, 0);
+                graphics::Point p3(i, j+1, 0);
+                graphics::Point p4(i+1, j+1, 0);
 
-        graphics::Vec3 not_used(-10, 0, 10);
-        graphics::Light l1(not_used, 0, -M_PI / 4.0, 400);
+                graphics::Triangle t1(p4, p2, p1);
+                graphics::Triangle t2(p1, p3, p4);
+                if (floorGridColor) {
+                    t1.r = 200;
+                    t1.g = 200;
+                    t1.b = 200;
+                    t2.r = 200;
+                    t2.g = 200;
+                    t2.b = 200;
+                } else {
+                    t1.r = 150;
+                    t1.g = 150;
+                    t1.b = 150;
+                    t2.r = 150;
+                    t2.g = 150;
+                    t2.b = 150;
+                }
+                graphics::Triangle::triangles.push_back(t1);
+                graphics::Triangle::triangles.push_back(t2);
+            }
+        }
+        graphics::Vec3 lightPos(-10, 0, 10);
+        graphics::Light l1(lightPos, 0, -M_PI / 4.0, 400);
         graphics::Light::lights.push_back(l1);
 
-        graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, -0.5), 1, graphics::Triangle::triangles);
+        graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, 0.5), 1, graphics::Triangle::triangles);
+        graphics::utils::buildSphere(graphics::Vec3(3.5, -0.5, 0.5), 1, 40, graphics::Triangle::triangles, 255, 200, 200);
 
         for (graphics::Light &l : graphics::Light::lights) {
             l.fillZBuffer(graphics::Triangle::triangles);
         }
 
         cam.pos.y = -2;
-        cam.pos.z = 1;
+        cam.pos.z = 2;
     }
 }
 
