@@ -449,17 +449,7 @@ Camera::Camera(Vec3 pos, float thetaZ, float thetaY, float fov) {
     this->costhetaZ = cos(thetaZ);
     this->maxPlaneCoordInv = 1 / this->maxPlaneCoord;
 }
-Camera::Camera() {
-    this->fov = 90;
-    this->fov_rad = 90 * M_PI / 180;
-    this->maxPlaneCoord = tan(fov_rad / 2);
-    this->direction = Vec3(1,0,0);
-    this->floorDirection = Vec3(1,0,0);
-    this->maxPlaneCoordInv = 1 / this->maxPlaneCoord;
-    this->sinthetaY = 0;
-    this->sinthetaZ = 0;
-    this->costhetaY = 1;
-    this->costhetaZ = 1;
+Camera::Camera() : Camera(Vec3(0,0,0), 0, 0, 90) {
 }
 
 // METHODS
