@@ -13,6 +13,7 @@ struct Vec3;
 struct Point;
 struct Line;
 struct Triangle;
+struct Object3D;
 
 struct Camera;
 struct World;
@@ -118,6 +119,21 @@ struct Triangle {
 
     static void drawVerticalScreenLine(const Camera& cam, Window& window, const Triangle& triangle, int x, float y1, float y2, float d1);
     static void drawVerticalScreenLine(const Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, int x, float y1, float y2, float d1);
+};
+
+
+//---------------------------------------------------------------------------
+// DECLARING "Object3D"
+struct Object3D {
+    static std::vector<Object3D> objects;
+    std::vector<Triangle> triangles;
+    bool isDeletable;
+
+    Object3D();
+    Object3D(std::vector<Triangle> triangles);
+    Object3D(std::vector<Triangle> triangles, bool isDeletable);
+
+    void draw(const Camera& cam, Window& window);
 };
 
 
