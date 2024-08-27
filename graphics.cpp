@@ -371,8 +371,13 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
             vecToLight *= vecToLightMagInv;
             float shadowMapLightingAmount = Light::lights[0].amountLit(vec, vecToLightMagInv);
             float angleLighting = vecToLight.dot(triangle.absoluteNormal);
-            angleLighting = std::max(angleLighting, 0.0f);
-            float multiplier = 0.2 + 0.8 * shadowMapLightingAmount * angleLighting;
+
+            float multiplier;
+            if (angleLighting > 0) {
+                multiplier = 0.2 + 0.8 * shadowMapLightingAmount * angleLighting;
+            } else {
+                multiplier = 0.2 + 0.05 * angleLighting;
+            }
             window.pixelArray.setPixel(x, y, multiplier * triangle.r, multiplier * triangle.g, multiplier * triangle.b);
         }
     }
@@ -408,8 +413,13 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
             vecToLight *= vecToLightMagInv;
             float shadowMapLightingAmount = Light::lights[0].amountLit(vec, vecToLightMagInv);
             float angleLighting = vecToLight.dot(triangle->absoluteNormal);
-            angleLighting = std::max(angleLighting, 0.0f);
-            float multiplier = 0.2 + 0.8 * shadowMapLightingAmount * angleLighting;
+
+            float multiplier;
+            if (angleLighting > 0) {
+                multiplier = 0.2 + 0.8 * shadowMapLightingAmount * angleLighting;
+            } else {
+                multiplier = 0.2 + 0.05 * angleLighting;
+            }
             window.pixelArray.setPixel(x, y, multiplier * triangle->r, multiplier * triangle->g, multiplier * triangle->b);
         }
     }
@@ -868,19 +878,12 @@ void Window::getUint8Pointer(uint8_t* buffer) {
 std::vector<Light> Light::lights;
 
 // CONSTRUCTORS
-Light::Light(Point pos, float thetaZ, float thetaY, float luminosity) : zBuffer(4000, 4000) {
-    Camera camera(pos.absolutePos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
-    this->cam = camera;
+Light::Light(Vec3 pos, float thetaZ, float thetaY, float fov, float luminosity) : zBuffer(4000, 4000), cam(pos, thetaZ, thetaY, fov) {
     this->luminosity = luminosity;
     filteringRadius = 2;
     filteringAreaInv = 1.0 / ( (2 * filteringRadius + 1) * (2 * filteringRadius + 1));
 }
-Light::Light(Vec3 pos, float thetaZ, float thetaY, float luminosity) : zBuffer(4000, 4000) {
-    Camera camera(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI);
-    this->cam = camera;
-    this->luminosity = luminosity;
-    filteringRadius = 2;
-    filteringAreaInv = 1.0 / ( (2 * filteringRadius + 1) * (2 * filteringRadius + 1));
+Light::Light(Vec3 pos, float thetaZ, float thetaY, float luminosity) : Light::Light(pos, thetaZ, thetaY, atan(0.5) * 180 / M_PI, luminosity) {
 }
 
 // METHODS

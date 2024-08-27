@@ -57,8 +57,8 @@ extern "C" {
                 graphics::Triangle::triangles.push_back(t2);
             }
         }
-        graphics::Vec3 lightPos(-10, 0, 10);
-        graphics::Light l1(lightPos, 0, -M_PI / 4.0, 400);
+        graphics::Vec3 lightPos(-50, 0, 50);
+        graphics::Light l1(lightPos, 0, -M_PI / 4.0, 10, 4000);
         graphics::Light::lights.push_back(l1);
 
         graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, 0.5), 1, graphics::Triangle::triangles);

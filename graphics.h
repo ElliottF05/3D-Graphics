@@ -228,7 +228,7 @@ struct Light {
 
     static std::vector<Light> lights;
 
-    Light(Point pos, float thetaZ, float thetaY, float luminosity);
+    Light(Vec3 pos, float thetaZ, float thetaY, float fov, float luminosity);
     Light(Vec3 pos, float thetaZ, float thetaY, float luminosity);
 
     void getTrianglePerspectiveFromLight(Triangle triangle);
