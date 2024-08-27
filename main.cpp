@@ -19,12 +19,13 @@ static graphics::Camera cam;
 // Setting up buffer
 static uint8_t* buffer = new uint8_t[window.width * window.height * 4];
 
-// Setting up ghost triangles
-static std::vector<graphics::Triangle> ghostTriangles;
+// Ghost object
+static graphics::Object3D ghostObject;
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setup_scene() {
+        graphics::Object3D floorGrid;
         bool floorGridColor = true;
         int floorGridSize = 12;
         for (int i = -floorGridSize / 2; i < floorGridSize / 2; i++) {
@@ -53,16 +54,18 @@ extern "C" {
                     t2.g = 150;
                     t2.b = 150;
                 }
-                graphics::Triangle::triangles.push_back(t1);
-                graphics::Triangle::triangles.push_back(t2);
+                floorGrid.triangles.push_back(t1);
+                floorGrid.triangles.push_back(t2);
             }
         }
+        graphics::Object3D::objects.push_back(floorGrid);
+
         graphics::Vec3 lightPos(-50, 0, 50);
         graphics::Light l1(lightPos, 0, -M_PI / 4.0, 10, 4000);
         graphics::Light::lights.push_back(l1);
 
-        graphics::utils::buildCube(graphics::Vec3(0.5, -0.5, 0.5), 1, graphics::Triangle::triangles);
-        graphics::utils::buildSphere(graphics::Vec3(3.5, -0.5, 0.5), 1, 40, graphics::Triangle::triangles, 255, 200, 200);
+        graphics::Object3D::objects.push_back(graphics::Object3D::buildCube(graphics::Vec3(0.5, -0.5, 0.5), 1));
+        graphics::Object3D::objects.push_back(graphics::Object3D::buildSphere(graphics::Vec3(3.5, -0.5, 0.5), 1, 40, 255, 200, 200));
 
         for (graphics::Light &l : graphics::Light::lights) {
             l.fillZBuffer(graphics::Triangle::triangles);
@@ -97,22 +100,16 @@ extern "C" {
         }
 
         // DRAWING TRIANGLES
-        for (graphics::Triangle &t : graphics::Triangle::triangles) {
-            threads::threadPool.addTask([&t] {
-                t.draw(cam, window);
-            });
+        for (graphics::Object3D &o : graphics::Object3D::objects) {
+            o.drawMultithreaded(cam, window);
         }
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
 
-        ghostTriangles.clear();
-        graphics::utils::buildCube(getPositionOfNewObject(), 1, ghostTriangles, 120, 120, 120);
-        for (graphics::Triangle &t : ghostTriangles) {
-            threads::threadPool.addTask([&t] {
-                t.draw(cam, window);
-            });
-        }
+        // DRAWING GHOST TRIANGLES
+        ghostObject = graphics::Object3D::buildCube(getPositionOfNewObject(), 1, 120, 120, 120);
+        ghostObject.drawMultithreaded(cam, window);
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
@@ -137,11 +134,9 @@ extern "C" {
         cam.rotate(rotateMultiplier * cameraRotateZ, rotateMultiplier * cameraRotateY);
 
         if (userInputCode == 1) {
-            for (graphics::Triangle &t : ghostTriangles) {
-                graphics::Triangle::triangles.push_back(t);
-            }
+            graphics::Object3D::objects.push_back(ghostObject);
             for (graphics::Light &l : graphics::Light::lights) {
-            l.fillZBuffer(ghostTriangles);
+            l.fillZBuffer(ghostObject.triangles);
             }
         }
     }

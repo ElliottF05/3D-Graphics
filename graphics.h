@@ -133,7 +133,13 @@ struct Object3D {
     Object3D(std::vector<Triangle> triangles);
     Object3D(std::vector<Triangle> triangles, bool isDeletable);
 
-    void draw(const Camera& cam, Window& window);
+    void drawMultithreaded(const Camera& cam, Window& window);
+
+    // Making new objects
+    static Object3D buildCube(Vec3 center, float sideLength, int r, int g, int b);
+    static Object3D buildSphere(Vec3 center, float radius, int iterations, int r, int g, int b);
+    static Object3D buildCube(Vec3 center, float sideLength);
+    static Object3D buildSphere(Vec3 center, float radius, int iterations);
 };
 
 
@@ -269,12 +275,6 @@ namespace utils {
     void sortPair(int& toLower, int& toHigher);
     void clampToRange(int& value, int max);
     void sortAndClamp(int& toLower, int& toHigher, int max);
-
-    // Making new objects
-    void buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles, int r, int g, int b);
-    void buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles, int r, int g, int b);
-    void buildCube(Vec3 center, float sideLength, std::vector<Triangle>& triangles);
-    void buildSphere(Vec3 center, float radius, int iterations, std::vector<Triangle>& triangles);
 }
 
 }
