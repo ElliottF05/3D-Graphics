@@ -640,11 +640,12 @@ void PixelArray::setPixel(int x, int y, int color) {
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
-    data[index].mutex.lock();
-    data[index].r = color;
-    data[index].g = color;
-    data[index].b = color;
-    data[index].mutex.unlock();
+    {
+        std::lock_guard<std::mutex> lock(data[index].mutex);
+        data[index].r = color;
+        data[index].g = color;
+        data[index].b = color;
+    }
 }
 void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
@@ -652,11 +653,12 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
         throw "color value out of bounds";
     }
     int index = this->getIndex(x, y);
-    data[index].mutex.lock();
-    data[index].r = r;
-    data[index].g = g;
-    data[index].b = b;
-    data[index].mutex.unlock();
+    {
+        std::lock_guard<std::mutex> lock(data[index].mutex);
+        data[index].r = r;
+        data[index].g = g;
+        data[index].b = b;
+    }
 }
 void PixelArray::clear() {
     for (int i = 0; i < data.size(); i += width) {
@@ -711,9 +713,10 @@ void ZBuffer::setDepth(int x, int y, float depth) {
         throw "invalid depth";
     }
     int index = getIndex(x, y);
-    data[index].mutex.lock();
-    data[index].depth = depth;
-    data[index].mutex.unlock();
+    {
+        std::lock_guard<std::mutex> lock(data[index].mutex);
+        data[index].depth = depth;
+    }
 }
 float ZBuffer::getDepth(int x, int y) {
     int index = getIndex(x, y);

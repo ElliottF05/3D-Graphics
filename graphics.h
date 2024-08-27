@@ -151,6 +151,7 @@ struct Camera {
     float thetaZ, thetaY, sinthetaZ, sinthetaY, costhetaZ, costhetaY, fov, fov_rad, maxPlaneCoord, maxPlaneCoordInv;
     Vec3 direction;
     Vec3 floorDirection;
+    Triangle* lookingAt;
 
     Camera(Vec3 pos, float thetaZ, float thetaY, float fov);
     Camera();
