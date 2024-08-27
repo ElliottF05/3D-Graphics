@@ -427,6 +427,31 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
 
 
 //-----------------------------------------------------------------------------------
+// IMPLEMENTATION OF "Object3D"
+
+// STATIC VARIABLE
+std::vector<Object3D> Object3D::objects;
+
+// CONSTRUCTORS
+Object3D::Object3D(std::vector<Triangle> triangles, bool isDeletable) {
+    this->triangles = triangles;
+    this->isDeletable = isDeletable;
+    Object3D::objects.push_back(*this);
+}
+Object3D::Object3D(std::vector<Triangle> triangles) : Object3D(triangles, true) {}
+Object3D::Object3D() : Object3D(std::vector<Triangle>(), true) {}
+
+// METHODS
+void Object3D::draw(const Camera& cam, Window& window) {
+    for (Triangle& triangle : triangles) {
+        threads::threadPool.addTask([&triangle, &cam, &window] {
+            triangle.draw(cam, window);
+        });
+    }
+}
+
+
+//-----------------------------------------------------------------------------------
 // IMPLEMENTATION OF "Camera"
 
 // CONSTRUCTORS
