@@ -360,7 +360,7 @@ void Triangle::drawVerticalScreenLine(Camera &cam, Window &window, const Triangl
 
             if (x == window.width * 0.5 && y == window.height * 0.5) {
                 cam.lookingAtTriangle = &triangle;
-                cam.lookigAtObject = &object;
+                cam.lookingAtObject = &object;
             }
 
             Vec3 vec(cameraX, cameraY, cameraZ);
@@ -408,7 +408,7 @@ void Triangle::drawVerticalScreenLine(Camera& cam, Window& window, const std::sh
 
             if (x == window.width * 0.5 && y == window.height * 0.5) {
                 cam.lookingAtTriangle = triangle.get();
-                cam.lookigAtObject = &object;
+                cam.lookingAtObject = &object;
             }
 
             Vec3 vec(cameraX, cameraY, cameraZ);
@@ -443,16 +443,21 @@ void Triangle::drawVerticalScreenLine(Camera& cam, Window& window, const std::sh
 
 // STATIC VARIABLE
 std::vector<Object3D> Object3D::objects;
+int Object3D::objectCounter = 0;
 
 // CONSTRUCTORS
 Object3D::Object3D(std::vector<Triangle> triangles, bool isDeletable) {
     this->triangles = triangles;
     this->isDeletable = isDeletable;
+    id = ++objectCounter;
 }
 Object3D::Object3D(std::vector<Triangle> triangles) : Object3D(triangles, true) {}
 Object3D::Object3D() : Object3D(std::vector<Triangle>(), true) {}
 
 // METHODS
+bool Object3D::operator==(const Object3D& other) const {
+    return this->id == other.id;
+}
 void Object3D::drawMultithreaded(Camera& cam, Window& window) {
     for (Triangle& triangle : triangles) {
         threads::threadPool.addTask([&triangle, &cam, &window, this] {
@@ -462,6 +467,19 @@ void Object3D::drawMultithreaded(Camera& cam, Window& window) {
 }
 
 // STATIC METHODS
+void Object3D::removeObject(const Object3D& object) {
+    if (!object.isDeletable) {
+        return;
+    }
+    for (int i = 0; i < objects.size(); i++) {
+        if (objects[i] == object) {
+            objects.erase(objects.begin() + i);
+            return;
+        }
+    }
+}
+
+// Making new objects
 Object3D Object3D::buildCube(Vec3 center, float sideLength, int red, int green, int blue) {
     Object3D cube;
     float halfSide = sideLength / 2;

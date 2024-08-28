@@ -97,6 +97,8 @@ extern "C" {
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
+        const graphics::Triangle* lookingAtTriangle = cam.lookingAtTriangle;
+        const graphics::Object3D* lookingAtObject = cam.lookingAtObject;
 
         // DRAWING GHOST TRIANGLES
         ghostObject = graphics::Object3D::buildCube(cam.getPositionOfNewObject(window), 1, 120, 120, 120);
@@ -105,13 +107,16 @@ extern "C" {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
 
+        cam.lookingAtTriangle = lookingAtTriangle;
+        cam.lookingAtObject = lookingAtObject;
+
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         window.getUint8Pointer(buffer);
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
-        std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
+        // std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
         return &buffer[0];
     }
 }
@@ -128,6 +133,17 @@ extern "C" {
             graphics::Object3D::objects.push_back(ghostObject);
             for (graphics::Light &l : graphics::Light::lights) {
                 l.fillZBuffer(ghostObject.triangles);
+            }
+        } else if (userInputCode == 2) {
+            graphics::Object3D::removeObject(*cam.lookingAtObject);
+            for (graphics::Light &l : graphics::Light::lights) {
+                l.zBuffer.clear();
+                while (threads::threadPool.getNumberOfActiveTasks() > 0) {
+                    std::this_thread::sleep_for(std::chrono::microseconds(200));
+                }
+                for (graphics::Object3D &o : graphics::Object3D::objects) {
+                    l.fillZBuffer(o.triangles);
+                }
             }
         }
     }

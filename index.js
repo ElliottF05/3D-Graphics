@@ -29,9 +29,13 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-document.addEventListener('click', () => {
+document.addEventListener('click', (event) => {
     if (pointerLocked) {
-        _user_input(0,0,0,0,0, 1)
+        if (event.button == 0) {
+            _EXTERN_userInput(0,0,0,0,0, 1)
+        } else if (event.button == 2) {
+            _EXTERN_userInput(0,0,0,0,0, 2)
+        }
     }
 });
 

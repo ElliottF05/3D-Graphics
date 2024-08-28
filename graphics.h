@@ -126,14 +126,19 @@ struct Triangle {
 // DECLARING "Object3D"
 struct Object3D {
     static std::vector<Object3D> objects;
+    static int objectCounter;
     std::vector<Triangle> triangles;
     bool isDeletable;
+    int id;
 
     Object3D();
     Object3D(std::vector<Triangle> triangles);
     Object3D(std::vector<Triangle> triangles, bool isDeletable);
 
+    bool operator==(const Object3D& other) const;
     void drawMultithreaded(Camera& cam, Window& window);
+
+    static void removeObject(const Object3D& object);
 
     // Making new objects
     static Object3D buildCube(Vec3 center, float sideLength, int r, int g, int b);
@@ -152,7 +157,7 @@ struct Camera {
     Vec3 direction;
     Vec3 floorDirection;
     const Triangle* lookingAtTriangle;
-    const Object3D* lookigAtObject;
+    const Object3D* lookingAtObject;
 
     Camera(Vec3 pos, float thetaZ, float thetaY, float fov);
     Camera();
