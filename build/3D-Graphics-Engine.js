@@ -4491,11 +4491,11 @@ var wasmExports = createWasm();
 
 var ___wasm_call_ctors = () => (___wasm_call_ctors = wasmExports["__wasm_call_ctors"])();
 
-var _setup_scene = Module["_setup_scene"] = () => (_setup_scene = Module["_setup_scene"] = wasmExports["setup_scene"])();
+var _EXTERN_setupScene = Module["_EXTERN_setupScene"] = () => (_EXTERN_setupScene = Module["_EXTERN_setupScene"] = wasmExports["EXTERN_setupScene"])();
 
-var _get_buffer = Module["_get_buffer"] = () => (_get_buffer = Module["_get_buffer"] = wasmExports["get_buffer"])();
+var _EXTERN_getBuffer = Module["_EXTERN_getBuffer"] = () => (_EXTERN_getBuffer = Module["_EXTERN_getBuffer"] = wasmExports["EXTERN_getBuffer"])();
 
-var _user_input = Module["_user_input"] = (a0, a1, a2, a3, a4, a5) => (_user_input = Module["_user_input"] = wasmExports["user_input"])(a0, a1, a2, a3, a4, a5);
+var _EXTERN_userInput = Module["_EXTERN_userInput"] = (a0, a1, a2, a3, a4, a5) => (_EXTERN_userInput = Module["_EXTERN_userInput"] = wasmExports["EXTERN_userInput"])(a0, a1, a2, a3, a4, a5);
 
 var _main = Module["_main"] = (a0, a1) => (_main = Module["_main"] = wasmExports["__main_argc_argv"])(a0, a1);
 

@@ -24,7 +24,7 @@ static graphics::Object3D ghostObject;
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    void setup_scene() {
+    void EXTERN_setupScene() {
         graphics::Object3D floorGrid;
         floorGrid.isDeletable = false;
         bool floorGridColor = true;
@@ -81,7 +81,7 @@ extern "C" {
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    uint8_t* get_buffer() {
+    uint8_t* EXTERN_getBuffer() {
         auto start = std::chrono::high_resolution_clock::now();
 
         // CLEARING WINDOW
@@ -118,7 +118,7 @@ extern "C" {
 
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    void user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode) {
+    void EXTERN_userInput(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode) {
         float moveMultiplier = 0.1;
         cam.moveRelative(moveMultiplier * cameraMoveFoward, moveMultiplier * cameraMoveSide, moveMultiplier * cameraMoveUp);
         float rotateMultiplier = 0.01;
