@@ -115,10 +115,10 @@ struct Triangle {
     Triangle(Vec3 p1, Vec3 p2, Vec3 p3);
     Triangle();
 
-    void draw(const Camera& cam, Window& window);
+    void draw(Camera& cam, Window& window, const Object3D& object);
 
-    static void drawVerticalScreenLine(const Camera& cam, Window& window, const Triangle& triangle, int x, float y1, float y2, float d1);
-    static void drawVerticalScreenLine(const Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, int x, float y1, float y2, float d1);
+    static void drawVerticalScreenLine(Camera& cam, Window& window, const Triangle& triangle, const Object3D& object, int x, float y1, float y2, float d1);
+    static void drawVerticalScreenLine(Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, const Object3D& object, int x, float y1, float y2, float d1);
 };
 
 
@@ -133,7 +133,7 @@ struct Object3D {
     Object3D(std::vector<Triangle> triangles);
     Object3D(std::vector<Triangle> triangles, bool isDeletable);
 
-    void drawMultithreaded(const Camera& cam, Window& window);
+    void drawMultithreaded(Camera& cam, Window& window);
 
     // Making new objects
     static Object3D buildCube(Vec3 center, float sideLength, int r, int g, int b);
@@ -151,7 +151,8 @@ struct Camera {
     float thetaZ, thetaY, sinthetaZ, sinthetaY, costhetaZ, costhetaY, fov, fov_rad, maxPlaneCoord, maxPlaneCoordInv;
     Vec3 direction;
     Vec3 floorDirection;
-    Triangle* lookingAt;
+    const Triangle* lookingAtTriangle;
+    const Object3D* lookigAtObject;
 
     Camera(Vec3 pos, float thetaZ, float thetaY, float fov);
     Camera();
@@ -162,6 +163,9 @@ struct Camera {
     float getCameraZFromPixel(int y, int height) const;
     float getCameraYFromPixelFast(int x, float widthInv) const;
     float getCameraZFromPixelFast(int y, float heightInv) const;
+
+    Vec3 getCenterOfViewPosition(Window& window) const;
+    Vec3 getPositionOfNewObject(Window& window) const;
 };
 
 
@@ -233,8 +237,8 @@ struct Window {
 
     void drawPoint(Point& point);
     void drawLine(Line& line);
-    void drawTriangle(Triangle& triangle, const Camera& cam);
-    void drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam);
+    void drawTriangle(Triangle& triangle, const Object3D& object, Camera& cam);
+    void drawTriangle(std::shared_ptr<Triangle> triangle, const Object3D& object, Camera& cam);
     void draw(); // implementation specific
     void getUint8Pointer(uint8_t* buffer); // implementation specific
     void clear();

@@ -253,7 +253,7 @@ Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3) : p1(p1), p2(p2), p3(p3) {
 Triangle::Triangle() {}
 
 // METHODS
-void Triangle::draw(const Camera& cam, Window& window) {
+void Triangle::draw(Camera& cam, Window& window, const Object3D& object) {
     Vec3 toCam = cam.pos - p1.absolutePos;
     if (absoluteNormal.dot(toCam) < 0) {
         return;
@@ -308,7 +308,7 @@ void Triangle::draw(const Camera& cam, Window& window) {
         behind[0]->calculateScreenPos(cam, window);
         behind[1]->calculateScreenPos(cam, window);
 
-        window.drawTriangle(*this, cam);
+        window.drawTriangle(*this, object, cam);
     } else if (frontSize == 2) {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
@@ -330,17 +330,17 @@ void Triangle::draw(const Camera& cam, Window& window) {
         t->g = g;
         t->b = b;
 
-        window.drawTriangle(*this, cam);
-        window.drawTriangle(t, cam);
+        window.drawTriangle(*this, object, cam);
+        window.drawTriangle(t, object, cam);
     } else {
         front[0]->calculateScreenPos(cam, window);
         front[1]->calculateScreenPos(cam, window);
         front[2]->calculateScreenPos(cam, window);
 
-        window.drawTriangle(*this, cam);
+        window.drawTriangle(*this, object, cam);
     }
 }
-void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const Triangle &triangle, int x, float y1, float y2, float d1) {
+void Triangle::drawVerticalScreenLine(Camera &cam, Window &window, const Triangle &triangle, const Object3D& object, int x, float y1, float y2, float d1) {
     int bottom = round(y1);
     int top = round(y2);
     utils::sortAndClamp(bottom, top, window.height - 1);
@@ -354,8 +354,14 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
         float cameraVecLength = sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
         depth = (d1 / denom) * cameraVecLength;
         depth = std::max(depth, 0.0f);
+
         if (depth < window.zBuffer.getDepth(x, y)) {
             window.zBuffer.setDepth(x, y, depth);
+
+            if (x == window.width * 0.5 && y == window.height * 0.5) {
+                cam.lookingAtTriangle = &triangle;
+                cam.lookigAtObject = &object;
+            }
 
             Vec3 vec(cameraX, cameraY, cameraZ);
             vec /= cameraVecLength;
@@ -382,7 +388,7 @@ void Triangle::drawVerticalScreenLine(const Camera &cam, Window &window, const T
         }
     }
 }
-void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, int x, float y1, float y2, float d1) {
+void Triangle::drawVerticalScreenLine(Camera& cam, Window& window, const std::shared_ptr<Triangle> triangle, const Object3D& object, int x, float y1, float y2, float d1) {
     int bottom = round(y1);
     int top = round(y2);
     utils::sortAndClamp(bottom, top, window.height - 1);
@@ -396,8 +402,14 @@ void Triangle::drawVerticalScreenLine(const Camera& cam, Window& window, const s
         float cameraVecLength = sqrt(cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ);
         depth = (d1 / denom) * cameraVecLength;
         depth = std::max(depth, 0.0f);
+
         if (depth < window.zBuffer.getDepth(x, y)) {
             window.zBuffer.setDepth(x, y, depth);
+
+            if (x == window.width * 0.5 && y == window.height * 0.5) {
+                cam.lookingAtTriangle = triangle.get();
+                cam.lookigAtObject = &object;
+            }
 
             Vec3 vec(cameraX, cameraY, cameraZ);
             vec /= cameraVecLength;
@@ -441,10 +453,10 @@ Object3D::Object3D(std::vector<Triangle> triangles) : Object3D(triangles, true) 
 Object3D::Object3D() : Object3D(std::vector<Triangle>(), true) {}
 
 // METHODS
-void Object3D::drawMultithreaded(const Camera& cam, Window& window) {
+void Object3D::drawMultithreaded(Camera& cam, Window& window) {
     for (Triangle& triangle : triangles) {
-        threads::threadPool.addTask([&triangle, &cam, &window] {
-            triangle.draw(cam, window);
+        threads::threadPool.addTask([&triangle, &cam, &window, this] {
+            triangle.draw(cam, window, *this);
         });
     }
 }
@@ -592,6 +604,18 @@ float Camera::getCameraYFromPixelFast(int x, float widthInv) const {
 }
 float Camera::getCameraZFromPixelFast(int y, float heightInv) const {
     return - maxPlaneCoord * ((2 * y + 1.0) * heightInv - 1);
+}
+Vec3 Camera::getCenterOfViewPosition(Window& window) const {
+    float depth = window.zBuffer.getDepth(window.width * 0.5, window.height * 0.5);
+    return pos + direction * depth;
+}
+Vec3 Camera::getPositionOfNewObject(Window& window) const {
+    Vec3 viewCenter = getCenterOfViewPosition(window);
+    viewCenter += 0.5 * lookingAtTriangle->absoluteNormal;
+    viewCenter.x = round(viewCenter.x + 0.5) - 0.5;
+    viewCenter.y = round(viewCenter.y + 0.5) - 0.5;
+    viewCenter.z = round(viewCenter.z + 0.5) - 0.5;
+    return viewCenter;
 }
 
 
@@ -831,7 +855,7 @@ void Window::drawLine(Line &line) {
     }
     
 }
-void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
+void Window::drawTriangle(Triangle &triangle, const Object3D& object, Camera& cam) {
     Point a, b, c;
     a = triangle.p1;
     b = triangle.p2;
@@ -869,8 +893,8 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
     y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
     for (float x = left; x < mid; x++) {
-        threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
-            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, &triangle, &object, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, object, x, y1, y2, d1);
         });
         y1 += dy1;
         y2 += dy_long;
@@ -879,14 +903,14 @@ void Window::drawTriangle(Triangle &triangle, const Camera& cam) {
     y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
     y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
     for (float x = mid; x < right; x++) {
-        threads::threadPool.addTask([&cam, this, &triangle, x, y1, y2, d1] {
-            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, &triangle, &object, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, object, x, y1, y2, d1);
         });
         y1 += dy2;
         y2 += dy_long;
     }
 }
-void Window::drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam) {
+void Window::drawTriangle(std::shared_ptr<Triangle> triangle, const Object3D& object, Camera& cam) {
     Point a, b, c;
     a = triangle->p1;
     b = triangle->p2;
@@ -924,8 +948,8 @@ void Window::drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam)
     y1 = a.screenPos.y + dy1 * (left - a.screenPos.x);
     y2 = a.screenPos.y + dy_long * (left - a.screenPos.x);
     for (float x = left; x < mid; x++) {
-        threads::threadPool.addTask([&cam, this, triangle, x, y1, y2, d1] {
-            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, triangle, &object, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, object, x, y1, y2, d1);
         });
         y1 += dy1;
         y2 += dy_long;
@@ -934,8 +958,8 @@ void Window::drawTriangle(std::shared_ptr<Triangle> triangle, const Camera& cam)
     y1 = b.screenPos.y + dy2 * (mid - b.screenPos.x);
     y2 = a.screenPos.y + dy_long * (mid - a.screenPos.x);
     for (float x = mid; x < right; x++) {
-        threads::threadPool.addTask([&cam, this, triangle, x, y1, y2, d1] {
-            Triangle::drawVerticalScreenLine(cam, *this, triangle, x, y1, y2, d1);
+        threads::threadPool.addTask([&cam, this, triangle, &object, x, y1, y2, d1] {
+            Triangle::drawVerticalScreenLine(cam, *this, triangle, object, x, y1, y2, d1);
         });
         y1 += dy2;
         y2 += dy_long;

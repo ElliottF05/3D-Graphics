@@ -26,6 +26,7 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setup_scene() {
         graphics::Object3D floorGrid;
+        floorGrid.isDeletable = false;
         bool floorGridColor = true;
         int floorGridSize = 12;
         for (int i = -floorGridSize / 2; i < floorGridSize / 2; i++) {
@@ -68,24 +69,14 @@ extern "C" {
         graphics::Object3D::objects.push_back(graphics::Object3D::buildSphere(graphics::Vec3(3.5, -0.5, 0.5), 1, 40, 255, 200, 200));
 
         for (graphics::Light &l : graphics::Light::lights) {
-            l.fillZBuffer(graphics::Triangle::triangles);
+            for (graphics::Object3D &o : graphics::Object3D::objects) {
+                l.fillZBuffer(o.triangles);
+            }
         }
 
         cam.pos.y = -2;
         cam.pos.z = 2;
     }
-}
-
-graphics::Vec3 getCenterOfScreen() {
-    return cam.pos + cam.direction * window.zBuffer.getDepth(window.width / 2, window.height / 2);
-}
-
-graphics::Vec3 getPositionOfNewObject() {
-    graphics::Vec3 newObjectPosition = getCenterOfScreen() - cam.direction;
-    newObjectPosition.x = round(newObjectPosition.x + 0.5) - 0.5;
-    newObjectPosition.y = round(newObjectPosition.y + 0.5) - 0.5;
-    newObjectPosition.z = round(newObjectPosition.z + 0.5) - 0.5;
-    return newObjectPosition;
 }
 
 extern "C" {
@@ -108,7 +99,7 @@ extern "C" {
         }
 
         // DRAWING GHOST TRIANGLES
-        ghostObject = graphics::Object3D::buildCube(getPositionOfNewObject(), 1, 120, 120, 120);
+        ghostObject = graphics::Object3D::buildCube(cam.getPositionOfNewObject(window), 1, 120, 120, 120);
         ghostObject.drawMultithreaded(cam, window);
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
@@ -136,7 +127,7 @@ extern "C" {
         if (userInputCode == 1) {
             graphics::Object3D::objects.push_back(ghostObject);
             for (graphics::Light &l : graphics::Light::lights) {
-            l.fillZBuffer(ghostObject.triangles);
+                l.fillZBuffer(ghostObject.triangles);
             }
         }
     }
