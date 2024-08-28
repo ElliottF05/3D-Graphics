@@ -1,121 +1,25 @@
-const canvas = document.getElementById('canvas');
-const canvasContext = canvas.getContext('2d');
+// EXPORTING C++ FUNCTIONS TO BE USED IN TYPESCRIPT
 
-let running = true;
-var pressedKeys = {};
-let mouseX = 0;
-let mouseY = 0;
-let mouseMultiplier = 1;
-let pointerLocked = false;
-window.onkeyup = function(e) { pressedKeys[e.key] = false; }
-window.onkeydown = function(e) { pressedKeys[e.key] = true; }
-
+let moduleInitialized = false;
+console.log("Loading module...");
 Module.onRuntimeInitialized = () => {
-    console.log('Module loading...');
+    moduleInitialized = true;
+};
+
+// Wait for the module to be initialized...
+while (!moduleInitialized) {
+    console.log("Waiting for module to be initialized...");
+    await new Promise(r => setTimeout(r, 10));
+}
+
+console.log("Module loaded!!");
+export function CPPsetupScene() {
     _EXTERN_setupScene();
-    console.log("Module loaded and scene set up.");
-    console.log("Starting main loop");
-    loop();
 }
-
-document.addEventListener('keydown', (event) => {
-    if (event.key == 'p') {
-        running = !running;
-    }
-    if (event.key == 'Escape') {
-        console.log('Escape pressed');
-        document.exitPointerLock();
-        console.log(pointerLocked);
-    }
-});
-
-document.addEventListener('click', (event) => {
-    if (pointerLocked) {
-        if (event.button == 0) {
-            _EXTERN_userInput(0,0,0,0,0, 1)
-        } else if (event.button == 2) {
-            _EXTERN_userInput(0,0,0,0,0, 2)
-        }
-    }
-});
-
-canvas.addEventListener('mousemove', (event) => {
-    if (running) {
-        mouseX += event.movementX;
-        mouseY += event.movementY;
-    }
-});
-
-canvas.addEventListener('click', () => {
-    canvas.requestPointerLock().then(() => {
-        pointerLocked = true;
-    });
-});
-
-function setCanvasImage() {
-    const imageData = canvasContext.createImageData(500, 500);
-    const buffer_data = _EXTERN_getBuffer();
-    var uint8array = new Uint8ClampedArray(Module.HEAPU8.buffer, buffer_data, 500 * 500 * 4);
-    imageData.data.set(uint8array);
-    canvasContext.putImageData(imageData, 0, 0);
+export function CPPgetBuffer() {
+    return _EXTERN_getBuffer();
 }
-
-function processInput() {
-    // INFO FOR _user_input:
-    // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
-    if (pressedKeys['w']) {
-        _EXTERN_userInput(1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['s']) {
-        _EXTERN_userInput(-1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['a']) {
-        _EXTERN_userInput(0, -1, 0, 0, 0, 0);
-    }
-    if (pressedKeys['d']) {
-        _EXTERN_userInput(0, 1, 0, 0, 0, 0);
-    }
-    if (pressedKeys[' ']) {
-        _EXTERN_userInput(0, 0, 1, 0, 0, 0);
-    }
-    if (pressedKeys['Shift']) {
-        _EXTERN_userInput(0, 0, -1, 0, 0, 0);
-    }
-
-    if (pressedKeys['ArrowLeft']) {
-        _EXTERN_userInput(0, 0, 0, 1, 0, 0);
-    }
-    if (pressedKeys['ArrowRight']) {
-        _EXTERN_userInput(0, 0, 0, -1, 0, 0);
-    }
-    if (pressedKeys['ArrowUp']) {
-        _EXTERN_userInput(0, 0, 0, 0, 1, 0);
-    }
-    if (pressedKeys['ArrowDown']) {
-        _EXTERN_userInput(0, 0, 0, 0, -1, 0);
-    }
-    if (pointerLocked) {
-        _EXTERN_userInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
-        mouseX = 0;
-        mouseY = 0;
-    }
+export function CPPuserInput(a,b,c,d,e,f) {
+    _EXTERN_userInput(a,b,c,d,e,f);
 }
-
-
-async function loop() {
-    let readyForNextFrame = true;
-    while (true) {
-        readyForNextFrame = false;
-        setTimeout(() => {
-            readyForNextFrame = true;
-        },40);
-        if (running) {
-            processInput();
-            setCanvasImage();
-        }
-        // Wait for 40ms before the next frame
-        while (!readyForNextFrame) {
-            await new Promise(r => setTimeout(r, 1));
-        };
-    }
-}
+export const CPPModule = Module;
