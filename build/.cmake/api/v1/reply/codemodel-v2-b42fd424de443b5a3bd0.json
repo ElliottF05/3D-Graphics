@@ -27,7 +27,7 @@
 					[
 						0
 					],
-					"name" : "3D-Graphics-Engine",
+					"name" : "3D-Graphics",
 					"targetIndexes" : 
 					[
 						0
@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "3D-Graphics-Engine::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-3D-Graphics-Engine-Debug-6b597deb106eb6f21a59.json",
-					"name" : "3D-Graphics-Engine",
+					"id" : "3D-Graphics::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-3D-Graphics-Debug-5412d47b8fe24fae69c5.json",
+					"name" : "3D-Graphics",
 					"projectIndex" : 0
 				}
 			]

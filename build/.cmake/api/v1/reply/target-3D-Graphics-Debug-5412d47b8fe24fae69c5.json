@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "3D-Graphics-Engine.js"
+			"path" : "3D-Graphics.js"
 		}
 	],
 	"backtrace" : 1,
@@ -125,7 +125,7 @@
 			]
 		}
 	],
-	"id" : "3D-Graphics-Engine::@6890427a1f51a3e7e1df",
+	"id" : "3D-Graphics::@6890427a1f51a3e7e1df",
 	"launchers" : 
 	[
 		{
@@ -218,8 +218,8 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "3D-Graphics-Engine",
-	"nameOnDisk" : "3D-Graphics-Engine.js",
+	"name" : "3D-Graphics",
+	"nameOnDisk" : "3D-Graphics.js",
 	"paths" : 
 	{
 		"build" : ".",

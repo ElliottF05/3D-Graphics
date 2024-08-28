@@ -116,7 +116,7 @@ extern "C" {
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
-        // std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
+        std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
         return &buffer[0];
     }
 }
