@@ -1,5 +1,9 @@
 # Web-Based 3D Graphics Renderer
 
+## Demo
+Check out the live demo of the project:  
+[**3D Graphics Renderer - Interactive Demo**](https://elliottf05.github.io/3D-Graphics/)
+
 ## Overview
 This project is a **fully custom-built web-based 3D graphics renderer** developed from the ground up in C++ and compiled to WebAssembly. It combines **rasterization for real-time performance** with an optional **ray-tracing mode** for high-quality, physically-based renders. Users can interact with the scene in real-time by adding or removing objects, with immediate updates to lighting and rendering.
 
@@ -17,7 +21,3 @@ This project is a **fully custom-built web-based 3D graphics renderer** develope
 - **TypeScript**: Front-end for handling interactions and web components.
 - **Supabase + PostgreSQL**: Used for user authentication and data storage.
 - **Git/GitHub**: Version control and project management.
-
-## Demo
-Check out the live demo of the project:  
-[**3D Graphics Renderer - Interactive Demo**](https://elliottf05.github.io/3D-Graphics/)
