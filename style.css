@@ -1,8 +1,24 @@
-#canvas {
-    width: 700px;
-    height: 700px;
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #c4c4c4;
 }
+
+#main-div {
+    text-align: center;
+}
+
+#canvas {
+    width: calc(min(80vw, 80vh)); /* Set width to the smaller of 80% of viewport width or height */
+    height: calc(min(80vw, 80vh)); /* Set height to the smaller of 80% of viewport width or height */
+    border: 1px solid #000; /* Optional: Add a border to the canvas */
+}
+
 #controls-text {
     font-size: 20px;
     text-align: left;
+    margin-top: 20px;
 }
