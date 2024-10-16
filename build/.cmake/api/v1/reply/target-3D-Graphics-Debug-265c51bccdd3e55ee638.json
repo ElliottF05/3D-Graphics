@@ -242,19 +242,19 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "main.cpp",
+			"path" : "cpp/main.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "graphics.cpp",
+			"path" : "cpp/graphics.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "threads.cpp",
+			"path" : "cpp/threads.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

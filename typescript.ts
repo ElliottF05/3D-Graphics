@@ -161,6 +161,5 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
         'color_data' : Array.from(color_data)
         }
         console.log(scene_data);
-
     }
 });
