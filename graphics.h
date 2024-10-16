@@ -285,6 +285,11 @@ namespace utils {
     void sortPair(int& toLower, int& toHigher);
     void clampToRange(int& value, int max);
     void sortAndClamp(int& toLower, int& toHigher, int max);
+
+    int getSceneMetaDataSize();
+    int* getSceneMetaDataBuffer();
+    int* getScenePosDataBuffer();
+    int* getSceneColorDataBuffer();
 }
 
 }

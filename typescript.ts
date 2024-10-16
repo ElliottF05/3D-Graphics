@@ -1,4 +1,5 @@
 import { CPPgetBuffer, CPPsetupScene, CPPuserInput, CPPModule } from './index.js';
+import { CPPgetSceneMetaDataSize, CPPgetSceneMetaDataBuffer, CPPgetScenePosDataBuffer, CPPgetSceneColorDataBuffer } from './index.js';
 
 // DOM Canvas Elements
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -96,6 +97,7 @@ function processInput(): void {
 // Event listeners...
 document.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key == 'p') {
+        console.log('P pressed');
         running = !running;
     }
     if (event.key == 'Escape') {
@@ -125,4 +127,40 @@ canvas.addEventListener('mousemove', (event) => {
 canvas.addEventListener('click', () => {
     canvas.requestPointerLock();
     pointerLocked = true;
+});
+
+
+// Exporting scene data
+// TODO: change this to a button press
+document.addEventListener('keydown', (event: KeyboardEvent) => {    
+    if (event.key == '1') {
+        console.log("Getting scene data...");
+
+        var metadata_size: number = CPPgetSceneMetaDataSize();
+        var metadata_buffer_pointer: number = CPPgetSceneMetaDataBuffer();
+
+        var metadata = new Uint32Array(CPPModule.HEAPU32.buffer, metadata_buffer_pointer, metadata_size);
+
+        var num_objects: number = metadata[0];
+        var object_sizes: number[] = [];
+        var num_triangles: number = 0;
+        for (let i = 0; i < num_objects; i++) {
+            object_sizes.push(metadata[1 + i]);
+            num_triangles += metadata[1 + i];
+        }
+
+        var pos_buffer_pointer: number = CPPgetScenePosDataBuffer();
+        var color_buffer_pointer: number = CPPgetSceneColorDataBuffer();
+
+        var pos_data = new Float32Array(CPPModule.HEAPF32.buffer, pos_buffer_pointer, num_triangles * 9);
+        var color_data = new Uint32Array(CPPModule.HEAPU32.buffer, color_buffer_pointer, num_triangles * 3);
+
+        var scene_data = {
+        'metadata' : Array.from(metadata),
+        'pos_data' : Array.from(pos_data),
+        'color_data' : Array.from(color_data)
+        }
+        console.log(scene_data);
+
+    }
 });

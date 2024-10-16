@@ -23,3 +23,15 @@ export function CPPuserInput(a,b,c,d,e,f) {
     _EXTERN_userInput(a,b,c,d,e,f);
 }
 export const CPPModule = Module;
+export function CPPgetSceneMetaDataSize() {
+    return _EXTERN_getSceneMetaDataSize();
+}
+export function CPPgetSceneMetaDataBuffer() {
+    return _EXTERN_getSceneMetaDataBuffer();
+}
+export function CPPgetScenePosDataBuffer() {
+    return _EXTERN_getScenePosDataBuffer();
+}
+export function CPPgetSceneColorDataBuffer() {
+    return _EXTERN_getSceneColorDataBuffer();
+}

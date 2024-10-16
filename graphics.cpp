@@ -1299,3 +1299,57 @@ void utils::sortAndClamp(int &toLower, int &toHigher, int max) {
         toHigher = max;
     }
 }
+int utils::getSceneMetaDataSize() {
+    int size = 0;
+    size += 1; // this value holds the number of objects
+    size += graphics::Object3D::objects.size(); // each of these values holds the number of triangles in each object
+    return size;
+}
+int* utils::getSceneMetaDataBuffer() {
+    int size = getSceneMetaDataSize();
+    int* buffer = new int[size];
+    int index = 0;
+    buffer[index++] = graphics::Object3D::objects.size();
+    for (auto& object : graphics::Object3D::objects) {
+        buffer[index++] = object.triangles.size();
+    }
+    return &buffer[0];
+}
+int* utils::getScenePosDataBuffer() {
+    int size = 0;
+    for (auto& object : graphics::Object3D::objects) {
+        size += object.triangles.size() * 9;
+    }
+    float* buffer = new float[size];
+    int index = 0;
+    for (auto& object : graphics::Object3D::objects) {
+        for (auto& triangle : object.triangles) {
+            buffer[index++] = triangle.p1.absolutePos.x;
+            buffer[index++] = triangle.p1.absolutePos.y;
+            buffer[index++] = triangle.p1.absolutePos.z;
+            buffer[index++] = triangle.p2.absolutePos.x;
+            buffer[index++] = triangle.p2.absolutePos.y;
+            buffer[index++] = triangle.p2.absolutePos.z;
+            buffer[index++] = triangle.p3.absolutePos.x;
+            buffer[index++] = triangle.p3.absolutePos.y;
+            buffer[index++] = triangle.p3.absolutePos.z;
+        }
+    }
+    return (int*) &buffer[0];
+}
+int* utils::getSceneColorDataBuffer() {
+    int size = 0;
+    for (auto& object : graphics::Object3D::objects) {
+        size += object.triangles.size() * 3;
+    }
+    int* buffer = new int[size];
+    int index = 0;
+    for (auto& object : graphics::Object3D::objects) {
+        for (auto& triangle : object.triangles) {
+            buffer[index++] = triangle.r;
+            buffer[index++] = triangle.g;
+            buffer[index++] = triangle.b;
+        }
+    }
+    return &buffer[0];
+}

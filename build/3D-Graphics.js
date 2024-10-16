@@ -4497,6 +4497,14 @@ var _EXTERN_getBuffer = Module["_EXTERN_getBuffer"] = () => (_EXTERN_getBuffer =
 
 var _EXTERN_userInput = Module["_EXTERN_userInput"] = (a0, a1, a2, a3, a4, a5) => (_EXTERN_userInput = Module["_EXTERN_userInput"] = wasmExports["EXTERN_userInput"])(a0, a1, a2, a3, a4, a5);
 
+var _EXTERN_getSceneMetaDataSize = Module["_EXTERN_getSceneMetaDataSize"] = () => (_EXTERN_getSceneMetaDataSize = Module["_EXTERN_getSceneMetaDataSize"] = wasmExports["EXTERN_getSceneMetaDataSize"])();
+
+var _EXTERN_getSceneMetaDataBuffer = Module["_EXTERN_getSceneMetaDataBuffer"] = () => (_EXTERN_getSceneMetaDataBuffer = Module["_EXTERN_getSceneMetaDataBuffer"] = wasmExports["EXTERN_getSceneMetaDataBuffer"])();
+
+var _EXTERN_getScenePosDataBuffer = Module["_EXTERN_getScenePosDataBuffer"] = () => (_EXTERN_getScenePosDataBuffer = Module["_EXTERN_getScenePosDataBuffer"] = wasmExports["EXTERN_getScenePosDataBuffer"])();
+
+var _EXTERN_getSceneColorDataBuffer = Module["_EXTERN_getSceneColorDataBuffer"] = () => (_EXTERN_getSceneColorDataBuffer = Module["_EXTERN_getSceneColorDataBuffer"] = wasmExports["EXTERN_getSceneColorDataBuffer"])();
+
 var _main = Module["_main"] = (a0, a1) => (_main = Module["_main"] = wasmExports["__main_argc_argv"])(a0, a1);
 
 var __emscripten_tls_init = () => (__emscripten_tls_init = wasmExports["_emscripten_tls_init"])();

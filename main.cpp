@@ -116,7 +116,7 @@ extern "C" {
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
         }
-        std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
+        // std::cout << "returning buffer, elapsed time: " << elapsed.count() << std::endl;
         return &buffer[0];
     }
 }
@@ -148,6 +148,32 @@ extern "C" {
         }
     }
 }
+
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    int EXTERN_getSceneMetaDataSize() {
+        return graphics::utils::getSceneMetaDataSize();
+    }
+}
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    int* EXTERN_getSceneMetaDataBuffer() {
+        return graphics::utils::getSceneMetaDataBuffer();
+    }
+}
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    int* EXTERN_getScenePosDataBuffer() {
+        return graphics::utils::getScenePosDataBuffer();
+    }
+}
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    int* EXTERN_getSceneColorDataBuffer() {
+        return graphics::utils::getSceneColorDataBuffer();
+    }
+}
+
 
 int main(int, char**){
     std::cout << "Hello, from main!" << std::endl;
