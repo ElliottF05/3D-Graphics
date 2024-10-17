@@ -290,6 +290,9 @@ namespace utils {
     int* getSceneMetaDataBuffer();
     int* getScenePosDataBuffer();
     int* getSceneColorDataBuffer();
+
+    int* setSceneDataBuffer(int size);
+    void loadScene(int metadata[], float posData[], int colorData[]);
 }
 
 }

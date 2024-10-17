@@ -73,40 +73,16 @@ build CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o: CXX_COMPILER__3D-Graphics_un
 
 
 #############################################
-# Link the executable 3D-Graphics.js
+# Link the executable /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js
 
-build 3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o
+build /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o
   FLAGS = -g
   LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=30 -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   POST_BUILD = :
   PRE_LINK = :
-  TARGET_FILE = 3D-Graphics.js
+  TARGET_FILE = /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js
   TARGET_PDB = 3D-Graphics.js.dbg
-
-
-#############################################
-# Utility command for package
-
-build CMakeFiles/package.util: CUSTOM_COMMAND all
-  COMMAND = cd /Users/elliottfaa/repos/3D-Graphics-Engine/build && /opt/homebrew/Cellar/cmake/3.29.3/bin/cpack --config ./CPackConfig.cmake
-  DESC = Run CPack packaging tool...
-  pool = console
-  restat = 1
-
-build package: phony CMakeFiles/package.util
-
-
-#############################################
-# Utility command for package_source
-
-build CMakeFiles/package_source.util: CUSTOM_COMMAND
-  COMMAND = cd /Users/elliottfaa/repos/3D-Graphics-Engine/build && /opt/homebrew/Cellar/cmake/3.29.3/bin/cpack --config ./CPackSourceConfig.cmake /Users/elliottfaa/repos/3D-Graphics-Engine/build/CPackSourceConfig.cmake
-  DESC = Run CPack packaging tool for source...
-  pool = console
-  restat = 1
-
-build package_source: phony CMakeFiles/package_source.util
 
 
 #############################################
@@ -135,7 +111,9 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 # =============================================================================
 # Target aliases.
 
-build 3D-Graphics: phony 3D-Graphics.js
+build 3D-Graphics: phony /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js
+
+build 3D-Graphics.js: phony /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js
 
 # =============================================================================
 # Folder targets.
@@ -145,7 +123,7 @@ build 3D-Graphics: phony 3D-Graphics.js
 #############################################
 # Folder: /Users/elliottfaa/repos/3D-Graphics-Engine/build
 
-build all: phony 3D-Graphics.js
+build all: phony /Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/cpp/3D-Graphics.js
 
 # =============================================================================
 # Built-in targets

@@ -1353,3 +1353,44 @@ int* utils::getSceneColorDataBuffer() {
     }
     return &buffer[0];
 }
+int* utils::setSceneDataBuffer(int size) {
+    int* buffer = new int[size];
+    return &buffer[0];
+}
+void utils::loadScene(int metadata[], float posData[], int colorData[]) {
+    graphics::Object3D::objects.clear();
+    
+    int numObjects = metadata[0];
+    int posIndex = 0;
+    int colorIndex = 0;
+
+    for (int i = 0; i < numObjects; i++) {
+        int numTriangles = metadata[i + 1];
+        graphics::Object3D object;
+        for (int j = 0; j < numTriangles; j++) {
+            graphics::Triangle triangle;
+            triangle.p1.absolutePos.x = posData[posIndex++];
+            triangle.p1.absolutePos.y = posData[posIndex++];
+            triangle.p1.absolutePos.z = posData[posIndex++];
+            triangle.p2.absolutePos.x = posData[posIndex++];
+            triangle.p2.absolutePos.y = posData[posIndex++];
+            triangle.p2.absolutePos.z = posData[posIndex++];
+            triangle.p3.absolutePos.x = posData[posIndex++];
+            triangle.p3.absolutePos.y = posData[posIndex++];
+            triangle.p3.absolutePos.z = posData[posIndex++];
+            triangle.r = colorData[colorIndex++];
+            triangle.g = colorData[colorIndex++];
+            triangle.b = colorData[colorIndex++];
+            object.triangles.push_back(triangle);
+        }
+        graphics::Object3D::objects.push_back(object);
+    }
+
+    for (graphics::Light &l : graphics::Light::lights) {
+        l.zBuffer.clear();
+        for (graphics::Object3D &o : graphics::Object3D::objects) {
+            l.fillZBuffer(o.triangles);
+        }
+    }
+
+}

@@ -1,5 +1,3 @@
 /Users/elliottfaa/repos/3D-Graphics-Engine/build/CMakeFiles/3D-Graphics.dir
-/Users/elliottfaa/repos/3D-Graphics-Engine/build/CMakeFiles/package.dir
-/Users/elliottfaa/repos/3D-Graphics-Engine/build/CMakeFiles/package_source.dir
 /Users/elliottfaa/repos/3D-Graphics-Engine/build/CMakeFiles/edit_cache.dir
 /Users/elliottfaa/repos/3D-Graphics-Engine/build/CMakeFiles/rebuild_cache.dir

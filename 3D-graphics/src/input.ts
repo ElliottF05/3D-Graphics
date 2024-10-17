@@ -75,7 +75,7 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
         Database.test();
     }
     if (event.key == '2') {
-        Database.importSceneData(9);
+        Database.importSceneData(11);
     }
 });
 

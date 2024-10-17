@@ -46,3 +46,11 @@ export function CPPgetSceneColorDataBuffer(): number {
     // @ts-ignore
     return _EXTERN_getSceneColorDataBuffer();
 }
+export function CPPsetSceneDataBuffer(size: number): number {
+    // @ts-ignore
+    return _EXTERN_setSceneDataBuffer(size);
+}
+export function CPPloadScene(metadata_buffer: number, pos_data_buffer: number, color_data_buffer: number): void {
+    // @ts-ignore
+    return _EXTERN_loadScene(metadata_buffer, pos_data_buffer, color_data_buffer);
+}

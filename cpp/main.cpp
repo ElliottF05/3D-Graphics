@@ -173,6 +173,18 @@ extern "C" {
         return graphics::utils::getSceneColorDataBuffer();
     }
 }
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    int* EXTERN_setSceneDataBuffer(int size) {
+        return graphics::utils::setSceneDataBuffer(size);
+    }
+}
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    void EXTERN_loadScene(int metadata[], float posData[], int colorData[]) {
+        graphics::utils::loadScene(metadata, posData, colorData);
+    }
+}
 
 
 int main(int, char**){

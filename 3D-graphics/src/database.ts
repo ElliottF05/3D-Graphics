@@ -1,6 +1,6 @@
 import * as CPPInterface from './cppInterface.js';
 import { createClient } from '@supabase/supabase-js'
-import { Database, Json } from './database.types'
+import { Database } from './database.types'
 
 const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_API_KEY: string = import.meta.env.VITE_SUPABASE_API_KEY;
@@ -58,12 +58,39 @@ export async function importSceneData(sceneID: number): Promise<void> {
         console.error('Error fetching data:', error.message)
         return;
     } else {
-        //console.log(data)
-        // console.log(data[0].metadata);
-        // console.log(data[0].pos_data);
-        // console.log(data[0].color_data);
+        console.log(data)
+        let metadata = data[0].metadata;
+        let pos_data = data[0].pos_data;
+        let color_data = data[0].color_data;
+        console.log(metadata);
+        console.log(pos_data);
+        console.log(color_data);
 
-        
+        let size = 0;
+        size += metadata.length;
+        size += pos_data.length;
+        size += color_data.length;
+
+        let metadata_buffer_pointer = CPPInterface.CPPsetSceneDataBuffer(size);
+        let pos_buffer_pointer = metadata_buffer_pointer + 4 * metadata.length;
+        let color_buffer_pointer = pos_buffer_pointer + 4 * pos_data.length;
+
+        let metadata_buffer = new Uint32Array(CPPInterface.CPPmodule.HEAPU32.buffer, metadata_buffer_pointer, metadata.length);
+        for (let i = 0; i < metadata_buffer.length; i++) {
+            metadata_buffer[i] = metadata[i];
+        }
+
+        let pos_data_buffer = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, pos_buffer_pointer, pos_data.length);
+        for (let i = 0; i < pos_data_buffer.length; i++) {
+            pos_data_buffer[i] = pos_data[i];
+        }
+
+        let color_data_buffer = new Uint32Array(CPPInterface.CPPmodule.HEAPU32.buffer, color_buffer_pointer, color_data.length);
+        for (let i = 0; i < color_data_buffer.length; i++) {
+            color_data_buffer[i] = color_data[i];
+        }
+
+        CPPInterface.CPPloadScene(metadata_buffer_pointer, pos_buffer_pointer, color_buffer_pointer);
 
     }
 }

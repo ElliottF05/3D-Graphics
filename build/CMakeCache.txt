@@ -15,15 +15,6 @@
 ########################
 
 //Value Computed by CMake
-3D-Graphics-Engine_BINARY_DIR:STATIC=/Users/elliottfaa/repos/3D-Graphics-Engine/build
-
-//Value Computed by CMake
-3D-Graphics-Engine_IS_TOP_LEVEL:STATIC=ON
-
-//Value Computed by CMake
-3D-Graphics-Engine_SOURCE_DIR:STATIC=/Users/elliottfaa/repos/3D-Graphics-Engine
-
-//Value Computed by CMake
 3D-Graphics_BINARY_DIR:STATIC=/Users/elliottfaa/repos/3D-Graphics-Engine/build
 
 //Value Computed by CMake
