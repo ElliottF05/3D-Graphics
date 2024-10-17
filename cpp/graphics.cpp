@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "threads.h"
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -228,7 +229,6 @@ void Line::draw(const Camera& cam, Window& window) {
 
 // CONSTRUCTOR
 // NOTE: When points are given in clockwise order, the normal vector points towards the camera
-std::vector<Triangle> Triangle::triangles; // defining the static variable, TODO: check if this is right
 Triangle::Triangle(Vec3 p1, Vec3 p2, Vec3 p3, int r, int g, int b) : p1(p1), p2(p2), p3(p3), r(r), g(g), b(b) {
     this->absoluteNormal = (p3 - p1).cross(p2 - p1);
     this->absoluteNormal.normalize();
@@ -1368,16 +1368,11 @@ void utils::loadScene(int metadata[], float posData[], int colorData[]) {
         int numTriangles = metadata[i + 1];
         graphics::Object3D object;
         for (int j = 0; j < numTriangles; j++) {
-            graphics::Triangle triangle;
-            triangle.p1.absolutePos.x = posData[posIndex++];
-            triangle.p1.absolutePos.y = posData[posIndex++];
-            triangle.p1.absolutePos.z = posData[posIndex++];
-            triangle.p2.absolutePos.x = posData[posIndex++];
-            triangle.p2.absolutePos.y = posData[posIndex++];
-            triangle.p2.absolutePos.z = posData[posIndex++];
-            triangle.p3.absolutePos.x = posData[posIndex++];
-            triangle.p3.absolutePos.y = posData[posIndex++];
-            triangle.p3.absolutePos.z = posData[posIndex++];
+            graphics::Vec3 v1(posData[posIndex], posData[posIndex+1], posData[posIndex+2]);
+            graphics::Vec3 v2(posData[posIndex+3], posData[posIndex+4], posData[posIndex+5]);
+            graphics::Vec3 v3(posData[posIndex+6], posData[posIndex+7], posData[posIndex+8]);
+            posIndex += 9;
+            graphics::Triangle triangle(v1, v2, v3);
             triangle.r = colorData[colorIndex++];
             triangle.g = colorData[colorIndex++];
             triangle.b = colorData[colorIndex++];
@@ -1386,11 +1381,14 @@ void utils::loadScene(int metadata[], float posData[], int colorData[]) {
         graphics::Object3D::objects.push_back(object);
     }
 
-    for (graphics::Light &l : graphics::Light::lights) {
-        l.zBuffer.clear();
-        for (graphics::Object3D &o : graphics::Object3D::objects) {
-            l.fillZBuffer(o.triangles);
+    for (auto& light : graphics::Light::lights) {
+        for (auto& object : graphics::Object3D::objects) {
+            light.fillZBuffer(object.triangles);
         }
+    }
+
+    while (threads::threadPool.getNumberOfActiveTasks() > 0) {
+        std::this_thread::sleep_for(std::chrono::microseconds(200));
     }
 
 }
