@@ -36,19 +36,28 @@ export type Database = {
     Tables: {
       test: {
         Row: {
-          column1: Json | null
-          created_at: string
+          color_data: number[]
           id: number
+          metadata: number[]
+          pos_data: number[]
+          time_created: string | null
+          user_id: number | null
         }
         Insert: {
-          column1?: Json | null
-          created_at?: string
+          color_data: number[]
           id?: number
+          metadata: number[]
+          pos_data: number[]
+          time_created?: string | null
+          user_id?: number | null
         }
         Update: {
-          column1?: Json | null
-          created_at?: string
+          color_data?: number[]
           id?: number
+          metadata?: number[]
+          pos_data?: number[]
+          time_created?: string | null
+          user_id?: number | null
         }
         Relationships: []
       }

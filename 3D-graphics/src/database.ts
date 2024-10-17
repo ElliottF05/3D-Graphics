@@ -13,19 +13,11 @@ const supabase = createClient<Database>(
 // Exporting scene data
 export async function test(): Promise<void> {
     console.log('Test function called');
-    console.log(buildSceneData());
-    
-    let test_json: Json = <Json><unknown> {
-        "test_key": "test_value"
-    };
-
-    const { error } = await supabase
-        .from('test')
-        .insert({ id: 1, column1: test_json })
+    exportSceneData();
 
 }
 
-function buildSceneData(): JSON {
+async function exportSceneData(): Promise<void> {
     console.log("Getting scene data...");
 
     var metadata_size: number = CPPInterface.CPPgetSceneMetaDataSize();
@@ -47,12 +39,31 @@ function buildSceneData(): JSON {
     var pos_data = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, pos_buffer_pointer, num_triangles * 9);
     var color_data = new Uint32Array(CPPInterface.CPPmodule.HEAPU32.buffer, color_buffer_pointer, num_triangles * 3);
 
-    var scene_data = <JSON><unknown> {
-        'metadata' : Array.from(metadata),
-        'pos_data' : Array.from(pos_data),
-        'color_data' : Array.from(color_data)
+    const { error } = await supabase
+        .from('test')
+        .insert({ metadata: Array.from(metadata), pos_data: Array.from(pos_data), color_data: Array.from(color_data) })
+    if (error) {
+        console.error('Error inserting data:', error.message)
     }
-    // console.log(scene_data);
 
-    return scene_data;
+    
+}
+
+export async function importSceneData(sceneID: number): Promise<void> {
+    const { data, error } = await supabase
+        .from('test')
+        .select('metadata, pos_data, color_data')
+        .eq('id', sceneID) 
+    if (error) {
+        console.error('Error fetching data:', error.message)
+        return;
+    } else {
+        //console.log(data)
+        // console.log(data[0].metadata);
+        // console.log(data[0].pos_data);
+        // console.log(data[0].color_data);
+
+        
+
+    }
 }

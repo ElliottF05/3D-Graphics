@@ -74,6 +74,9 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key == '1') {
         Database.test();
     }
+    if (event.key == '2') {
+        Database.importSceneData(9);
+    }
 });
 
 document.addEventListener('click', (event) => {
