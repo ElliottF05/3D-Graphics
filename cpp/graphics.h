@@ -285,13 +285,11 @@ namespace utils {
     void clampToRange(int& value, int max);
     void sortAndClamp(int& toLower, int& toHigher, int max);
 
-    int getSceneMetaDataSize();
-    int* getSceneMetaDataBuffer();
-    int* getScenePosDataBuffer();
-    int* getSceneColorDataBuffer();
+    int getDataBufferSize();
+    float* getDataBufferPointer();
 
-    int* setSceneDataBuffer(int size);
-    void loadScene(int metadata[], float posData[], int colorData[]);
+    float* setDataBufferPointer(int size);
+    void loadScene(float data[]);
 }
 
 }

@@ -34,6 +34,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      scenes: {
+        Row: {
+          created_at: string | null
+          data: number[]
+          id: number
+          last_edited: string | null
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          data: number[]
+          id?: number
+          last_edited?: string | null
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          data?: number[]
+          id?: number
+          last_edited?: string | null
+          user_id?: number | null
+        }
+        Relationships: []
+      }
       test: {
         Row: {
           color_data: number[]
@@ -58,6 +82,24 @@ export type Database = {
           pos_data?: number[]
           time_created?: string | null
           user_id?: number | null
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          id: number
+          scenes: number[] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          scenes?: number[] | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          scenes?: number[] | null
         }
         Relationships: []
       }

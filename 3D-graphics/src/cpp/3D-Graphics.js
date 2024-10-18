@@ -4497,17 +4497,13 @@ var _EXTERN_getBuffer = Module["_EXTERN_getBuffer"] = () => (_EXTERN_getBuffer =
 
 var _EXTERN_userInput = Module["_EXTERN_userInput"] = (a0, a1, a2, a3, a4, a5) => (_EXTERN_userInput = Module["_EXTERN_userInput"] = wasmExports["EXTERN_userInput"])(a0, a1, a2, a3, a4, a5);
 
-var _EXTERN_getSceneMetaDataSize = Module["_EXTERN_getSceneMetaDataSize"] = () => (_EXTERN_getSceneMetaDataSize = Module["_EXTERN_getSceneMetaDataSize"] = wasmExports["EXTERN_getSceneMetaDataSize"])();
+var _EXTERN_getDataBufferSize = Module["_EXTERN_getDataBufferSize"] = () => (_EXTERN_getDataBufferSize = Module["_EXTERN_getDataBufferSize"] = wasmExports["EXTERN_getDataBufferSize"])();
 
-var _EXTERN_getSceneMetaDataBuffer = Module["_EXTERN_getSceneMetaDataBuffer"] = () => (_EXTERN_getSceneMetaDataBuffer = Module["_EXTERN_getSceneMetaDataBuffer"] = wasmExports["EXTERN_getSceneMetaDataBuffer"])();
+var _EXTERN_getDataBufferPointer = Module["_EXTERN_getDataBufferPointer"] = () => (_EXTERN_getDataBufferPointer = Module["_EXTERN_getDataBufferPointer"] = wasmExports["EXTERN_getDataBufferPointer"])();
 
-var _EXTERN_getScenePosDataBuffer = Module["_EXTERN_getScenePosDataBuffer"] = () => (_EXTERN_getScenePosDataBuffer = Module["_EXTERN_getScenePosDataBuffer"] = wasmExports["EXTERN_getScenePosDataBuffer"])();
+var _EXTERN_setDataBufferPointer = Module["_EXTERN_setDataBufferPointer"] = a0 => (_EXTERN_setDataBufferPointer = Module["_EXTERN_setDataBufferPointer"] = wasmExports["EXTERN_setDataBufferPointer"])(a0);
 
-var _EXTERN_getSceneColorDataBuffer = Module["_EXTERN_getSceneColorDataBuffer"] = () => (_EXTERN_getSceneColorDataBuffer = Module["_EXTERN_getSceneColorDataBuffer"] = wasmExports["EXTERN_getSceneColorDataBuffer"])();
-
-var _EXTERN_setSceneDataBuffer = Module["_EXTERN_setSceneDataBuffer"] = a0 => (_EXTERN_setSceneDataBuffer = Module["_EXTERN_setSceneDataBuffer"] = wasmExports["EXTERN_setSceneDataBuffer"])(a0);
-
-var _EXTERN_loadScene = Module["_EXTERN_loadScene"] = (a0, a1, a2) => (_EXTERN_loadScene = Module["_EXTERN_loadScene"] = wasmExports["EXTERN_loadScene"])(a0, a1, a2);
+var _EXTERN_loadScene = Module["_EXTERN_loadScene"] = a0 => (_EXTERN_loadScene = Module["_EXTERN_loadScene"] = wasmExports["EXTERN_loadScene"])(a0);
 
 var _main = Module["_main"] = (a0, a1) => (_main = Module["_main"] = wasmExports["__main_argc_argv"])(a0, a1);
 

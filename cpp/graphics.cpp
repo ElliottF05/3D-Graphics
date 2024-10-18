@@ -1299,91 +1299,131 @@ void utils::sortAndClamp(int &toLower, int &toHigher, int max) {
         toHigher = max;
     }
 }
-int utils::getSceneMetaDataSize() {
+
+
+int utils::getDataBufferSize() {
     int size = 0;
-    size += 1; // this value holds the number of objects
+    size += 6; // camera pos (3 values) + camera rotation (2 values) + fov (1 value)
+    size += 1; // number of lights
+    size += 10 * graphics::Light::lights.size(); // light pos (3 values) + light rotation (2 values) + fov (1 value) + luminosity (1 value) + r,g,b (3 values)
+    size += 1; // number of objects
     size += graphics::Object3D::objects.size(); // each of these values holds the number of triangles in each object
+    for (auto& object : graphics::Object3D::objects) {
+        size += object.triangles.size() * 9; // each of these values holds the position of a vertex in a triangle
+        size += object.triangles.size() * 3; // each of these values holds the color of a triangle
+    }
     return size;
 }
-int* utils::getSceneMetaDataBuffer() {
-    int size = getSceneMetaDataSize();
-    int* buffer = new int[size];
-    int index = 0;
-    buffer[index++] = graphics::Object3D::objects.size();
-    for (auto& object : graphics::Object3D::objects) {
-        buffer[index++] = object.triangles.size();
-    }
-    return &buffer[0];
-}
-int* utils::getScenePosDataBuffer() {
-    int size = 0;
-    for (auto& object : graphics::Object3D::objects) {
-        size += object.triangles.size() * 9;
-    }
-    float* buffer = new float[size];
-    int index = 0;
-    for (auto& object : graphics::Object3D::objects) {
-        for (auto& triangle : object.triangles) {
-            buffer[index++] = triangle.p1.absolutePos.x;
-            buffer[index++] = triangle.p1.absolutePos.y;
-            buffer[index++] = triangle.p1.absolutePos.z;
-            buffer[index++] = triangle.p2.absolutePos.x;
-            buffer[index++] = triangle.p2.absolutePos.y;
-            buffer[index++] = triangle.p2.absolutePos.z;
-            buffer[index++] = triangle.p3.absolutePos.x;
-            buffer[index++] = triangle.p3.absolutePos.y;
-            buffer[index++] = triangle.p3.absolutePos.z;
-        }
-    }
-    return (int*) &buffer[0];
-}
-int* utils::getSceneColorDataBuffer() {
-    int size = 0;
-    for (auto& object : graphics::Object3D::objects) {
-        size += object.triangles.size() * 3;
-    }
-    int* buffer = new int[size];
-    int index = 0;
-    for (auto& object : graphics::Object3D::objects) {
-        for (auto& triangle : object.triangles) {
-            buffer[index++] = triangle.r;
-            buffer[index++] = triangle.g;
-            buffer[index++] = triangle.b;
-        }
-    }
-    return &buffer[0];
-}
-int* utils::setSceneDataBuffer(int size) {
-    int* buffer = new int[size];
-    return &buffer[0];
-}
-void utils::loadScene(int metadata[], float posData[], int colorData[]) {
-    graphics::Object3D::objects.clear();
-    
-    int numObjects = metadata[0];
-    int posIndex = 0;
-    int colorIndex = 0;
+float* utils::getDataBufferPointer() {
+    float* buf = new float[getDataBufferSize()];
 
-    for (int i = 0; i < numObjects; i++) {
-        int numTriangles = metadata[i + 1];
+    int i = 0;
+    // camera data
+    buf[i++] = 0;
+    buf[i++] = 0;
+    buf[i++] = 0;
+    buf[i++] = 0;
+    buf[i++] = 0;
+    buf[i++] = 90;
+
+    // light data
+    buf[i++] = graphics::Light::lights.size();
+    for (auto& l : graphics::Light::lights) {
+        buf[i++] = l.cam.pos.x;
+        buf[i++] = l.cam.pos.y;
+        buf[i++] = l.cam.pos.z;
+        buf[i++] = l.cam.thetaZ;
+        buf[i++] = l.cam.thetaY;
+        buf[i++] = l.cam.fov;
+        buf[i++] = l.luminosity;
+        buf[i++] = 255;
+        buf[i++] = 255;
+        buf[i++] = 255;
+    }
+
+    // object data
+    buf[i++] = graphics::Object3D::objects.size();
+    for (auto& o : graphics::Object3D::objects) {
+        buf[i++] = o.triangles.size();
+    }
+
+    // triangle data
+    for (auto& o : graphics::Object3D::objects) {
+        for (auto& t : o.triangles) {
+            buf[i++] = t.p1.absolutePos.x;
+            buf[i++] = t.p1.absolutePos.y;
+            buf[i++] = t.p1.absolutePos.z;
+            buf[i++] = t.p2.absolutePos.x;
+            buf[i++] = t.p2.absolutePos.y;
+            buf[i++] = t.p2.absolutePos.z;
+            buf[i++] = t.p3.absolutePos.x;
+            buf[i++] = t.p3.absolutePos.y;
+            buf[i++] = t.p3.absolutePos.z;
+            buf[i++] = t.r;
+            buf[i++] = t.g;
+            buf[i++] = t.b;
+        }
+    }
+
+    return &buf[0];
+    
+}
+float* utils::setDataBufferPointer(int size) {
+    std::cout << "setDataBufferPointer() called with size = " << size << std::endl;
+    float* buf = new float[size];
+    return &buf[0];
+}
+void utils::loadScene(float data[]) {
+    std::cout << "loadScene() called" << std::endl;
+    graphics::Object3D::objects.clear();
+    graphics::Light::lights.clear();
+
+    int i = 0;
+
+    // camera data
+    graphics::Vec3 camPos(data[i], data[i+1], data[i+2]);
+    i += 3;
+    graphics::Camera cam(camPos, data[i], data[i+1], data[i+2]);
+    i += 3;
+    // TODO: this is unused, must make camera static
+
+    // light data
+    int numLights = data[i++];
+    for (int j = 0; j < numLights; j++) {
+        graphics::Vec3 lightPos(data[i], data[i+1], data[i+2]);
+        i += 3;
+        graphics::Light light(lightPos, data[i], data[i+1], data[i+2], data[i+3]);
+        i += 4;
+        i += 3; // TODO: this is unused, must add colors to lights
+        graphics::Light::lights.push_back(light);
+    }
+
+    // object data
+    int numObjects = data[i++];
+    std::vector<int> numTrianglesVec;
+    for (int j = 0; j < numObjects; j++) {
+        numTrianglesVec.push_back(data[i++]);
+    }
+    for (int numTriangles : numTrianglesVec) {
         graphics::Object3D object;
         for (int j = 0; j < numTriangles; j++) {
-            graphics::Vec3 v1(posData[posIndex], posData[posIndex+1], posData[posIndex+2]);
-            graphics::Vec3 v2(posData[posIndex+3], posData[posIndex+4], posData[posIndex+5]);
-            graphics::Vec3 v3(posData[posIndex+6], posData[posIndex+7], posData[posIndex+8]);
-            posIndex += 9;
+            graphics::Vec3 v1(data[i], data[i+1], data[i+2]);
+            graphics::Vec3 v2(data[i+3], data[i+4], data[i+5]);
+            graphics::Vec3 v3(data[i+6], data[i+7], data[i+8]);
+            i += 9;
             graphics::Triangle triangle(v1, v2, v3);
-            triangle.r = colorData[colorIndex++];
-            triangle.g = colorData[colorIndex++];
-            triangle.b = colorData[colorIndex++];
+            triangle.r = data[i++];
+            triangle.g = data[i++];
+            triangle.b = data[i++];
             object.triangles.push_back(triangle);
         }
         graphics::Object3D::objects.push_back(object);
     }
 
-    for (auto& light : graphics::Light::lights) {
+    // light the scene
+    for (auto& l : graphics::Light::lights) {
         for (auto& object : graphics::Object3D::objects) {
-            light.fillZBuffer(object.triangles);
+            l.fillZBuffer(object.triangles);
         }
     }
 

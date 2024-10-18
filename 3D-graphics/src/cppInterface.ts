@@ -30,27 +30,20 @@ export function CPPuserInput(a: number, b: number, c: number, d: number, e: numb
     // @ts-ignore
     _EXTERN_userInput(a,b,c,d,e,f);
 }
-export function CPPgetSceneMetaDataSize(): number {
+
+export function CPPgetDataBufferSize(): number {
     // @ts-ignore
-    return _EXTERN_getSceneMetaDataSize();
+    return _EXTERN_getDataBufferSize();
 }
-export function CPPgetSceneMetaDataBuffer(): number {
+export function CPPgetDataBufferPointer(): number {
     // @ts-ignore
-    return _EXTERN_getSceneMetaDataBuffer();
+    return _EXTERN_getDataBufferPointer();
 }
-export function CPPgetScenePosDataBuffer(): number {
+export function CPPsetDataBufferPointer(size: number): number {
     // @ts-ignore
-    return _EXTERN_getScenePosDataBuffer();
+    return _EXTERN_setDataBufferPointer(size);
 }
-export function CPPgetSceneColorDataBuffer(): number {
+export function CPPloadScene(data: number): void {
     // @ts-ignore
-    return _EXTERN_getSceneColorDataBuffer();
-}
-export function CPPsetSceneDataBuffer(size: number): number {
-    // @ts-ignore
-    return _EXTERN_setSceneDataBuffer(size);
-}
-export function CPPloadScene(metadata_buffer: number, pos_data_buffer: number, color_data_buffer: number): void {
-    // @ts-ignore
-    return _EXTERN_loadScene(metadata_buffer, pos_data_buffer, color_data_buffer);
+    return _EXTERN_loadScene(data);
 }

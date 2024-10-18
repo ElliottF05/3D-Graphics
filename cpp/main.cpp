@@ -149,40 +149,29 @@ extern "C" {
     }
 }
 
+
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    int EXTERN_getSceneMetaDataSize() {
-        return graphics::utils::getSceneMetaDataSize();
+    int EXTERN_getDataBufferSize() {
+        return graphics::utils::getDataBufferSize();
     }
 }
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    int* EXTERN_getSceneMetaDataBuffer() {
-        return graphics::utils::getSceneMetaDataBuffer();
+    float* EXTERN_getDataBufferPointer() {
+        return graphics::utils::getDataBufferPointer();
     }
 }
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    int* EXTERN_getScenePosDataBuffer() {
-        return graphics::utils::getScenePosDataBuffer();
+    float* EXTERN_setDataBufferPointer(int size) {
+        return graphics::utils::setDataBufferPointer(size);
     }
 }
 extern "C" {
     EMSCRIPTEN_KEEPALIVE
-    int* EXTERN_getSceneColorDataBuffer() {
-        return graphics::utils::getSceneColorDataBuffer();
-    }
-}
-extern "C" {
-    EMSCRIPTEN_KEEPALIVE
-    int* EXTERN_setSceneDataBuffer(int size) {
-        return graphics::utils::setSceneDataBuffer(size);
-    }
-}
-extern "C" {
-    EMSCRIPTEN_KEEPALIVE
-    void EXTERN_loadScene(int metadata[], float posData[], int colorData[]) {
-        graphics::utils::loadScene(metadata, posData, colorData);
+    void EXTERN_loadScene(float data[]) {
+        graphics::utils::loadScene(data);
     }
 }
 
