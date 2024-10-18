@@ -1,39 +1,39 @@
-<!-- <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
-</html> -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>3D-Graphics</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="main-div">
-        <canvas id="canvas" width="500" height="500"></canvas>
-        <p id="controls-text"><b>Controls</b><br>
-            Camera Movement: W, A, S, D, Space, Left Shift -> foward, left, backwards, right, up, down.<br>
-            Camera Rotation: Mouse
-        </p>
+    <div id="main-container">
+        <div id="user-management">
+            <h2>User Management</h2>
+            <form id="user-form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+                <div class="button-container">
+                    <button type="button" id="sign-in-button">Sign In</button>
+                    <button type="button" id="sign-up-button">Sign Up</button>
+                </div>
+                <p id="status-message"></p>
+            </form>
+        </div>
+        <div id="main-div">
+            <canvas id="canvas" width="500" height="500"></canvas>
+            <p id="controls-text"><b>Controls</b><br>
+                Camera Movement: W, A, S, D, Space, Left Shift -> forward, left, backwards, right, up, down.<br>
+                Camera Rotation: Arrow Keys
+            </p>
+        </div>
     </div>
+    <!-- <script src="enable-threads.js"></script> -->
     <script src="/src/cpp/3D-Graphics.js"></script>
     <script type="module" src="/src/cppInterface.ts"></script>
     <script type="module" src="/src/main.ts"></script>
-    <!-- <script type="module" src="./index.js"></script>
-    <script type="module" src="./typescript.js"></script> -->
 </body>
+</html>
+

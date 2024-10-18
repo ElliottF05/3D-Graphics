@@ -1,7 +1,16 @@
 import * as CPPInterface from './cppInterface.js';
-import { createClient } from '@supabase/supabase-js'
+import { AuthError, AuthInvalidCredentialsError, createClient, User } from '@supabase/supabase-js'
 import { Database } from './database.types'
 
+// DOM ELEMENTS
+const signInButton = document.getElementById('sign-in-button') as HTMLButtonElement;
+const signUpButton = document.getElementById('sign-up-button') as HTMLButtonElement;
+const emailField = document.getElementById('email') as HTMLInputElement;
+const passwordField = document.getElementById('password') as HTMLInputElement;
+const statusMessage = document.getElementById('status-message') as HTMLDivElement;
+
+
+// INITIALIZING SUPABASE
 const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_API_KEY: string = import.meta.env.VITE_SUPABASE_API_KEY;
 
@@ -9,8 +18,11 @@ const supabase = createClient<Database>(
     SUPABASE_URL,
     SUPABASE_API_KEY
 )
+let user: null | User = null;
+let userLoggedIn: boolean = false;
 
-// Exporting scene data
+
+// TEST
 export async function test(): Promise<void> {
     console.log('Test function called');
 
@@ -19,7 +31,94 @@ export async function test(): Promise<void> {
 
 }
 
-async function exportSceneData(): Promise<void> {
+
+// AUTH
+export async function signUp(email: string, password: string): Promise<void> {
+    console.log('Signing up...');
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password
+    })
+    if (error) {
+        handleAuthError(error, 'signUp');
+        console.error('Error signing up:', error.message)
+    } else {
+        console.log('Signed up:', data);
+        user = data.user;
+        userLoggedIn = true;
+        onAuthSuccess();
+
+        const { error } = await supabase
+            .from('users')
+            .insert({scenes: [], UID: user?.id})
+        if (error) {
+            console.log("Failed to insert new user into database");
+        }
+    }
+}
+export async function signIn(email: string, password: string): Promise<void> {
+    console.log('Signing in...');
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+    })
+    if (error) {
+        handleAuthError(error, 'signIn');
+        console.error('Error signing up:', error.message)
+    } else {
+        console.log('Signed in:', data);
+        user = data.user;
+        userLoggedIn = true;
+        onAuthSuccess();
+    }
+}
+
+function handleAuthError(error: AuthError, from: string): void {
+    console.log("Auth error code:", error.code);
+    statusMessage.className = 'error';
+    if (error.code == "invalid_credentials") {
+        if (from == 'signUp') {
+            statusMessage.innerText = 'Invalid email or password';
+        } else {
+            statusMessage.innerText = 'Incorrect or invalid email or password';
+        }
+    }
+    else if (error.code == "validation_failed") {
+        statusMessage.innerText = 'Invalid email or password';
+    } 
+    else if (error.code == "anonymous_provider_disabled") {
+        statusMessage.innerText = 'Invalid email or password';
+    }
+    else if (error.code == "user_already_exists") {
+        statusMessage.innerText = 'Email already in use';
+    }
+    else {
+        statusMessage.innerText = 'An error occurred';
+    }
+}
+
+function onAuthSuccess() {
+    console.log('User logged in:', user);
+    statusMessage.innerText = 'Welcome, ' + user?.email;
+    statusMessage.className = '';
+}
+
+// Event listeners for sign-in and sign-up buttons
+signInButton.addEventListener('click', async () => {
+    const email = emailField.value;
+    const password = passwordField.value;
+    await signIn(email, password);
+});
+
+signUpButton.addEventListener('click', async () => {
+    const email = emailField.value;
+    const password = passwordField.value;
+    await signUp(email, password);
+});
+
+
+// EXPORT AND IMPORT SCENE DATA
+export async function exportSceneData(): Promise<void> {
     console.log("Exporting scene data...");
 
     var data_buffer_size: number = CPPInterface.CPPgetDataBufferSize();
@@ -36,7 +135,6 @@ async function exportSceneData(): Promise<void> {
 
     
 }
-
 export async function importSceneData(sceneID: number): Promise<void> {
     console.log("Importing scene data...");
     const { data, error } = await supabase

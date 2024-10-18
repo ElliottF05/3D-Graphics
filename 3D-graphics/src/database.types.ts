@@ -87,19 +87,19 @@ export type Database = {
       }
       users: {
         Row: {
-          created_at: string
           id: number
           scenes: number[] | null
+          UID: string | null
         }
         Insert: {
-          created_at?: string
           id?: number
           scenes?: number[] | null
+          UID?: string | null
         }
         Update: {
-          created_at?: string
           id?: number
           scenes?: number[] | null
+          UID?: string | null
         }
         Relationships: []
       }

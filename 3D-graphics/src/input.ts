@@ -16,6 +16,9 @@ window.onkeydown = function(e: KeyboardEvent) { pressedKeys[e.key] = true; }
 
 // Process user input and send it to the C++ code
 export function processInput(): void {
+    if (!pointerLocked) {
+        return;
+    }
     // INFO FOR _user_input:
     // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
     if (pressedKeys['w']) {
@@ -66,17 +69,20 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
             Main.unpause();
         }
     }
-    if (event.key == 'Escape') {
-        console.log('Escape pressed');
-        document.exitPointerLock();
-        console.log(pointerLocked);
+    if (event.key == '9') {
+        Database.exportSceneData();
     }
-    if (event.key == '1') {
-        Database.test();
-    }
-    if (event.key == '2') {
+    if (event.key == '0') {
         Database.importSceneData(7);
     }
+});
+document.addEventListener('pointerlockchange', (event) => {
+    if (document.pointerLockElement) {
+        pointerLocked = true;
+    } else {
+        pointerLocked = false;
+    }
+    console.log("Pointer lock changed to: " + pointerLocked);
 });
 
 document.addEventListener('click', (event) => {
@@ -90,13 +96,13 @@ document.addEventListener('click', (event) => {
 });
 
 canvas.addEventListener('mousemove', (event) => {
-    if (Main.isRunning()) {
+    if (Main.isRunning() && pointerLocked) {
         mouseX += event.movementX;
         mouseY += event.movementY;
     }
 });
 
 canvas.addEventListener('click', () => {
+    console.log("Requesting pointer lock...");
     canvas.requestPointerLock();
-    pointerLocked = true;
 });

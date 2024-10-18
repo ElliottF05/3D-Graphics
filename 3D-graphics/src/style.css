@@ -16,12 +16,86 @@ body, html {
     color: #333;
 }
 
-#main-div {
-    text-align: center;
+#main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
     padding: 20px;
     background: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
+}
+
+#user-management {
+    width: 300px;
+    margin-right: 20px;
+    margin-top: 10px;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+#user-management h2, #user-management h3 {
+    margin-bottom: 10px;
+}
+
+#user-management label {
+    display: block;
+    margin-top: 10px;
+}
+
+#user-management input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#user-management .button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+#user-management button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#sign-in-button {
+    margin-right: 2px;
+}
+#sign-up-button {
+    margin-left: 2px;
+}
+
+#user-management button:hover {
+    background-color: #555;
+}
+
+#status-message {
+    margin-top: 10px;
+}
+
+.error {
+    color: #f00; /* Red color for error messages */
+}
+
+#main-div {
+    text-align: center;
+    padding: 30px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    width: calc(min(80vw, 80vh) + 60px);
 }
 
 #canvas {
@@ -32,9 +106,9 @@ body, html {
 }
 
 #controls-text {
-    font-size: 18px;
+    font-size: 20px;
     text-align: left;
     margin-top: 20px;
-    color: #555;
-    line-height: 1.6;
+    word-wrap: break-word; /* Ensure text wraps within the container */
+    overflow-wrap: break-word; /* Ensure text wraps within the container */
 }
