@@ -19,7 +19,7 @@
                     <button type="button" id="sign-in-button">Sign In</button>
                     <button type="button" id="sign-up-button">Sign Up</button>
                 </div>
-                <p id="status-message"></p>
+                <p id="user-status-message"></p>
             </form>
         </div>
         <div id="main-div">
@@ -28,6 +28,29 @@
                 Camera Movement: W, A, S, D, Space, Left Shift -> forward, left, backwards, right, up, down.<br>
                 Camera Rotation: Arrow Keys
             </p>
+        </div>
+        <div id="scene-management">
+            <h2>Scene Management</h2>
+            <label for="color-picker">Select Color:</label>
+            <input type="color" id="color-picker">
+            
+            <!-- New input field for Scene Name -->
+            <label for="scene-name-input">Scene Name:</label>
+            <input type="text" id="scene-name-input" placeholder="Enter scene name">
+            
+            <button type="button" id="save-image-button">Save Image</button>
+            <button type="button" id="save-scene-button">Save Scene</button>
+            <p id="scene-status-message"></p>
+            <div id="image-gallery">
+                <!-- <img src="public/scene.png" alt="Scene Image 1">
+                <img src="public/scene.png" alt="Scene Image 2">
+                <img src="public/scene.png" alt="Scene Image 3"> -->
+                <!-- Add more images as needed -->
+            </div>
+            <div id="image-buttons">
+                <button id="view-image-button">View Image</button>
+                <button id="load-more-images">Load More Images</button>
+            </div>
         </div>
     </div>
     <!-- <script src="enable-threads.js"></script> -->

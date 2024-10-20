@@ -1,5 +1,5 @@
 import * as CPPInterface from './cppInterface.js';
-import { AuthError, AuthInvalidCredentialsError, createClient, User } from '@supabase/supabase-js'
+import { AuthError, createClient, User } from '@supabase/supabase-js'
 import { Database } from './database.types'
 
 // DOM ELEMENTS
@@ -7,7 +7,7 @@ const signInButton = document.getElementById('sign-in-button') as HTMLButtonElem
 const signUpButton = document.getElementById('sign-up-button') as HTMLButtonElement;
 const emailField = document.getElementById('email') as HTMLInputElement;
 const passwordField = document.getElementById('password') as HTMLInputElement;
-const statusMessage = document.getElementById('status-message') as HTMLDivElement;
+const statusMessage = document.getElementById('user-status-message') as HTMLDivElement;
 
 
 // INITIALIZING SUPABASE
@@ -19,6 +19,7 @@ const supabase = createClient<Database>(
     SUPABASE_API_KEY
 )
 let user: null | User = null;
+let userID: number | null = null;
 let userLoggedIn: boolean = false;
 
 
@@ -27,12 +28,19 @@ export async function test(): Promise<void> {
     console.log('Test function called');
 
     console.log('Testing exportSceneData()');
-    exportSceneData();
+    addOrUpdateScene(null, "testName");
 
 }
 
 
 // AUTH
+export function getUserID(): number {
+    return Number(user?.id);
+}
+export function getUserSignedIn(): boolean {
+    return userLoggedIn;
+}
+
 export async function signUp(email: string, password: string): Promise<void> {
     console.log('Signing up...');
     const { data, error } = await supabase.auth.signUp({
@@ -47,13 +55,6 @@ export async function signUp(email: string, password: string): Promise<void> {
         user = data.user;
         userLoggedIn = true;
         onAuthSuccess();
-
-        const { error } = await supabase
-            .from('users')
-            .insert({scenes: [], UID: user?.id})
-        if (error) {
-            console.log("Failed to insert new user into database");
-        }
     }
 }
 export async function signIn(email: string, password: string): Promise<void> {
@@ -118,22 +119,46 @@ signUpButton.addEventListener('click', async () => {
 
 
 // EXPORT AND IMPORT SCENE DATA
-export async function exportSceneData(): Promise<void> {
-    console.log("Exporting scene data...");
-
+function getSceneData(): Float32Array {
+    console.log("Getting scene data...");
     var data_buffer_size: number = CPPInterface.CPPgetDataBufferSize();
     var data_buffer_pointer: number = CPPInterface.CPPgetDataBufferPointer();
 
     var scene_data = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, data_buffer_pointer, data_buffer_size);
+    return scene_data;
 
-    const { error } = await supabase
-        .from('scenes')
-        .insert({ data: Array.from(scene_data) })
-    if (error) {
-        console.error('Error inserting data:', error.message)
+}
+
+export async function addOrUpdateScene(sceneID: number | null, sceneName: string): Promise<number> {
+    let scene_data = getSceneData();
+
+    if (sceneID === null) {
+        console.log("Adding new scene...");
+        console.log("USERID: ", user?.id);
+        console.log("SCENENAME: ", sceneName);
+        const { data, error } = await supabase
+            .from('scenes')
+            .insert({ data: Array.from(scene_data), user_id: user?.id as string, name: sceneName })
+            .select()
+        if (error) {
+            console.error('Error inserting data:', error.message)
+        } else {
+            return data[0].id;
+        }
+
+    } else {
+        console.log("Updating scene...");
+        const { data, error } = await supabase
+            .from('scenes')
+            .update({ data: Array.from(scene_data), name: sceneName })
+            .eq('id', sceneID)
+        if (error) {
+            console.error('Error updating data:', error.message)
+        } else {
+            return sceneID;
+        }
     }
-
-    
+    return -1;
 }
 export async function importSceneData(sceneID: number): Promise<void> {
     console.log("Importing scene data...");
@@ -159,5 +184,22 @@ export async function importSceneData(sceneID: number): Promise<void> {
 
         CPPInterface.CPPloadScene(data_buffer_pointer);
 
+    }
+}
+
+export async function uploadImage(image: Blob, scene_id: number): Promise<void> {
+    console.log("Uploading image...");
+    const url = String(user?.id) + Date.now();
+    const { data, error } = await supabase.storage.from('scene_images').upload(url, image)
+    if (error) {
+        console.error('Error uploading image:', error.message)
+    } else {
+        console.log('Image uploaded:', data);
+        const { error } = await supabase
+            .from('images')
+            .insert({ url: url, scene_id: scene_id })
+        if (error) {
+            console.log("Failed to insert new image into image table");
+        }
     }
 }

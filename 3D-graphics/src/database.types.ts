@@ -34,27 +34,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      images: {
+        Row: {
+          created_at: string
+          id: number
+          scene_id: number
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          scene_id: number
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          scene_id?: number
+          url?: string
+        }
+        Relationships: []
+      }
       scenes: {
         Row: {
           created_at: string | null
           data: number[]
           id: number
           last_edited: string | null
-          user_id: number | null
+          name: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           data: number[]
           id?: number
           last_edited?: string | null
-          user_id?: number | null
+          name?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string | null
           data?: number[]
           id?: number
           last_edited?: string | null
-          user_id?: number | null
+          name?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -82,24 +106,6 @@ export type Database = {
           pos_data?: number[]
           time_created?: string | null
           user_id?: number | null
-        }
-        Relationships: []
-      }
-      users: {
-        Row: {
-          id: number
-          scenes: number[] | null
-          UID: string | null
-        }
-        Insert: {
-          id?: number
-          scenes?: number[] | null
-          UID?: string | null
-        }
-        Update: {
-          id?: number
-          scenes?: number[] | null
-          UID?: string | null
         }
         Relationships: []
       }
