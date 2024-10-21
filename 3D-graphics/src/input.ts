@@ -73,7 +73,7 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
         // Database.exportSceneData("testName");
     }
     if (event.key == '0') {
-        Database.importSceneData(7);
+        // Database.importSceneData(7);
     }
 });
 document.addEventListener('pointerlockchange', (event) => {

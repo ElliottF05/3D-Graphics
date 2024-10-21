@@ -40,12 +40,12 @@ body, html {
     margin-bottom: 10px;
 }
 
-#user-management label, #scene-management label {
+label {
     display: block;
     margin-top: 10px;
 }
 
-#user-management input, #scene-management input {
+input {
     width: 100%;
     padding: 8px;
     margin-top: 5px;
@@ -70,7 +70,7 @@ body, html {
     box-sizing: border-box;
 }
 
-#user-management button, #scene-management button, #image-buttons button {
+button {
     width: 48%;
     padding: 10px;
     margin-top: 10px;
@@ -82,7 +82,14 @@ body, html {
     cursor: pointer;
 }
 
-#user-management button:hover, #scene-management button:hover, #image-buttons button:hover {
+#delete-image-button {
+    background-color: rgb(187, 31, 31);
+}
+#delete-image-button:hover {
+    background-color: #f00;
+}
+
+button:hover {
     background-color: #555;
 }
 
@@ -125,6 +132,56 @@ body, html {
 
 .error {
     color: #f00; /* Red color for error messages */
+}
+
+#scene-gallery {
+    display: flex;
+    flex-wrap: wrap; /* Ensure scenes wrap in multiple rows */
+    gap: 10px; /* Space between scene items */
+    max-height: 50vh; /* Limit the height of the gallery */
+    overflow-y: auto; /* Enable scrolling when necessary */
+    padding: 10px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scene-item {
+    flex: 1 1 150px; /* Set flexible size for each scene item */
+    max-width: 200px; /* Set a max width for consistency */
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Center the text and image */
+}
+
+.scene-item p {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.scene-thumbnail {
+    max-width: 100%;
+    max-height: 120px; /* Limit thumbnail height */
+    object-fit: cover; /* Maintain aspect ratio while covering the area */
+    border-radius: 5px;
+}
+
+.scene-selected {
+    background: lightgrey;
+}
+
+#scene-gallery-buttons.hidden {
+    display:none;
+}
+
+#delete-scene-button {
+    background-color: rgb(187, 31, 31);
+}
+#delete-scene-button:hover {
+    background-color: #f00;
 }
 
 #main-div {

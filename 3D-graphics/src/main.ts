@@ -1,7 +1,8 @@
 import * as CPPInterface from './cppInterface.ts';
 import * as Graphics from './graphics.ts';
 import * as Input from './input.ts';
-import './imageGallery.ts';
+
+import './database.ts';
 
 while (!CPPInterface.CPPmoduleInitialized) {
     console.log("Waiting for CPPinterface to be initialized...");
