@@ -258,11 +258,15 @@ deleteSceneButton.addEventListener('click', async () => {
                 }
             }
         }
-        Database.setSceneID(null);
+
+
+        if (selectedSceneID === Database.sceneID) {
+            Database.setSceneID(null);
+            RightSideBar.renderImageGallery();
+        }
         selectedSceneID = null;
         selectedSceneContainer = null;
         renderScenes();
-        RightSideBar.renderImageGallery();
     }
 });
 
