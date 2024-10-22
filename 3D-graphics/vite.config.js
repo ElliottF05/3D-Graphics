@@ -30,14 +30,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['3D-Graphics', '3D-Graphics.js', 'enable-threads.js']
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          threads: ['./src/enable-threads.js']
-        }
-      }
-    },
-    outDir: 'dist',
-    }
 });
