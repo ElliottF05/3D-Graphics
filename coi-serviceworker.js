@@ -50,7 +50,7 @@ if (typeof window === 'undefined') {
                     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
 
                     console.log(response);
-                    console.log(response.body);
+                    console.log(response.body.toString());
                     console.log(response.status);
                     console.log(response.statusText);
 
