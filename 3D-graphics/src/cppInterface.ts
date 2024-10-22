@@ -52,3 +52,7 @@ export function CPPloadScene(data: number): void {
     // @ts-ignore
     return CPPmodule._EXTERN_loadScene(data);
 }
+export function CPPsetSelectedColors(r: number, g: number, b: number): void {
+    // @ts-ignore
+    return CPPmodule._EXTERN_setSelectedColors(r, g, b);
+}

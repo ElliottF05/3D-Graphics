@@ -6,8 +6,6 @@ import './rightSideBar.ts'
 // INITIALIZING SUPABASE
 const SUPABASE_URL: string = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_API_KEY: string = import.meta.env.VITE_SUPABASE_API_KEY;
-console.log(SUPABASE_URL);
-console.log(SUPABASE_API_KEY);
 
 export const supabase = createClient<Database>(
     SUPABASE_URL,

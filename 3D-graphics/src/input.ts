@@ -3,6 +3,7 @@ import * as Main from './main.ts';
 
 // DOM Canvas Elements
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const colorPicker = document.getElementById('color-picker') as HTMLInputElement;
 
 // User input variables
 var pressedKeys: { [key: string]: boolean } = {};
@@ -10,8 +11,16 @@ let mouseX: number = 0;
 let mouseY: number = 0;
 let mouseMultiplier: number = 1;
 let pointerLocked: boolean = false;
+let r: number = 0;
+let g: number = 0;
+let b: number = 0;
 window.onkeyup = function(e: KeyboardEvent) { pressedKeys[e.key] = false; }
 window.onkeydown = function(e: KeyboardEvent) { pressedKeys[e.key] = true; }
+
+// Pre set color picker
+colorPicker.value = "#888888";
+hexToRgb(colorPicker.value);
+CPPInterface.CPPsetSelectedColors(r, g, b);
 
 // Process user input and send it to the C++ code
 export function processInput(): void {
@@ -92,6 +101,27 @@ document.addEventListener('click', (event) => {
             CPPInterface.CPPuserInput(0,0,0,0,0, 2)
         }
     }
+});
+
+// Function to convert hex to RGB
+function hexToRgb(hex: string) {
+    // Remove the '#' if present
+    hex = hex.replace(/^#/, '');
+    
+    // Parse the r, g, b values from the hex string
+    const bigint = parseInt(hex, 16);
+    r = (bigint >> 16) & 255;
+    g = (bigint >> 8) & 255;
+    b = bigint & 255;
+}
+colorPicker.addEventListener('input', () => {
+    const hexColor = colorPicker.value; // Get the hexadecimal color value
+    hexToRgb(hexColor); // Convert hex to RGB
+    console.log(r + ", " + g + ", " + b);
+});
+colorPicker.addEventListener('change', () => {
+    console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
+    CPPInterface.CPPsetSelectedColors(r, g, b);
 });
 
 canvas.addEventListener('mousemove', (event) => {

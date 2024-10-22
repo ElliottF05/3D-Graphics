@@ -15,6 +15,9 @@
 static bool running = true;
 static graphics::Window window(500, 500);
 static graphics::Camera cam;
+static int selectedRed = 0;
+static int selectedGreen = 0;
+static int selectedBlue = 0;
 
 // Setting up buffer
 static uint8_t* buffer = new uint8_t[window.width * window.height * 4];
@@ -101,7 +104,7 @@ extern "C" {
         const graphics::Object3D* lookingAtObject = cam.lookingAtObject;
 
         // DRAWING GHOST TRIANGLES
-        ghostObject = graphics::Object3D::buildCube(cam.getPositionOfNewObject(window), 1, 120, 120, 120);
+        ghostObject = graphics::Object3D::buildCube(cam.getPositionOfNewObject(window), 1, selectedRed, selectedGreen, selectedBlue);
         ghostObject.drawMultithreaded(cam, window);
         while (threads::threadPool.getNumberOfActiveTasks() > 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(200));
@@ -146,6 +149,15 @@ extern "C" {
                 }
             }
         }
+    }
+}
+
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE
+    void EXTERN_setSelectedColors(int r, int g, int b) {
+        selectedRed = r;
+        selectedGreen = g;
+        selectedBlue = b;
     }
 }
 
