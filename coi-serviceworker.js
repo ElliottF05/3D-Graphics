@@ -49,10 +49,10 @@ if (typeof window === 'undefined') {
                     }
                     newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
 
-                    console.log(response);
-                    console.log(response.body.toString());
-                    console.log(response.status);
-                    console.log(response.statusText);
+                    // console.log(response);
+                    // console.log(response.body.toString());
+                    // console.log(response.status);
+                    // console.log(response.statusText);
 
                     if (response.status == 204 || response.status == '204') {
                         return new Response(null, {
