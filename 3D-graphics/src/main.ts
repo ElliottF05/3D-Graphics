@@ -3,7 +3,6 @@ import * as Graphics from './graphics.ts';
 import * as Input from './input.ts';
 
 import './database.ts';
-import './style.css';
 
 while (!CPPInterface.CPPmoduleInitialized) {
     console.log("Waiting for CPPinterface to be initialized...");
@@ -45,6 +44,3 @@ export function isRunning(): boolean {
 // Set the scene and start the main loop
 CPPInterface.CPPsetupScene();
 loop();
-
-
-
