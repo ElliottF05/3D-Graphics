@@ -107,6 +107,8 @@ export async function deleteImage(image_id: number): Promise<void> {
 export async function renderImageGallery() {
     console.log("Rendering image gallery");
 
+    imageURLS = [];
+    imageIDs = [];
     if (Database.sceneID !== null) {
         const { data, error } = await Database.supabase
             .from('images')
