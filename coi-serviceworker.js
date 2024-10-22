@@ -55,7 +55,7 @@ if (typeof window === 'undefined') {
                     console.log(response.statusText);
 
                     return new Response(response.body, {
-                        status: response.status,
+                        status: response.status === null ? "" : response.status,
                         statusText: response.statusText,
                         headers: newHeaders,
                     });
