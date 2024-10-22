@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4"
+  },
+  "scripts": {
+    "build": "vite build",
+    "preview": "vite preview"
   }
 }

@@ -102,9 +102,6 @@ export async function deleteImage(image_id: number): Promise<void> {
     }
 }
 
-// Initial render of images
-setTimeout(renderImageGallery, 1000);
-// renderImageGallery();
 
 // Function to render images into the gallery
 export async function renderImageGallery() {
@@ -149,6 +146,10 @@ export async function renderImageGallery() {
 export function setSceneInputName(sceneName: string): void {
     sceneNameInput.value = sceneName;
 }
+function setSceneStatusMessage(message: string): void {
+    sceneStatusMessage.innerText = message;
+    setTimeout(() => {sceneStatusMessage.innerText = ''}, 5000);
+}
 
 // Handle clicking an image
 function handleImageClick(imageUrl: string, imageID: number, imageItem: HTMLDivElement) {
@@ -187,13 +188,11 @@ deleteImageButton.addEventListener('click', async () => {
 
 async function getImageFromCanvasAndUpload() {
     const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    let imageSrc;
     let imageBlob: Blob;
     let uploaded = false;
     canvas.toBlob(async (blob) => {
         if (blob) {
             imageBlob = blob;
-            imageSrc = URL.createObjectURL(blob);
             await uploadImage(imageBlob, Database.sceneID as number, Database.user?.id as string);
             uploaded = true;
             renderImageGallery();
@@ -205,24 +204,23 @@ async function getImageFromCanvasAndUpload() {
 }
 saveImageButton.addEventListener('click', async () => {
     if (!Database.getUserSignedIn()) {
-        sceneStatusMessage.innerText = 'You must be signed in to save images';
+        setSceneStatusMessage('You must be signed in to save images');
         return;
     }
     if (Database.sceneID === null) {
-        sceneStatusMessage.innerText = 'You must save the scene to save images';
+        setSceneStatusMessage('You must save the scene to save images');
         return;
     }
     getImageFromCanvasAndUpload();
-    sceneStatusMessage.innerText = '';
 });
 
 saveSceneButton.addEventListener('click', async () => {
     if (!Database.getUserSignedIn()) {
-        sceneStatusMessage.innerText = 'You must be signed in to save scenes';
+        setSceneStatusMessage('You must be signed in to save scenes');
         return;
     }
     if (sceneNameInput.value === '') {
-        sceneStatusMessage.innerText = 'You must enter a scene name to save the scene';
+        setSceneStatusMessage('You must enter a scene name to save the scene');
         return;
     }
 
@@ -232,6 +230,5 @@ saveSceneButton.addEventListener('click', async () => {
         uploadNewScene(sceneName, Database.user?.id as string);
     } else { // update existing scene
         updateExistingScene(sceneName);
-    }
-    sceneStatusMessage.innerText = '';
+    };
 });

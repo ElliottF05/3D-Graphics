@@ -1,6 +1,5 @@
 import * as CPPInterface from './cppInterface.ts';
 import * as Main from './main.ts';
-import * as Database from './database.ts';
 
 // DOM Canvas Elements
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -76,7 +75,7 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
         // Database.importSceneData(7);
     }
 });
-document.addEventListener('pointerlockchange', (event) => {
+document.addEventListener('pointerlockchange', () => {
     if (document.pointerLockElement) {
         pointerLocked = true;
     } else {

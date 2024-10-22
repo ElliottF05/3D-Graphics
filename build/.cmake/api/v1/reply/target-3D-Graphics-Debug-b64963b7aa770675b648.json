@@ -61,7 +61,27 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-sPTHREAD_POOL_SIZE=30"
+					"fragment" : "-sPTHREAD_POOL_SIZE=20"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sMODULARIZE"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sSINGLE_FILE=1"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sEXPORT_ES6=1"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sENVIRONMENT=web,worker"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-sEXPORT_NAME=\\\"WasmModule\\\""
 				},
 				{
 					"backtrace" : 3,
@@ -157,7 +177,32 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-sPTHREAD_POOL_SIZE=30",
+				"fragment" : "-sPTHREAD_POOL_SIZE=20",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sMODULARIZE",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sSINGLE_FILE=1",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sEXPORT_ES6=1",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sENVIRONMENT=web,worker",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-sEXPORT_NAME=\\\"WasmModule\\\"",
 				"role" : "flags"
 			},
 			{
