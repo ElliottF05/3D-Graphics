@@ -54,6 +54,14 @@ if (typeof window === 'undefined') {
                     console.log(response.status);
                     console.log(response.statusText);
 
+                    if (response.status == 204 || response.status == '204') {
+                        return new Response(null, {
+                            status: response.status === null ? "" : response.status,
+                            statusText: response.statusText,
+                            headers: newHeaders,
+                        });
+                    }
+
                     return new Response(response.body, {
                         status: response.status === null ? "" : response.status,
                         statusText: response.statusText,
