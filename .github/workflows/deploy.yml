@@ -3,7 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # Adjust if deploying from a different branch
+      - main 
+
+permissions:  # Set permissions explicitly
+  contents: write
 
 jobs:
   deploy:
