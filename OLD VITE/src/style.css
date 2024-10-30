@@ -1,0 +1,209 @@
+/* Reset some default browser styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+}
+
+#main-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+#user-management, #scene-management {
+    width: 300px;
+    margin: 0 20px;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+#user-management h2, #user-management h3, #scene-management h2, #scene-management h3 {
+    margin-bottom: 10px;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#scene-management input[type="color"] {
+    padding: 3px;
+    height: 40px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+#scene-management input[type="text"] {
+    width: 100%;
+    padding: 5px;
+    margin-top: 5px;
+    margin-bottom: 0px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 48%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background-color: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#delete-image-button {
+    background-color: rgb(187, 31, 31);
+}
+#delete-image-button:hover {
+    background-color: #f00;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+#image-gallery {
+    height: 50vh; /* Set a fixed height for the image list */
+    width: 100%; /* Full width of the container */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-y: auto; /* Enable vertical scrolling */
+    display: flex;
+    flex-direction: column; /* Stack images vertically */
+    padding: 10px; /* Add padding inside the container */
+}
+
+#image-gallery img {
+    max-width: 100%; /* Ensure images fit within the container */
+    max-height: 100%; /* Limit the height of the images */
+    object-fit: cover; /* Ensure images cover the area without distortion */
+    border-radius: 5px;
+}
+
+.image-item {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.selected-image {
+    background: lightgrey;
+}
+
+#image-buttons {
+    display: flex;
+    gap: 10px; /* Add space between the buttons */
+    margin-top: 10px; /* Add space above the buttons */
+}
+
+#status-message {
+    margin-top: 10px;
+}
+
+.error {
+    color: #f00; /* Red color for error messages */
+}
+
+#scene-gallery {
+    display: flex;
+    flex-wrap: wrap; /* Ensure scenes wrap in multiple rows */
+    gap: 10px; /* Space between scene items */
+    max-height: 50vh; /* Limit the height of the gallery */
+    overflow-y: auto; /* Enable scrolling when necessary */
+    padding: 10px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scene-item {
+    flex: 1 1 150px; /* Set flexible size for each scene item */
+    max-width: 200px; /* Set a max width for consistency */
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Center the text and image */
+}
+
+.scene-item p {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.scene-thumbnail {
+    max-width: 100%;
+    max-height: 120px; /* Limit thumbnail height */
+    object-fit: cover; /* Maintain aspect ratio while covering the area */
+    border-radius: 5px;
+}
+
+.scene-selected {
+    background: lightgrey;
+}
+
+#scene-gallery-buttons.hidden {
+    display:none;
+}
+
+#delete-scene-button {
+    background-color: rgb(187, 31, 31);
+}
+#delete-scene-button:hover {
+    background-color: #f00;
+}
+
+#main-div {
+    text-align: center;
+    padding: 30px;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    width: calc(min(80vw, 80vh) + 60px);
+}
+
+#canvas {
+    width: calc(min(80vw, 80vh)); /* Set width to the smaller of 80% of viewport width or height */
+    height: calc(min(80vw, 80vh)); /* Set height to the smaller of 80% of viewport width or height */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#controls-text {
+    font-size: 20px;
+    text-align: left;
+    margin-top: 20px;
+    word-wrap: break-word; /* Ensure text wraps within the container */
+    overflow-wrap: break-word; /* Ensure text wraps within the container */
+}
