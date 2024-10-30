@@ -1,6 +1,6 @@
 lsi: false
 safe: true
-source: ["./"]
+source: ["./dist"]
 include: ["dist", "dist/index.html", "dist/coi-serviceworker.js", "dist/assets", "dist/assets/**.js", "dist/assets/**.css", "dist/assets/**"]
 exclude: ["README.md", "./README.md"]
 incremental: false
