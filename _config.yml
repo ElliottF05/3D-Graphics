@@ -1,6 +1,8 @@
 lsi: false
 safe: true
 source: ["./"]
+include: ["./dist"]
+exclude: ["./index.html"]
 incremental: false
 highlighter: rouge
 gist:

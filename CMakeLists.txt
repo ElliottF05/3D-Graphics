@@ -4,8 +4,8 @@ project(3D-Graphics VERSION 0.1.0 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set(CMAKE_BINARY_DIR "${PROJECT_SOURCE_DIR}/3D-graphics/src/cpp")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/3D-graphics/src/cpp")
+set(CMAKE_BINARY_DIR "${PROJECT_SOURCE_DIR}/src/cpp")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/src/cpp")
 
 add_executable(3D-Graphics ./cpp/main.cpp ./cpp/graphics.cpp ./cpp/threads.cpp)
 
