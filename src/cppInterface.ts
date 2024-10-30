@@ -1,6 +1,6 @@
 import './style.css'
 // @ts-ignore
-import WasmModule from './cpp/3D-graphics.js'
+import WasmModule from './cpp/3D-Graphics.js'
 
 // INITIALIZING THE CPP MODULE
 
