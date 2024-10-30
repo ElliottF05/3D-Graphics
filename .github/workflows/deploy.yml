@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Adjust if deploying from a different branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the project
+        run: npm run build  # Run vite build
+
+      - name: Delete existing index.html
+        run: rm index.html  # Deletes the default index.html file
+
+      - name: Copy built files to root
+        run: cp -r dist/* .  # Copies the contents of `dist` to the root
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .  # Publish from the root directory
