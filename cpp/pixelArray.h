@@ -19,6 +19,7 @@ class PixelArray {
 
         void clear();
         void setPixel(int x, int y, int r, int g, int b);
+        void setPixel(int index, int r, int g, int b);
 
         int getWidth();
         int getHeight();

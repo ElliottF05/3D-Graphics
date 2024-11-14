@@ -38,6 +38,14 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
         data[index].b = b;
     }
 }
+void PixelArray::setPixel(int index, int r, int g, int b) {
+    {
+        std::lock_guard<std::mutex> lock(data[index].lock);
+        data[index].r = r;
+        data[index].g = g;
+        data[index].b = b;
+    }
+}
 const std::vector<PixelArrayData>& PixelArray::getData() const {
     return data;
 }

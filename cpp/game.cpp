@@ -52,6 +52,8 @@ void Game::setupScene() {
 }
 
 void Game::render() {
+    // CURRENTLY TAKING 2.2 to 2.4 ms on average
+
     // std::cout << "game.cpp: render() called" << std::endl;
     // auto startTime = std::chrono::high_resolution_clock::now();
     // auto fillTriangleTime = startTime - startTime;
@@ -171,8 +173,9 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
         }
         left = std::max(0, left);
         right = std::min(500, right);
+        int baseIndex = y * 500;
         for (int x = left; x < right; x++) {
-            pixelArray.setPixel(x, y, r, g, b);
+            pixelArray.setPixel(baseIndex + x, r, g, b);
         }
         x1 += slope1;
         x2 += slope2;
@@ -192,8 +195,9 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
         }
         left = std::max(0, left);
         right = std::min(500, right);
+        int baseIndex = y * 500;
         for (int x = left; x < right; x++) {
-            pixelArray.setPixel(x, y, r, g, b);
+            pixelArray.setPixel(baseIndex + x, r, g, b);
         }
         x1 += slope3;
         x2 += slope2;
