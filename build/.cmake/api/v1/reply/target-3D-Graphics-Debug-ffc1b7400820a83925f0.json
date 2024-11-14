@@ -89,7 +89,7 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-O3"
+					"fragment" : "-O1"
 				},
 				{
 					"backtrace" : 3,
@@ -216,7 +216,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-O3",
+				"fragment" : "-O1",
 				"role" : "flags"
 			},
 			{

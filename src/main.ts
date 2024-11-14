@@ -23,7 +23,10 @@ async function loop(): Promise<void> {
         },40);
         if (running) {
             Input.processInput();
+            let timeBefore = performance.now();
             CPPInterface.CPPrenderScene();
+            let timeAfter = performance.now();
+            console.log("frame time in js: ", timeAfter - timeBefore);
             Graphics.setCanvasImage();
         }
         // Wait for 40ms before the next frame

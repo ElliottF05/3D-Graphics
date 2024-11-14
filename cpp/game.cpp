@@ -1,6 +1,7 @@
 #include "game.h"
 #include "object3D.h"
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 
 // CONSTRUCTOR
@@ -47,11 +48,13 @@ void Game::setupScene() {
     objects.emplace_back(testObj, 220, 220, 220, 0, false);
 
     // create camera
-    camera = Camera(Vec3(-0.5f,-0.5f,1.5f), 0, 0, M_PI/2.0f);
+    camera = Camera(Vec3(-0.5f,-0.5f,1.5f), 0.0111, 0.0111, M_PI/2.0f);
 }
 
 void Game::render() {
     // std::cout << "game.cpp: render() called" << std::endl;
+    // auto startTime = std::chrono::high_resolution_clock::now();
+    // auto fillTriangleTime = startTime - startTime;
 
     // 1) clear screen
     pixelArray.clear();
@@ -118,10 +121,20 @@ void Game::render() {
             if (v1.z < 0 || v2.z < 0 || v3.z < 0) {
                 continue;
             }
+
+            // auto preFillTriangle = std::chrono::high_resolution_clock::now();
             fillTriangle(v1, v2, v3, obj.getR(), obj.getG(), obj.getB());
+            // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
+            // fillTriangleTime += afterFillTriangle - preFillTriangle;
+
 
         }
     }
+    // auto endTime = std::chrono::high_resolution_clock::now();
+    // auto totalDuration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+    // auto fillTriangleDuration = std::chrono::duration_cast<std::chrono::microseconds>(fillTriangleTime);
+    // std::cout << "total frame time: " << totalDuration.count() << std::endl;
+    // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
 void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
@@ -144,13 +157,13 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
     float slope3 = (v3.x - v2.x) / (v3.y - v2.y);
 
     // calculate starting and ending x values
-    int top = std::max(v1.y, 0.0f);
+    float top = std::max(v1.y, 0.0f);
     float x1 = slope1 * (top - v1.y) + v1.x;
     float x2 = slope2 * (top - v1.y) + v1.x;
-    int bottom = std::min(v2.y, 500.0f);
+    float bottom = std::min(v2.y, 500.0f);
 
     // fill top half
-    for (int y = top; y < bottom; y++) {
+    for (int y = round(top); y < round(bottom); y++) {
         int left = x1;
         int right = x2;
         if (left > right) {
@@ -166,13 +179,12 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
     }
 
     // fill bottom half
-
     top = std::max(v2.y, 0.0f);
-    x1 = slope1 * (top - v2.y) + v2.x;
+    x1 = slope3 * (top - v2.y) + v2.x;
     x2 = slope2 * (top - v1.y) + v1.x;
     bottom = std::min(v3.y, 500.0f);
 
-    for (int y = top; y < bottom; y++) {
+    for (int y = round(top); y < round(bottom); y++) {
         int left = x1;
         int right = x2;
         if (left > right) {
