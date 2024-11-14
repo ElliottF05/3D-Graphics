@@ -6,10 +6,7 @@
 #include <utility>
 #include <iostream>
 
-using namespace threads;
-
 // CONSTRUCTOR
-ThreadPool threadPool = ThreadPool(20);
 ThreadPool::ThreadPool(int num_threads) : stop_(false), active_tasks_(0) {
     // Creating worker threads 
     for (int i = 0; i < num_threads; ++i) { 

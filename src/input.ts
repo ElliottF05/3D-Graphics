@@ -9,7 +9,8 @@ const colorPicker = document.getElementById('color-picker') as HTMLInputElement;
 var pressedKeys: { [key: string]: boolean } = {};
 let mouseX: number = 0;
 let mouseY: number = 0;
-let mouseMultiplier: number = 1;
+let moveMultiplier: number = 0.25;
+let mouseMultiplier: number = 0.01;
 let pointerLocked: boolean = false;
 let r: number = 0;
 let g: number = 0;
@@ -17,10 +18,10 @@ let b: number = 0;
 window.onkeyup = function(e: KeyboardEvent) { pressedKeys[e.key] = false; }
 window.onkeydown = function(e: KeyboardEvent) { pressedKeys[e.key] = true; }
 
-// Pre set color picker
-colorPicker.value = "#888888";
-hexToRgb(colorPicker.value);
-CPPInterface.CPPsetSelectedColors(r, g, b);
+// // Pre set color picker
+// colorPicker.value = "#888888";
+// hexToRgb(colorPicker.value);
+// CPPInterface.CPPsetSelectedColors(r, g, b);
 
 // Process user input and send it to the C++ code
 export function processInput(): void {
@@ -29,42 +30,62 @@ export function processInput(): void {
     }
     // INFO FOR _user_input:
     // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
+    let cameraMoveFoward: number = 0;
+    let cameraMoveSide: number = 0;
+    let cameraMoveUp: number = 0;
+    let cameraRotateZ: number = 0;
+    let cameraRotateY: number = 0;
     if (pressedKeys['w']) {
-        CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
+        cameraMoveFoward += 1;
+        // CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
     }
     if (pressedKeys['s']) {
-        CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
+        cameraMoveFoward -= 1;
+        // CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
     }
     if (pressedKeys['a']) {
-        CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
+        cameraMoveSide += 1;
+        // CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
     }
     if (pressedKeys['d']) {
-        CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
+        cameraMoveSide -= 1;
+        // CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
     }
     if (pressedKeys[' ']) {
-        CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
+        cameraMoveUp += 1;
+        // CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
     }
     if (pressedKeys['Shift']) {
-        CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
+        cameraMoveUp -= 1;
+        // CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
     }
 
     if (pressedKeys['ArrowLeft']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
+        cameraRotateZ += 1;
+        // CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
     }
     if (pressedKeys['ArrowRight']) {
-        CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
+        cameraRotateZ -= 1;
+        // CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
     }
     if (pressedKeys['ArrowUp']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
+        cameraRotateY += 1;
+        // CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
     }
     if (pressedKeys['ArrowDown']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
+        cameraRotateY -= 1;
+        // CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
     }
     if (pointerLocked) {
         CPPInterface.CPPuserInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
         mouseX = 0;
         mouseY = 0;
     }
+
+    cameraMoveFoward *= moveMultiplier;
+    cameraMoveSide *= moveMultiplier;
+    cameraMoveUp *= moveMultiplier;
+    CPPInterface.CPPuserInput(cameraMoveFoward, cameraMoveSide, cameraMoveUp, cameraRotateZ, cameraRotateY, 0);
 }
 
 // Event listeners...
@@ -119,10 +140,10 @@ colorPicker.addEventListener('input', () => {
     hexToRgb(hexColor); // Convert hex to RGB
     console.log(r + ", " + g + ", " + b);
 });
-colorPicker.addEventListener('change', () => {
-    console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
-    CPPInterface.CPPsetSelectedColors(r, g, b);
-});
+// colorPicker.addEventListener('change', () => {
+//     console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
+//     CPPInterface.CPPsetSelectedColors(r, g, b);
+// });
 
 canvas.addEventListener('mousemove', (event) => {
     if (Main.isRunning() && pointerLocked) {

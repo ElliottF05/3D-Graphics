@@ -358,4 +358,17 @@ CMAKE_UNAME:INTERNAL=/usr/bin/uname
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //If true, we are targeting Emscripten output.
 EMSCRIPTEN:INTERNAL=1
+//Details about finding Python3
+FIND_PACKAGE_MESSAGE_DETAILS_Python3:INTERNAL=[/Users/elliottfaa/anaconda3/bin/python3.11][cfound components: Interpreter ][v3.11.5()]
+//Compiler reason failure
+_Python3_Compiler_REASON_FAILURE:INTERNAL=
+//Development reason failure
+_Python3_Development_REASON_FAILURE:INTERNAL=
+//Path to a program.
+_Python3_EXECUTABLE:INTERNAL=/Users/elliottfaa/anaconda3/bin/python3.11
+//Python3 Properties
+_Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;11;5;32;64;;;abi3;/Users/elliottfaa/anaconda3/lib/python3.11;/Users/elliottfaa/anaconda3/lib/python3.11;/Users/elliottfaa/anaconda3/lib/python3.11/site-packages;/Users/elliottfaa/anaconda3/lib/python3.11/site-packages
+_Python3_INTERPRETER_SIGNATURE:INTERNAL=32618d3eabd66ab21910e4db59a3cb59
+//NumPy reason failure
+_Python3_NumPy_REASON_FAILURE:INTERNAL=
 

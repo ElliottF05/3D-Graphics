@@ -141,7 +141,11 @@
 			[
 				0,
 				1,
-				2
+				2,
+				3,
+				4,
+				5,
+				6
 			]
 		}
 	],
@@ -278,7 +282,11 @@
 			[
 				0,
 				1,
-				2
+				2,
+				3,
+				4,
+				5,
+				6
 			]
 		}
 	],
@@ -287,19 +295,43 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "cpp/main.cpp",
+			"path" : "cpp/main2.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "cpp/graphics.cpp",
+			"path" : "cpp/camera.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cpp/game.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cpp/object3D.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cpp/pixelArray.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "cpp/threads.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cpp/vec3.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

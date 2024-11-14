@@ -1,8 +1,9 @@
 import * as CPPInterface from './cppInterface.ts';
 import * as Graphics from './graphics.ts';
 import * as Input from './input.ts';
+import './style.css';
 
-import './database.ts';
+// import './database.ts';
 
 while (!CPPInterface.CPPmoduleInitialized) {
     console.log("Waiting for CPPinterface to be initialized...");
@@ -22,6 +23,7 @@ async function loop(): Promise<void> {
         },40);
         if (running) {
             Input.processInput();
+            CPPInterface.CPPrenderScene();
             Graphics.setCanvasImage();
         }
         // Wait for 40ms before the next frame
@@ -42,5 +44,5 @@ export function isRunning(): boolean {
 }
 
 // Set the scene and start the main loop
-CPPInterface.CPPsetupScene();
+Graphics.setCanvasImage();
 loop();

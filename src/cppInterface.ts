@@ -1,4 +1,3 @@
-import './style.css'
 // @ts-ignore
 import WasmModule from './cpp/3D-Graphics.js'
 
@@ -22,37 +21,53 @@ while (!CPPmoduleInitialized) {
 console.log("Module loaded!!");
 
 
-export function CPPsetupScene(): void {
+
+export function CPPrenderScene(): void {
     // @ts-ignore
-    //_EXTERN_setupScene();
-    CPPmodule._EXTERN_setupScene();
+    CPPmodule._renderScene();
 }
-export function CPPgetBuffer(): number {
+export function CPPgetImageBuffer(): number {
+    // console.log("cppInterface.ts: CPPgetImageBuffer()");
     // @ts-ignore
-    return CPPmodule._EXTERN_getBuffer();
-}
+    return CPPmodule._getImageBuffer();
+};
 export function CPPuserInput(a: number, b: number, c: number, d: number, e: number, f: number): void {
     // @ts-ignore
-    CPPmodule._EXTERN_userInput(a,b,c,d,e,f);
+    CPPmodule._userInput(a,b,c,d,e,f);
 }
 
-export function CPPgetDataBufferSize(): number {
-    // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferSize();
-}
-export function CPPgetDataBufferPointer(): number {
-    // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferPointer();
-}
-export function CPPsetDataBufferPointer(size: number): number {
-    // @ts-ignore
-    return CPPmodule._EXTERN_setDataBufferPointer(size);
-}
-export function CPPloadScene(data: number): void {
-    // @ts-ignore
-    return CPPmodule._EXTERN_loadScene(data);
-}
-export function CPPsetSelectedColors(r: number, g: number, b: number): void {
-    // @ts-ignore
-    return CPPmodule._EXTERN_setSelectedColors(r, g, b);
-}
+
+// export function CPPsetupScene(): void {
+//     // @ts-ignore
+//     //_EXTERN_setupScene();
+//     CPPmodule._EXTERN_setupScene();
+// }
+// export function CPPgetBuffer(): number {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_getBuffer();
+// }
+// export function CPPuserInput(a: number, b: number, c: number, d: number, e: number, f: number): void {
+//     // @ts-ignore
+//     CPPmodule._EXTERN_userInput(a,b,c,d,e,f);
+// }
+
+// export function CPPgetDataBufferSize(): number {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_getDataBufferSize();
+// }
+// export function CPPgetDataBufferPointer(): number {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_getDataBufferPointer();
+// }
+// export function CPPsetDataBufferPointer(size: number): number {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_setDataBufferPointer(size);
+// }
+// export function CPPloadScene(data: number): void {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_loadScene(data);
+// }
+// export function CPPsetSelectedColors(r: number, g: number, b: number): void {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_setSelectedColors(r, g, b);
+// }
