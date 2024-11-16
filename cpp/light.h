@@ -1,5 +1,6 @@
 #pragma once
 
+#include "object3D.h"
 #include "vec3.h"
 #include "zBuffer.h"
 #include "camera.h"
@@ -16,7 +17,10 @@ class Light {
 
     public:
         Light(Vec3 position, float thetaZ, float thetaY, float fov, int r, int g, int b, float luminosity);
-        void addVerticesToShadowBuffer(std::vector<Vec3>& vertices);
-        void resetShadowBuffer();
+        void addVerticesToShadowMap(const std::vector<Vec3>& vertices);
+        void addObjectsToShadowMap(std::vector<Object3D>& objects);
+        void resetShadowMap();
         float getLightingAmount(Vec3 worldPos, Vec3& triangleNormal);
+
+        const ZBuffer& getZBuffer() const;
 };

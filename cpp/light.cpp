@@ -1,7 +1,7 @@
-#pragma once
-
 #include "light.h"
+#include "zBuffer.h"
 #include <cmath>
+#include <iostream>
 
 // CONSTRUCTOR
 Light::Light(Vec3 position, float thetaZ, float thetaY, float fov, int r, int g, int b, float luminosity)
@@ -9,19 +9,24 @@ Light::Light(Vec3 position, float thetaZ, float thetaY, float fov, int r, int g,
 }
 
 // METHODS
-void Light::addVerticesToShadowBuffer(std::vector<Vec3>& vertices) {
+const ZBuffer& Light::getZBuffer() const {
+    return zBuffer;
+}
+void Light::addVerticesToShadowMap(const std::vector<Vec3>& vertices) {
     for (int i = 0; i < vertices.size(); i += 3) {
         Vec3 v1 = vertices[i];
         Vec3 v2 = vertices[i+1];
         Vec3 v3 = vertices[i+2];
 
-        // 2.0) do not render if normal is pointing towards cam - FRONT FACE CULLING
+        // 2.0) do not render if normal is pointing towards light - FRONT FACE CULLING
         Vec3 normal = (v3 - v1).cross(v2 - v1);
-        Vec3 camToTriangle = v1 - camera.getPos();
+            normal.normalize();
+            Vec3 camToTriangle = v1 - camera.getPos();
 
-        if (normal.dot(camToTriangle) < 0) {
-            continue;
-        }
+            if (normal.dot(camToTriangle) < 0) {
+                std::cout << "triangle pointing towards light" << std::endl;
+                continue;
+            }
 
         // 2.1) project vertices
 
@@ -83,6 +88,7 @@ void Light::addVerticesToShadowBuffer(std::vector<Vec3>& vertices) {
 }
 
 void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
+    std::cout << "filling triangle: " << v1.toString() << ", " << v2.toString() << ", " << v3.toString() << std::endl;
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
     
     // sort vertices by y (v1 has lowest y, v3 has highest y)
@@ -105,7 +111,7 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     float top = std::max(v1.y, 0.0f);
     float x1 = slope1 * (top - v1.y) + v1.x;
     float x2 = slope2 * (top - v1.y) + v1.x;
-    float bottom = std::min(v2.y, 500.0f);
+    float bottom = std::min(v2.y, 1000.0f);
 
     // fill top half
     for (int y = round(top); y < round(bottom); y++) {
@@ -122,7 +128,7 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
             std::swap(left, right);
         }
         left = std::max(0, left);
-        right = std::min(500, right);
+        right = std::min(1000, right);
         for (int x = left; x < right; x++) {
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
@@ -140,7 +146,7 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     top = std::max(v2.y, 0.0f);
     x1 = slope3 * (top - v2.y) + v2.x;
     x2 = slope2 * (top - v1.y) + v1.x;
-    bottom = std::min(v3.y, 500.0f);
+    bottom = std::min(v3.y, 1000.0f);
 
     for (int y = round(top); y < round(bottom); y++) {
         int left = x1;
@@ -156,7 +162,7 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
             std::swap(left, right);
         }
         left = std::max(0, left);
-        right = std::min(500, right);
+        right = std::min(1000, right);
         for (int x = left; x < right; x++) {
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
@@ -171,12 +177,19 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     }
 }
 
-void Light::resetShadowBuffer() {
+void Light::addObjectsToShadowMap(std::vector<Object3D>& objects) {
+    for (int i = 0; i < objects.size(); i++) {
+        addVerticesToShadowMap(objects[i].getVertices());
+    }
+}
+
+void Light::resetShadowMap() {
     zBuffer.clear();
 }
 
 float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
     // pixelPos starts in world space
+    // std::cout << "pixelPos: " << pixelPos.toString() << std::endl;
 
     Vec3 lightToPixel = pixelPos - camera.getPos();
 
@@ -201,20 +214,20 @@ float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
     pixelPos.y = 0.5 * (height - pixelPos.y / maxPlaneCoord * width);
 
     if (depth < 0 || pixelPos.x < 0 || pixelPos.x >= width || pixelPos.y < 0 || pixelPos.y >= height) {
+        // std::cout << "pixel not in light's view" << std::endl;
         return 0;
     }
 
     if (depth > zBuffer.getPixel(pixelPos.x, pixelPos.y)) {
+        // std::cout << "pixel is occluded, depth: " << depth << ", zBuffer depth: " << zBuffer.getPixel(pixelPos.x, pixelPos.y) << std::endl;
         return 0;
-    } else {
-        zBuffer.setPixel(pixelPos.x, pixelPos.y, depth);
     }
 
     float invDist = 1.0f / std::sqrt(xDist * xDist + yDist * yDist + depth * depth);
 
     lightToPixel.normalize();
     float angleMultiplier = 1 - lightToPixel.dot(triangleNormal);
-    angleMultiplier = 1;
+    // std::cout << "luminosity: " << luminosity << ", invDist: " << invDist << ", angleMultiplier: " << angleMultiplier << std::endl;
 
     return luminosity * invDist * angleMultiplier;
 }

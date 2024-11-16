@@ -1,5 +1,6 @@
 #include "game.h"
 #include "object3D.h"
+#include "zBuffer.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>
@@ -34,7 +35,6 @@ void Game::setupScene() {
             addingTo.emplace_back(i+1,j+1,0);
         }
     }
-    std::cout << "darkGrey size: " << darkGrey.size() << std::endl;
     objects.emplace_back(darkGrey, 140, 140, 140, 0, false);
     objects.emplace_back(lightGrey, 200, 200, 200, 0, false);
 
@@ -59,8 +59,22 @@ void Game::setupScene() {
     testObj.push_back(b);
     testObj.push_back(c);
     testObj.push_back(d);
-    
+
     objects.emplace_back(testObj, 220, 220, 220, 0, false);
+
+    // create light
+    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/2.0f, 255, 255, 255, 7);
+    lights[0].resetShadowMap();
+    lights[0].addObjectsToShadowMap(objects);
+
+    const std::vector<ZBufferData>& zData = lights[0].getZBuffer().getData();
+    for (int y = 0; y < 1000; y++) {
+        for (int x = 0; x < 1000; x++) {
+            float z = zData[y * 500 + x].z;
+            std::cout << z << " ";
+        }
+        std::cout << std::endl;
+    }
 
     // create camera
     camera = Camera(Vec3(-0.5f,-0.5f,1.5f), 0.0111, 0.0111, M_PI/2.0f);
@@ -68,7 +82,8 @@ void Game::setupScene() {
 
 void Game::render() {
     // before zBuffer (only simple color fill per pixel) 2.2 to 2.4 ms on average
-    // AFTER ZBUFFER: 5-6ms on average
+    // after zBuffer: 5-6ms on average
+    // after shadowMapping (no filtering): 17-18ms on average
 
     // std::cout << "game.cpp: render() called" << std::endl;
     // auto startTime = std::chrono::high_resolution_clock::now();
@@ -152,7 +167,7 @@ void Game::render() {
             }
 
             // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-            fillTriangle(v1, v2, v3, obj.getR(), obj.getG(), obj.getB());
+            fillTriangle(v1, v2, v3, obj.getR(), obj.getG(), obj.getB(), obj.getReflectivity(), normal);
             // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
             // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
@@ -166,7 +181,7 @@ void Game::render() {
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
-void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
+void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float reflectivity, Vec3& normal) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
     
     // std::cout << "game.cpp: fillTriangle() called" << std::endl;
@@ -222,7 +237,13 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
 
-                pixelArray.setPixel(x, y, r, g, b);
+                float lightingAmount = lights[0].getLightingAmount(worldPos, normal);
+                lightingAmount = std::max(0.2f, lightingAmount);
+                int lightingR = std::min(255, (int) (r * lightingAmount));
+                int lightingG = std::min(255, (int) (g * lightingAmount));
+                int lightingB = std::min(255, (int) (b * lightingAmount));
+
+                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope1;
@@ -263,7 +284,13 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
 
-                pixelArray.setPixel(x, y, r, g, b);
+                float lightingAmount = lights[0].getLightingAmount(worldPos, normal);
+                lightingAmount = std::max(0.2f, lightingAmount);
+                int lightingR = std::min(255, (int) (r * lightingAmount));
+                int lightingG = std::min(255, (int) (g * lightingAmount));
+                int lightingB = std::min(255, (int) (b * lightingAmount));
+
+                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope3;
@@ -278,10 +305,11 @@ Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
 
     // v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
     // v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
+
     return Vec3(
         1,
-        -(xPixel * 2.0f / width * maxPlaneCoord - 1),
-        -(yPixel * 2 * maxPlaneCoord * width - height)
+        -((xPixel * 2.0f / width - 1) * maxPlaneCoord),
+        -((yPixel * 2.0f - height) / width * maxPlaneCoord)
     );
 }
 

@@ -16,4 +16,7 @@ int Object3D::getG() const {
 int Object3D::getB() const {
     return b;
 }
+float Object3D::getReflectivity() const {
+    return reflectivity;
+}
 

@@ -17,4 +17,5 @@ class Object3D {
         int getR() const;
         int getG() const;
         int getB() const;
+        float getReflectivity() const;
 };
