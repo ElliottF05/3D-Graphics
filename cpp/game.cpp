@@ -22,13 +22,13 @@ void Game::setupScene() {
     // make grid
     std::vector<Vec3> darkGrey;
     std::vector<Vec3> lightGrey;
-    int gridRadius = 2;
+    int gridRadius = 5;
     for (int i = -gridRadius; i < gridRadius; i++) {
         for (int j = -gridRadius; j < gridRadius; j++) {
             std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
             addingTo.emplace_back(i,j,0);
-            addingTo.emplace_back(i+1,j,0);
             addingTo.emplace_back(i+1,j+1,0);
+            addingTo.emplace_back(i+1,j,0);
             addingTo.emplace_back(i,j,0);
             addingTo.emplace_back(i,j+1,0);
             addingTo.emplace_back(i+1,j+1,0);
@@ -39,12 +39,27 @@ void Game::setupScene() {
     objects.emplace_back(lightGrey, 200, 200, 200, 0, false);
 
     std::vector<Vec3> testObj;
-    testObj.emplace_back(0,0,0.5f);
-    testObj.emplace_back(0,1,0.5f);
-    testObj.emplace_back(1,1,0.5f);
-    testObj.emplace_back(0,0,0.5f);
-    testObj.emplace_back(1,0,0.5f);
-    testObj.emplace_back(1,1,0.5f);
+    Vec3 a(-3,-3,0);
+    Vec3 b(-3,-1,0);
+    Vec3 c(-1,-2,0);
+    Vec3 d(-2,-2,2);
+
+    testObj.push_back(a);
+    testObj.push_back(c);
+    testObj.push_back(b);
+
+    testObj.push_back(a);
+    testObj.push_back(b);
+    testObj.push_back(d);
+
+    testObj.push_back(c);
+    testObj.push_back(a);
+    testObj.push_back(d);
+
+    testObj.push_back(b);
+    testObj.push_back(c);
+    testObj.push_back(d);
+    
     objects.emplace_back(testObj, 220, 220, 220, 0, false);
 
     // create camera
@@ -71,12 +86,21 @@ void Game::render() {
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
 
+            // 2.0) do not render if normal is pointing away from cam - BACK FACE CULLING
+            Vec3 normal = (v3 - v1).cross(v2 - v1);
+            normal.normalize();
+            Vec3 camToTriangle = v1 - camera.getPos();
+
+            if (normal.dot(camToTriangle) > 0) {
+                continue;
+            }
+
             // 2.1) project vertices
 
             // 2.1.1) translate vertices to camera space
-            v1 = v1 - camera.getPos();
-            v2 = v2 - camera.getPos();
-            v3 = v3 - camera.getPos();
+            v1 -= camera.getPos();
+            v2 -= camera.getPos();
+            v3 -= camera.getPos();
 
             // 2.1.2) rotate vertices to camera space
             v1.rotateZ(-camera.getThetaZ());
