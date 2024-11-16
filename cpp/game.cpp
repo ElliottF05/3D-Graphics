@@ -52,7 +52,8 @@ void Game::setupScene() {
 }
 
 void Game::render() {
-    // CURRENTLY TAKING 2.2 to 2.4 ms on average
+    // before zBuffer (only simple color fill per pixel) 2.2 to 2.4 ms on average
+    // AFTER ZBUFFER: 5-6ms on average
 
     // std::cout << "game.cpp: render() called" << std::endl;
     // auto startTime = std::chrono::high_resolution_clock::now();
@@ -60,6 +61,7 @@ void Game::render() {
 
     // 1) clear screen
     pixelArray.clear();
+    zBuffer.clear();
 
     // 2) render objects
     for (const Object3D& obj : objects) {
@@ -110,7 +112,6 @@ void Game::render() {
             int height = pixelArray.getHeight();
 
             float maxPlaneCoord = tan(camera.getFov() / 2.0f);
-            maxPlaneCoord = 1;
 
             v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
             v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
@@ -189,8 +190,16 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            depth = depth - floor(depth);
-            pixelArray.setPixel(x, y, depth * r, depth * g, depth * b);
+            if (depth < zBuffer.getPixel(x, y)) {
+                zBuffer.setPixel(x, y, depth);
+
+                Vec3 worldPos = getPlaneCoords(x, y) * depth;
+                worldPos.rotateY(camera.getThetaY());
+                worldPos.rotateZ(camera.getThetaZ());
+                worldPos += camera.getPos();
+
+                pixelArray.setPixel(x, y, r, g, b);
+            }
         }
         x1 += slope1;
         x2 += slope2;
@@ -222,13 +231,34 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            depth = depth - floor(depth);
-            pixelArray.setPixel(x, y, depth * r, depth * g, depth * b);
+            if (depth < zBuffer.getPixel(x, y)) {
+                zBuffer.setPixel(x, y, depth);
+
+                Vec3 worldPos = getPlaneCoords(x, y) * depth;
+                worldPos.rotateY(camera.getThetaY());
+                worldPos.rotateZ(camera.getThetaZ());
+                worldPos += camera.getPos();
+
+                pixelArray.setPixel(x, y, r, g, b);
+            }
         }
         x1 += slope3;
         x2 += slope2;
     }
+}
 
+Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
+    int width = pixelArray.getWidth();
+    int height = pixelArray.getHeight();
+    float maxPlaneCoord = tan(camera.getFov() / 2.0f);
+
+    // v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
+    // v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
+    return Vec3(
+        1,
+        -(xPixel * 2.0f / width * maxPlaneCoord - 1),
+        -(yPixel * 2 * maxPlaneCoord * width - height)
+    );
 }
 
 uint8_t* Game::exportImageBuffer() {
@@ -245,20 +275,13 @@ uint8_t* Game::exportImageBuffer() {
 
 void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float verticalMovement, float rotateZ, float rotateY, float otherInputCode) {
     // std::cout << "game.cpp: userCameraInput() called" << std::endl;
-
     Vec3 pos = camera.getPos();
-
-    // std::cout << "camera pos1: " << pos.toString() << std::endl;
 
     Vec3 movement = Vec3(forwardMovement,sidewaysMovement,verticalMovement);
     movement.rotateZ(camera.getThetaZ());
     pos = pos + movement;
     camera.setPos(pos);
 
-    // std::cout << "camera pos2: " << camera.getPos().toString() << std::endl;
-
     camera.setThetaY(camera.getThetaY() + rotateY);
     camera.setThetaZ(camera.getThetaZ() + rotateZ);
-
-    // std::cout << "camera pos3: " << camera.getPos().toString() << std::endl;
 }

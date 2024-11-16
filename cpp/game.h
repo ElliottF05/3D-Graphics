@@ -17,6 +17,7 @@ private:
     uint8_t* imageBuffer;
 
     void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b);
+    Vec3 getPlaneCoords(int xPixel, int yPixel);
 
 public:
     Game();

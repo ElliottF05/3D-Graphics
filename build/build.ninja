@@ -91,6 +91,12 @@ build CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o: CXX_COMPILER__3D-Graphics_unsca
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
 
+build CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/zBuffer.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o.d
+  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target 3D-Graphics
@@ -99,7 +105,7 @@ build CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o: CXX_COMPILER__3D-Graphics_unsca
 #############################################
 # Link the executable /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js
 
-build /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o
+build /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o
   FLAGS = -g
   LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir

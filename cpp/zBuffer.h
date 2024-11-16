@@ -20,6 +20,8 @@ class ZBuffer {
         void clear();
         void setPixel(int x, int y, float z);
         void setPixel(int index, float z);
+        float getPixel(int x, int y);
+        float getPixel(int index);
 
         int getWidth();
         int getHeight();

@@ -6,7 +6,11 @@
 ZBuffer::ZBuffer(int width, int height) {
     this->width = width;
     this->height = height;
+
     data = std::vector<ZBufferData>(width * height);
+    for (int i = 0; i < data.size(); i++) {
+        data[i].z = 9999.0f;
+    }
 }
 
 // METHODS
@@ -38,6 +42,19 @@ void ZBuffer::setPixel(int index, float z) {
     {
         std::lock_guard<std::mutex> lock(data[index].lock);
         data[index].z = z;
+    }
+}
+float ZBuffer::getPixel(int x, int y) {
+    int index = getIndex(x, y);
+    {
+        std::lock_guard<std::mutex> lock(data[index].lock);
+        return data[index].z;
+    }
+}
+float ZBuffer::getPixel(int index) {
+    {
+        std::lock_guard<std::mutex> lock(data[index].lock);
+        return data[index].z;
     }
 }
 const std::vector<ZBufferData>& ZBuffer::getData() const {
