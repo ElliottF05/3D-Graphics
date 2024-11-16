@@ -4,12 +4,15 @@
 #include "object3D.h"
 #include "camera.h"
 #include "pixelArray.h"
+#include "zBuffer.h"
 
 class Game {
 private:
     std::vector<Object3D> objects;
-    PixelArray pixelArray;
     Camera camera;
+
+    PixelArray pixelArray;
+    ZBuffer zBuffer;
 
     uint8_t* imageBuffer;
 

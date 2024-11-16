@@ -5,7 +5,7 @@
 #include <iostream>
 
 // CONSTRUCTOR
-Game::Game() : pixelArray(500, 500), camera(Vec3(0,0,0), 0, 0, M_PI/2.0f) {
+Game::Game() : pixelArray(500, 500), zBuffer(500, 500), camera(Vec3(0,0,0), 0, 0, M_PI/2.0f) {
     imageBuffer = new uint8_t[500 * 500 * 4];
 }
 
@@ -233,7 +233,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b) {
 
 uint8_t* Game::exportImageBuffer() {
     // std::cout << "game.cpp: exportImageBuffer() called" << std::endl;
-    for (int i = 0; i < 500 * 500; i++) {
+    for (int i = 0; i < pixelArray.getWidth() * pixelArray.getHeight(); i++) {
         const PixelArrayData& data = pixelArray.getData()[i];
         imageBuffer[4*i] = data.r;
         imageBuffer[4*i+1] = data.g;

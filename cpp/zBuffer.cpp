@@ -1,23 +1,21 @@
 #include <iostream>
 
-#include "pixelArray.h"
+#include "zBuffer.h"
 
 // CONSTRUCTOR
-PixelArray::PixelArray(int width, int height) {
+ZBuffer::ZBuffer(int width, int height) {
     this->width = width;
     this->height = height;
-    data = std::vector<PixelArrayData>(width * height);
+    data = std::vector<ZBufferData>(width * height);
 }
 
 // METHODS
-void PixelArray::clear() {
+void ZBuffer::clear() {
     for (int i = 0; i < data.size(); i++) {
-        data[i].r = 0;
-        data[i].g = 0;
-        data[i].b = 0;
+        data[i].z = 9999.0f;
     }
 }
-int PixelArray::getIndex(int x, int y) {
+int ZBuffer::getIndex(int x, int y) {
     // if (x < 0 || x >= width || y < 0 || y >= height) {
     //     std::cout << "PixelArray::getIndex() failed, pixel coordinates out of bounds. INPUTS: x = " << x << 
     //     ", y = " << y << std::endl; 
@@ -25,7 +23,7 @@ int PixelArray::getIndex(int x, int y) {
     // }
     return (width * y) + x;
 }
-void PixelArray::setPixel(int x, int y, int r, int g, int b) {
+void ZBuffer::setPixel(int x, int y, float z) {
     // if (r < 0 || g < 0 || b < 0 || r > 255 || g > 255 || b > 255) {
     //     std::cout << "PixelArray::setPixel() failed, color value out of bounds. INPUTS: r, g, b = " << r << ", " << g << ", " << b << std::endl;
     //     throw "color value out of bounds";
@@ -33,25 +31,21 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     int index = getIndex(x, y);
     {
         std::lock_guard<std::mutex> lock(data[index].lock);
-        data[index].r = r;
-        data[index].g = g;
-        data[index].b = b;
+        data[index].z = z;
     }
 }
-void PixelArray::setPixel(int index, int r, int g, int b) {
+void ZBuffer::setPixel(int index, float z) {
     {
         std::lock_guard<std::mutex> lock(data[index].lock);
-        data[index].r = r;
-        data[index].g = g;
-        data[index].b = b;
+        data[index].z = z;
     }
 }
-const std::vector<PixelArrayData>& PixelArray::getData() const {
+const std::vector<ZBufferData>& ZBuffer::getData() const {
     return data;
 }
-int PixelArray::getWidth() {
+int ZBuffer::getWidth() {
     return width;
 }
-int PixelArray::getHeight() {
+int ZBuffer::getHeight() {
     return height;
 }
