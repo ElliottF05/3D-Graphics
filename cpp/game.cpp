@@ -3,6 +3,7 @@
 #include "zBuffer.h"
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 // CONSTRUCTOR
@@ -39,10 +40,10 @@ void Game::setupScene() {
     objects.emplace_back(lightGrey, 200, 200, 200, 0, false);
 
     std::vector<Vec3> testObj;
-    Vec3 a(-3,-3,0);
-    Vec3 b(-3,-1,0);
-    Vec3 c(-1,-2,0);
-    Vec3 d(-2,-2,2);
+    Vec3 a(-1,-1,0);
+    Vec3 b(-1,1,0);
+    Vec3 c(1,0,0);
+    Vec3 d(0,0,2);
 
     testObj.push_back(a);
     testObj.push_back(c);
@@ -67,23 +68,17 @@ void Game::setupScene() {
     lights[0].resetShadowMap();
     lights[0].addObjectsToShadowMap(objects);
 
-    const std::vector<ZBufferData>& zData = lights[0].getZBuffer().getData();
-    for (int y = 0; y < 1000; y++) {
-        for (int x = 0; x < 1000; x++) {
-            float z = zData[y * 500 + x].z;
-            std::cout << z << " ";
-        }
-        std::cout << std::endl;
-    }
-
     // create camera
     camera = Camera(Vec3(-0.5f,-0.5f,1.5f), 0.0111, 0.0111, M_PI/2.0f);
+
+    std::cout << "game.cpp: setupScene() finished" << std::endl;
 }
 
 void Game::render() {
     // before zBuffer (only simple color fill per pixel) 2.2 to 2.4 ms on average
     // after zBuffer: 5-6ms on average
     // after shadowMapping (no filtering): 17-18ms on average
+    // with shadowmap filtering, float math (small impact), and 16x the shadow map res: 45ms on average
 
     // std::cout << "game.cpp: render() called" << std::endl;
     // auto startTime = std::chrono::high_resolution_clock::now();
@@ -126,8 +121,6 @@ void Game::render() {
             v2.rotateY(-camera.getThetaY());
             v3.rotateY(-camera.getThetaY());
 
-            // std::cout << "v1 after rotate: " << v1.toString() << std::endl;
-
             // 2.1.3) project vertices to plane space
             float depth = v1.x;
             v1.x = v1.y / depth;
@@ -143,8 +136,6 @@ void Game::render() {
             v3.x = v3.y / depth;
             v3.y = v3.z / depth;
             v3.z = depth;
-
-            // std::cout << "v1 after projection: " << v1.toString() << std::endl;
 
             // 2.1.4) scale vertices to screen space
             int width = pixelArray.getWidth();
@@ -171,7 +162,6 @@ void Game::render() {
             // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
             // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
-
         }
     }
     // auto endTime = std::chrono::high_resolution_clock::now();
@@ -183,9 +173,7 @@ void Game::render() {
 
 void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float reflectivity, Vec3& normal) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
-    
-    // std::cout << "game.cpp: fillTriangle() called" << std::endl;
-    // std::cout << "v1.y = " << v1.y << ", v2.y = " << v2.y << ", v3.y = " << v3.y << std::endl;
+
     // sort vertices by y (v1 has lowest y, v3 has highest y)
     if (v1.y > v2.y) {
         std::swap(v1, v2);
@@ -197,21 +185,32 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
         std::swap(v1, v2);
     }
 
+    int height = pixelArray.getHeight();
+    int width = pixelArray.getWidth();
+
     // calculate slopes
     float slope1 = (v2.x - v1.x) / (v2.y - v1.y); // slope of line from v1 to v2
     float slope2 = (v3.x - v1.x) / (v3.y - v1.y); // slope of line from v1 to v3
     float slope3 = (v3.x - v2.x) / (v3.y - v2.y); // slope of line from v2 to v3
 
+    if (v1.y == v2.y || v1.y == v3.y || v2.y == v3.y) {
+        return;
+    }
+
     // calculate starting and ending x values
     float top = std::max(v1.y, 0.0f);
     float x1 = slope1 * (top - v1.y) + v1.x;
     float x2 = slope2 * (top - v1.y) + v1.x;
-    float bottom = std::min(v2.y, 500.0f);
+    float bottom = std::min(v2.y, height-1.0f);
+    // std::cout << "top = " << top << ", bottom = " << bottom << std::endl;
 
     // fill top half
-    for (int y = round(top); y < round(bottom); y++) {
-        int left = x1;
-        int right = x2;
+    for (float y = top; y < bottom; y++) {
+        if (std::isnan(y) || std::isinf(y)) {
+            break;
+        }
+        float left = x1;
+        float right = x2;
         
         float q1 = (y - v1.y) / (v2.y - v1.y);
         float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
@@ -222,20 +221,37 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
         if (left > right) {
             std::swap(left, right);
         }
-        left = std::max(0, left);
-        right = std::min(500, right);
-        for (int x = left; x < right; x++) {
+        left = std::max(0.0f, left);
+        right = std::min(width-1.0f, right);
+        int yInt = std::round(y);
+        // std::cout << "left = " << left << ", right = " << right << std::endl;
+        for (float x = left; x < right; x++) {
+            // std::cout << "x = " << x << std::endl;
+            if (std::isnan(x) || std::isinf(x)) {
+                break;
+            }
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+            int xInt = std::round(x);
+            // std::cout << "1" << std::endl;
+
+            // std::cout << "depth = " << depth << std::endl;
+            // std::cout << "xInt = " << xInt << ", yInt = " << yInt << std::endl;
+
+            // std::cout << "zBuffer.getPixel(xInt, yInt) = " << zBuffer.getPixel(xInt, yInt) << std::endl;
+
+            if (depth < zBuffer.getPixel(xInt, yInt)) {
+                // std::cout << "2" << std::endl;
+                zBuffer.setPixel(xInt, yInt, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
+
+                // std::cout << "3" << std::endl;
 
                 float lightingAmount = lights[0].getLightingAmount(worldPos, normal);
                 lightingAmount = std::max(0.2f, lightingAmount);
@@ -243,8 +259,10 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
                 int lightingG = std::min(255, (int) (g * lightingAmount));
                 int lightingB = std::min(255, (int) (b * lightingAmount));
 
-                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
+                // std::cout << "4" << std::endl;
             }
+            // std::cout << "5" << std::endl;
         }
         x1 += slope1;
         x2 += slope2;
@@ -254,11 +272,15 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
     top = std::max(v2.y, 0.0f);
     x1 = slope3 * (top - v2.y) + v2.x;
     x2 = slope2 * (top - v1.y) + v1.x;
-    bottom = std::min(v3.y, 500.0f);
+    bottom = std::min(v3.y, height-1.0f);
+    // std::cout << "top = " << top << ", bottom = " << bottom << std::endl;
 
-    for (int y = round(top); y < round(bottom); y++) {
-        int left = x1;
-        int right = x2;
+    for (float y = top; y < bottom; y++) {
+        if (std::isnan(y) || std::isinf(y)) {
+            break;
+        }
+        float left = x1;
+        float right = x2;
 
         float q1 = (y - v2.y) / (v3.y - v2.y);
         float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
@@ -269,15 +291,23 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
         if (left > right) {
             std::swap(left, right);
         }
-        left = std::max(0, left);
-        right = std::min(500, right);
-        for (int x = left; x < right; x++) {
+        left = std::max(0.0f, left);
+        right = std::min(width-1.0f, right);
+        int yInt = std::round(y);
+        // std::cout << "left = " << left << ", right = " << right << std::endl;
+        for (float x = left; x < right; x++) {
+            if (std::isnan(x) || std::isinf(x)) {
+                break;
+            }
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+            int xInt = std::round(x);
+
+
+            if (depth < zBuffer.getPixel(xInt, yInt)) {
+                zBuffer.setPixel(xInt, yInt, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -290,7 +320,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
                 int lightingG = std::min(255, (int) (g * lightingAmount));
                 int lightingB = std::min(255, (int) (b * lightingAmount));
 
-                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope3;
@@ -299,6 +329,20 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
 }
 
 Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
+    int width = pixelArray.getWidth();
+    int height = pixelArray.getHeight();
+    float maxPlaneCoord = tan(camera.getFov() / 2.0f);
+
+    // v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
+    // v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
+
+    return Vec3(
+        1,
+        -((xPixel * 2.0f / width - 1) * maxPlaneCoord),
+        -((yPixel * 2.0f - height) / width * maxPlaneCoord)
+    );
+}
+Vec3 Game::getPlaneCoords(float xPixel, float yPixel) {
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
     float maxPlaneCoord = tan(camera.getFov() / 2.0f);

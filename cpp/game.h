@@ -20,6 +20,7 @@ private:
 
     void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float reflectivity, Vec3& normal);
     Vec3 getPlaneCoords(int xPixel, int yPixel);
+    Vec3 getPlaneCoords(float xPixel, float yPixel);
 
 public:
     Game();
