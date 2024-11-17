@@ -218,10 +218,31 @@ float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
         return 0;
     }
 
-    if (depth > zBuffer.getPixel(pixelPos.x, pixelPos.y)) {
-        // std::cout << "pixel is occluded, depth: " << depth << ", zBuffer depth: " << zBuffer.getPixel(pixelPos.x, pixelPos.y) << std::endl;
+    float shadowAmount = 0;
+    int samples = 0;
+    int filterRadius = 0;
+    for (int dy = -filterRadius; dy <= filterRadius; dy++) {
+        for (int dx = -filterRadius; dx <= filterRadius; dx++) {
+            Vec3 samplePos = pixelPos + Vec3(dx, dy, 0);
+            if (samplePos.x < 0 || samplePos.x >= width || samplePos.y < 0 || samplePos.y >= height) {
+                continue;
+            }
+            if (depth < zBuffer.getPixel(samplePos.x, samplePos.y)) {
+                shadowAmount += 1;
+            }
+            samples++;
+        }
+    }
+
+    // if (depth > zBuffer.getPixel(pixelPos.x, pixelPos.y)) {
+    //     // std::cout << "pixel is occluded, depth: " << depth << ", zBuffer depth: " << zBuffer.getPixel(pixelPos.x, pixelPos.y) << std::endl;
+    //     return 0;
+    // }
+
+    if (shadowAmount == 0) {
         return 0;
     }
+    shadowAmount /= samples;
 
     float invDist = 1.0f / std::sqrt(xDist * xDist + yDist * yDist + depth * depth);
 
@@ -229,5 +250,5 @@ float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
     float angleMultiplier = 1 - lightToPixel.dot(triangleNormal);
     // std::cout << "luminosity: " << luminosity << ", invDist: " << invDist << ", angleMultiplier: " << angleMultiplier << std::endl;
 
-    return luminosity * invDist * angleMultiplier;
+    return luminosity * invDist * angleMultiplier * shadowAmount;
 }

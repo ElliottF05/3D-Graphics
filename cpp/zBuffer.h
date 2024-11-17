@@ -26,4 +26,5 @@ class ZBuffer {
         int getWidth();
         int getHeight();
         const std::vector<ZBufferData>& getData() const;
+        std::vector<ZBufferData>& getMutableData();
 };

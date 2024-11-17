@@ -60,6 +60,9 @@ float ZBuffer::getPixel(int index) {
 const std::vector<ZBufferData>& ZBuffer::getData() const {
     return data;
 }
+std::vector<ZBufferData>& ZBuffer::getMutableData() {
+    return data;
+}
 int ZBuffer::getWidth() {
     return width;
 }

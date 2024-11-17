@@ -63,7 +63,7 @@ void Game::setupScene() {
     objects.emplace_back(testObj, 220, 220, 220, 0, false);
 
     // create light
-    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/2.0f, 255, 255, 255, 7);
+    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 7);
     lights[0].resetShadowMap();
     lights[0].addObjectsToShadowMap(objects);
 
