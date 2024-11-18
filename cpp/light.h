@@ -20,7 +20,7 @@ class Light {
         void addVerticesToShadowMap(const std::vector<Vec3>& vertices);
         void addObjectsToShadowMap(std::vector<Object3D>& objects);
         void resetShadowMap();
-        float getLightingAmount(Vec3 worldPos, Vec3& triangleNormal);
+        float getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& triangleNormal, const ObjectProperties& properties);
 
         const ZBuffer& getZBuffer() const;
 };

@@ -3,19 +3,26 @@
 #include <vector>
 #include "vec3.h"
 
+struct ObjectProperties {
+    int r, g, b;
+    float k_s, k_d, k_a;
+    int shininess;
+    bool isDeletable;
+
+    ObjectProperties(int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable);
+};
+
 class Object3D {
     private:
         std::vector<Vec3> vertices;
-        int r, g, b;
-        float reflectivity;
-        bool isDeletable;
+        ObjectProperties properties;
     public:
         Object3D();
-        Object3D(std::vector<Vec3> vertices, int r, int g, int b, float reflectivity, bool isDeletable);
+        Object3D(std::vector<Vec3> vertices, ObjectProperties properties);
+        Object3D(std::vector<Vec3> vertices, int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable);
+        Object3D(std::vector<Vec3> vertices, int r, int g, int b);
 
         const std::vector<Vec3>& getVertices() const;
-        int getR() const;
-        int getG() const;
-        int getB() const;
-        float getReflectivity() const;
+        const ObjectProperties& getProperties() const;
+        ObjectProperties& getMutableProperties();
 };

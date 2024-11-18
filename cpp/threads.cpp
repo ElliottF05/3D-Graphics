@@ -1,3 +1,6 @@
+// Made with the help of GeeksForGeeks
+// https://www.geeksforgeeks.org/thread-pool-in-cpp/
+
 #include "threads.h"
 #include <atomic>
 #include <functional>

@@ -15,16 +15,16 @@ void Game::setupScene() {
     std::cout << "game.cpp: setupScene() called" << std::endl;
 
     // create objects
-    objects.emplace_back(std::vector<Vec3>{
-        Vec3(10,0,1),
-        Vec3(10,4,2),
-        Vec3(10,0,5)
-    }, 255, 0, 0, 0, false);
+    // objects.emplace_back(std::vector<Vec3>{
+    //     Vec3(10,0,1),
+    //     Vec3(10,4,2),
+    //     Vec3(10,0,5)
+    // }, 255, 0, 0);
 
     // make grid
     std::vector<Vec3> darkGrey;
     std::vector<Vec3> lightGrey;
-    int gridRadius = 5;
+    int gridRadius = 12;
     for (int i = -gridRadius; i < gridRadius; i++) {
         for (int j = -gridRadius; j < gridRadius; j++) {
             std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
@@ -36,40 +36,51 @@ void Game::setupScene() {
             addingTo.emplace_back(i+1,j+1,0);
         }
     }
-    objects.emplace_back(darkGrey, 140, 140, 140, 0, false);
-    objects.emplace_back(lightGrey, 200, 200, 200, 0, false);
+    objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
+    objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
 
-    std::vector<Vec3> testObj;
-    Vec3 a(-1,-1,0);
-    Vec3 b(-1,1,0);
-    Vec3 c(1,0,0);
-    Vec3 d(0,0,2);
+    std::vector<Vec3> testObjVertices;
+    float radius = 0.5f;
+    int iterations = 10;
 
-    testObj.push_back(a);
-    testObj.push_back(c);
-    testObj.push_back(b);
+    Vec3 center = Vec3(1,1,radius);
 
-    testObj.push_back(a);
-    testObj.push_back(b);
-    testObj.push_back(d);
+    std::vector<Vec3> prev;
+    for (int i = 0; i < iterations; i++) {
+        prev.push_back(center + Vec3(0,0,radius));
+    }
+    std::vector<Vec3> curr;
+    for (int i = 1; i < iterations; i++) {
+        float z = radius * sin(M_PI / 2.0f - i * M_PI / iterations);
+        for (int j = 0; j < iterations; j++) {
+            float x = radius * cos(j * 2.0f * M_PI / iterations) * cos(M_PI / 2.0f - i * M_PI / iterations);
+            float y = radius * sin(j * 2.0f * M_PI / iterations) * cos(M_PI / 2.0f - i * M_PI / iterations);
+            curr.push_back(center + Vec3(x,y,z));
+        }
+        for (int i = 0; i < iterations; i++) {
+            testObjVertices.push_back(prev[i]);
+            testObjVertices.push_back(curr[(i+1) % iterations]);
+            testObjVertices.push_back(curr[i]);
+            testObjVertices.push_back(prev[i]);
+            testObjVertices.push_back(prev[(i+1) % iterations]);
+            testObjVertices.push_back(curr[(i+1) % iterations]);
+        }
+        prev = curr;
+        curr.clear();
+    }
 
-    testObj.push_back(c);
-    testObj.push_back(a);
-    testObj.push_back(d);
+    // Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 1.0f, true);
+    //objects.push_back(testObj);
 
-    testObj.push_back(b);
-    testObj.push_back(c);
-    testObj.push_back(d);
-
-    objects.emplace_back(testObj, 220, 220, 220, 0, false);
+    // objects.emplace_back(testObjVertices, 220, 220, 220);
 
     // create light
-    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 7);
+    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
     lights[0].resetShadowMap();
     lights[0].addObjectsToShadowMap(objects);
 
     // create camera
-    camera = Camera(Vec3(-0.5f,-0.5f,1.5f), 0.0111, 0.0111, M_PI/2.0f);
+    camera = Camera(Vec3(-0.511111f,-0.511111f,1.511111f), 0.0111111, 0.0111111, M_PI/2.0f);
 
     std::cout << "game.cpp: setupScene() finished" << std::endl;
 }
@@ -158,7 +169,7 @@ void Game::render() {
             }
 
             // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-            fillTriangle(v1, v2, v3, obj.getR(), obj.getG(), obj.getB(), obj.getReflectivity(), normal);
+            fillTriangle(v1, v2, v3, obj.getProperties(), normal);
             // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
             // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
@@ -171,7 +182,7 @@ void Game::render() {
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
-void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float reflectivity, Vec3& normal) {
+void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
     // sort vertices by y (v1 has lowest y, v3 has highest y)
@@ -253,11 +264,11 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
 
                 // std::cout << "3" << std::endl;
 
-                float lightingAmount = lights[0].getLightingAmount(worldPos, normal);
+                float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
                 lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, (int) (r * lightingAmount));
-                int lightingG = std::min(255, (int) (g * lightingAmount));
-                int lightingB = std::min(255, (int) (b * lightingAmount));
+                int lightingR = std::min(255, (int) (properties.r * lightingAmount));
+                int lightingG = std::min(255, (int) (properties.g * lightingAmount));
+                int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
                 pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
                 // std::cout << "4" << std::endl;
@@ -314,11 +325,11 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, int r, int g, int b, float
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
 
-                float lightingAmount = lights[0].getLightingAmount(worldPos, normal);
+                float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
                 lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, (int) (r * lightingAmount));
-                int lightingG = std::min(255, (int) (g * lightingAmount));
-                int lightingB = std::min(255, (int) (b * lightingAmount));
+                int lightingR = std::min(255, (int) (properties.r * lightingAmount));
+                int lightingG = std::min(255, (int) (properties.g * lightingAmount));
+                int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
                 pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
             }

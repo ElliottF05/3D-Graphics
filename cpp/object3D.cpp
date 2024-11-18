@@ -1,22 +1,21 @@
 #include "object3D.h"
 
+// ObjectProperties
+ObjectProperties::ObjectProperties(int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable) : r(r), g(g), b(b), k_s(k_s), k_d(k_d), k_a(k_a), shininess(shininess), isDeletable(isDeletable) {}
+
 // CONSTRUCTORS
-Object3D::Object3D() : vertices(), r(0), g(0), b(0), reflectivity(0), isDeletable(true) {}
-Object3D::Object3D(std::vector<Vec3> vertices, int r, int g, int b, float reflectivity, bool isDeletable) : vertices(vertices), r(r), g(g), b(b), reflectivity(reflectivity), isDeletable(isDeletable) {}
+Object3D::Object3D() : vertices(), properties(255, 255, 255, 0, 1, 0.2f, 0, true) {}
+Object3D::Object3D(std::vector<Vec3> vertices, ObjectProperties properties) : vertices(vertices), properties(properties) {}
+Object3D::Object3D(std::vector<Vec3> vertices, int r, int g, int b) : vertices(vertices), properties(r, g, b, 0, 1, 0.2f, 0, true) {}
+Object3D::Object3D(std::vector<Vec3> vertices, int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable) : vertices(vertices), properties(r, g, b, k_s, k_d, k_a, shininess, isDeletable) {}
 
 const std::vector<Vec3>& Object3D::getVertices() const {
     return vertices;
 }
-int Object3D::getR() const {
-    return r;
+const ObjectProperties& Object3D::getProperties() const {
+    return properties;
 }
-int Object3D::getG() const {
-    return g;
-}
-int Object3D::getB() const {
-    return b;
-}
-float Object3D::getReflectivity() const {
-    return reflectivity;
+ObjectProperties& Object3D::getMutableProperties() {
+    return properties;
 }
 

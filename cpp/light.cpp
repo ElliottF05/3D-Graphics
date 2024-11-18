@@ -1,5 +1,6 @@
 #include "light.h"
 #include "zBuffer.h"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 
@@ -212,11 +213,12 @@ void Light::resetShadowMap() {
     zBuffer.clear();
 }
 
-float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
+float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& triangleNormal, const ObjectProperties& properties) {
     // pixelPos starts in world space
     // std::cout << "pixelPos: " << pixelPos.toString() << std::endl;
 
-    Vec3 lightToPixel = pixelPos - camera.getPos();
+    Vec3 pixelToLight = camera.getPos() - worldPos;
+    Vec3 pixelPos = worldPos;
 
     pixelPos -= camera.getPos();
     pixelPos.rotateZ(-camera.getThetaZ());
@@ -265,16 +267,36 @@ float Light::getLightingAmount(Vec3 pixelPos, Vec3& triangleNormal) {
     //     return 0;
     // }
 
-    if (shadowAmount == 0) {
+
+    if (shadowAmount == 0) { // in shadow
         return 0;
     }
-    shadowAmount /= samples;
 
+    float ambientLight = properties.k_a;
+
+    pixelToLight.normalize();
+    float angleMultiplier = pixelToLight.dot(triangleNormal);
+
+    if (angleMultiplier < 0) { // facing away from light
+        return ambientLight;
+    }
+
+    shadowAmount /= samples;
     float invDist = 1.0f / std::sqrt(xDist * xDist + yDist * yDist + depth * depth);
 
-    lightToPixel.normalize();
-    float angleMultiplier = 1 - lightToPixel.dot(triangleNormal);
-    // std::cout << "luminosity: " << luminosity << ", invDist: " << invDist << ", angleMultiplier: " << angleMultiplier << std::endl;
+    float diffuseLight = properties.k_d * angleMultiplier;
 
-    return luminosity * invDist * angleMultiplier * shadowAmount;
+    float specularLight = 0;
+    if (properties.k_s > 0) {
+        Vec3 R = 2 * pixelToLight.dot(triangleNormal) * triangleNormal - pixelToLight;
+        Vec3 V = cameraPos - worldPos;
+        V.normalize();
+        // std::cout << "cameraPos: " << cameraPos.toString() << ", worldPos: " << worldPos.toString() << std::endl;
+        float RdotV = R.dot(V);
+        if (RdotV >= 0) {
+            specularLight = properties.k_s * std::pow(RdotV, properties.shininess);
+        }
+    }
+
+    return ambientLight + luminosity * invDist * shadowAmount * (diffuseLight + specularLight);
 }
