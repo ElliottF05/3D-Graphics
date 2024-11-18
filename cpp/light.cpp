@@ -288,13 +288,27 @@ float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& tria
 
     float specularLight = 0;
     if (properties.k_s > 0) {
-        Vec3 R = 2 * pixelToLight.dot(triangleNormal) * triangleNormal - pixelToLight;
+
+        // PHONG MODEL
+        // Vec3 R = 2 * pixelToLight.dot(triangleNormal) * triangleNormal - pixelToLight;
+        // Vec3 V = cameraPos - worldPos;
+        // V.normalize();
+        // float RdotV = R.dot(V);
+        // if (RdotV >= 0) {
+        //     specularLight = properties.k_s * std::pow(RdotV, properties.shininess);
+        // }
+
+        // BLINN PHONG MODEL
         Vec3 V = cameraPos - worldPos;
         V.normalize();
-        // std::cout << "cameraPos: " << cameraPos.toString() << ", worldPos: " << worldPos.toString() << std::endl;
-        float RdotV = R.dot(V);
-        if (RdotV >= 0) {
-            specularLight = properties.k_s * std::pow(RdotV, properties.shininess);
+        Vec3 H = V + pixelToLight;
+        H.normalize();
+
+        float NdotH = triangleNormal.dot(H);
+        int expMultiplier = 4;
+
+        if (NdotH >= 0) {
+            specularLight = properties.k_s * std::pow(NdotH, expMultiplier * properties.shininess);
         }
     }
 

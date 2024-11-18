@@ -24,7 +24,7 @@ void Game::setupScene() {
     // make grid
     std::vector<Vec3> darkGrey;
     std::vector<Vec3> lightGrey;
-    int gridRadius = 12;
+    int gridRadius = 5;
     for (int i = -gridRadius; i < gridRadius; i++) {
         for (int j = -gridRadius; j < gridRadius; j++) {
             std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
@@ -41,7 +41,7 @@ void Game::setupScene() {
 
     std::vector<Vec3> testObjVertices;
     float radius = 0.5f;
-    int iterations = 10;
+    int iterations = 30;
 
     Vec3 center = Vec3(1,1,radius);
 
@@ -69,8 +69,8 @@ void Game::setupScene() {
         curr.clear();
     }
 
-    // Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 1.0f, true);
-    //objects.push_back(testObj);
+    Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
+    objects.push_back(testObj);
 
     // objects.emplace_back(testObjVertices, 220, 220, 220);
 
@@ -90,6 +90,7 @@ void Game::render() {
     // after zBuffer: 5-6ms on average
     // after shadowMapping (no filtering): 17-18ms on average
     // with shadowmap filtering, float math (small impact), and 16x the shadow map res: 45ms on average
+    // with Phong reflections: 45ms on average
 
     // std::cout << "game.cpp: render() called" << std::endl;
     // auto startTime = std::chrono::high_resolution_clock::now();
