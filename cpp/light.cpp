@@ -214,91 +214,77 @@ void Light::resetShadowMap() {
 }
 
 float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& triangleNormal, const ObjectProperties& properties) {
-    // pixelPos starts in world space
-    // std::cout << "pixelPos: " << pixelPos.toString() << std::endl;
-
+    
+    // compute pixel-to-light vector and normalize
     Vec3 pixelToLight = camera.getPos() - worldPos;
-    Vec3 pixelPos = worldPos;
+    pixelToLight.normalize();
 
-    pixelPos -= camera.getPos();
+    // transform world position to camera space
+    Vec3 pixelPos = worldPos - camera.getPos();
     pixelPos.rotateZ(-camera.getThetaZ());
     pixelPos.rotateY(-camera.getThetaY());
 
     float depth = pixelPos.x;
-    pixelPos.x = pixelPos.y / depth;
-    pixelPos.y = pixelPos.z / depth;
-    pixelPos.z = depth;
+    if (depth <= 0) { // pixel is behind the camera
+        return 0;
+    }
 
-    float xDist = pixelPos.x;
-    float yDist = pixelPos.y;
+    float invDepth = 1.0f / depth;
+    pixelPos.x = pixelPos.y * invDepth;
+    pixelPos.y = pixelPos.z * invDepth;
+    pixelPos.z = depth;
 
     int width = zBuffer.getWidth();
     int height = zBuffer.getHeight();
-
     float maxPlaneCoord = tan(camera.getFov() / 2.0f);
 
-    pixelPos.x = (0.5 * width) * (1 - pixelPos.x / maxPlaneCoord);
-    pixelPos.y = 0.5 * (height - pixelPos.y / maxPlaneCoord * width);
+    // screen-space coordinates
+    float screenX = (0.5f * width) * (1.0f - pixelPos.x / maxPlaneCoord);
+    float screenY = 0.5f * (height - (pixelPos.y / maxPlaneCoord) * width);
 
-    if (depth < 0 || pixelPos.x < 0 || pixelPos.x >= width || pixelPos.y < 0 || pixelPos.y >= height) {
-        // std::cout << "pixel not in light's view" << std::endl;
-        return 0;
-    }
-
-    float shadowAmount = 0;
+    float shadowAmount = 0.0f;
     int samples = 0;
     int filterRadius = 1;
     float bias = 0.01f;
-    for (int dy = -filterRadius; dy <= filterRadius; dy++) {
-        for (int dx = -filterRadius; dx <= filterRadius; dx++) {
-            Vec3 samplePos = pixelPos + Vec3(dx, dy, 0);
-            if (samplePos.x < 0 || samplePos.x >= width || samplePos.y < 0 || samplePos.y >= height) {
+
+    for (int dy = -filterRadius; dy <= filterRadius; ++dy) {
+        for (int dx = -filterRadius; dx <= filterRadius; ++dx) {
+            int sampleX = static_cast<int>(screenX) + dx;
+            int sampleY = static_cast<int>(screenY) + dy;
+
+            if (sampleX < 0 || sampleX >= width || sampleY < 0 || sampleY >= height) {
                 continue;
             }
-            if (depth + bias < zBuffer.getPixel(samplePos.x, samplePos.y)) {
-                shadowAmount += 1;
+
+            if (depth + bias < zBuffer.getPixel(sampleX, sampleY)) {
+                shadowAmount += 1.0f;
             }
-            samples++;
+            ++samples;
         }
     }
 
-    // if (depth > zBuffer.getPixel(pixelPos.x, pixelPos.y)) {
-    //     // std::cout << "pixel is occluded, depth: " << depth << ", zBuffer depth: " << zBuffer.getPixel(pixelPos.x, pixelPos.y) << std::endl;
-    //     return 0;
-    // }
 
-
-    if (shadowAmount == 0) { // in shadow
-        return 0;
+    if (shadowAmount == 0) {
+        return 0; // fully in shadow
     }
 
+    // compute lighting components
     float ambientLight = properties.k_a;
-
-    pixelToLight.normalize();
     float angleMultiplier = pixelToLight.dot(triangleNormal);
-
-    if (angleMultiplier < 0) { // facing away from light
-        return ambientLight;
+    if (angleMultiplier <= 0.0f) {
+        return ambientLight; // light is behind or parallel to the surface
     }
 
     shadowAmount /= samples;
-    float invDist = 1.0f / std::sqrt(xDist * xDist + yDist * yDist + depth * depth);
+    float invDist = 1.0f / std::sqrt(pixelPos.x * pixelPos.x + pixelPos.y * pixelPos.y + depth * depth);
 
     float diffuseLight = properties.k_d * angleMultiplier;
-
     float specularLight = 0;
+
     if (properties.k_s > 0) {
-
-        // PHONG MODEL
-        // Vec3 R = 2 * pixelToLight.dot(triangleNormal) * triangleNormal - pixelToLight;
-        // Vec3 V = cameraPos - worldPos;
-        // V.normalize();
-        // float RdotV = R.dot(V);
-        // if (RdotV >= 0) {
-        //     specularLight = properties.k_s * std::pow(RdotV, properties.shininess);
-        // }
-
         // BLINN PHONG MODEL
+        // https://en.wikipedia.org/wiki/Phong_reflection_model
+        // https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model
         Vec3 V = cameraPos - worldPos;
         V.normalize();
         Vec3 H = V + pixelToLight;
@@ -306,8 +292,7 @@ float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& tria
 
         float NdotH = triangleNormal.dot(H);
         int expMultiplier = 4;
-
-        if (NdotH >= 0) {
+        if (NdotH >= 0.0f) {
             specularLight = properties.k_s * std::pow(NdotH, expMultiplier * properties.shininess);
         }
     }

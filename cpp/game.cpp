@@ -41,7 +41,7 @@ void Game::setupScene() {
 
     std::vector<Vec3> testObjVertices;
     float radius = 0.5f;
-    int iterations = 30;
+    int iterations = 100;
 
     Vec3 center = Vec3(1,1,radius);
 
