@@ -25,8 +25,8 @@ void Game::setupScene() {
     std::vector<Vec3> darkGrey;
     std::vector<Vec3> lightGrey;
     int gridRadius = 5;
-    for (int i = -gridRadius; i < gridRadius; i++) {
-        for (int j = -gridRadius; j < gridRadius; j++) {
+    for (int i = -gridRadius+1; i < gridRadius; i++) {
+        for (int j = -gridRadius+1; j < gridRadius; j++) {
             std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
             addingTo.emplace_back(i,j,0);
             addingTo.emplace_back(i+1,j+1,0);
@@ -186,6 +186,8 @@ void Game::render() {
 void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
+    // std::cout << "v1: " << v1.toString() << " v2: " << v2.toString() << " v3: " << v3.toString() << std::endl;
+
     // sort vertices by y (v1 has lowest y, v3 has highest y)
     if (v1.y > v2.y) {
         std::swap(v1, v2);
@@ -210,17 +212,15 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     }
 
     // calculate starting and ending x values
-    float top = std::max(v1.y, 0.0f);
+    float top = std::max(std::ceil(v1.y), 0.0f);
     float x1 = slope1 * (top - v1.y) + v1.x;
     float x2 = slope2 * (top - v1.y) + v1.x;
-    float bottom = std::min(v2.y, height-1.0f);
-    // std::cout << "top = " << top << ", bottom = " << bottom << std::endl;
+    float bottom = std::min(std::floor(v2.y), height-1.0f);
 
     // fill top half
-    for (float y = top; y < bottom; y++) {
-        if (std::isnan(y) || std::isinf(y)) {
-            break;
-        }
+    // std::cout << "FILLING TOP HALF" << std::endl;
+    for (float y = top; y <= bottom; y++) {
+        
         float left = x1;
         float right = x2;
         
@@ -233,37 +233,26 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         if (left > right) {
             std::swap(left, right);
         }
+        // right += 1;
         left = std::max(0.0f, left);
         right = std::min(width-1.0f, right);
         int yInt = std::round(y);
-        // std::cout << "left = " << left << ", right = " << right << std::endl;
-        for (float x = left; x < right; x++) {
-            // std::cout << "x = " << x << std::endl;
-            if (std::isnan(x) || std::isinf(x)) {
-                break;
-            }
+        // std::cout << "left: " << left << " right: " << right << "at y: " << y << std::endl;
+
+        for (float x = left; x <= right; x++) {
+
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
-
             int xInt = std::round(x);
-            // std::cout << "1" << std::endl;
-
-            // std::cout << "depth = " << depth << std::endl;
-            // std::cout << "xInt = " << xInt << ", yInt = " << yInt << std::endl;
-
-            // std::cout << "zBuffer.getPixel(xInt, yInt) = " << zBuffer.getPixel(xInt, yInt) << std::endl;
 
             if (depth < zBuffer.getPixel(xInt, yInt)) {
-                // std::cout << "2" << std::endl;
                 zBuffer.setPixel(xInt, yInt, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
-
-                // std::cout << "3" << std::endl;
 
                 float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
                 lightingAmount = std::max(0.2f, lightingAmount);
@@ -272,25 +261,21 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
                 int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
                 pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
-                // std::cout << "4" << std::endl;
             }
-            // std::cout << "5" << std::endl;
         }
         x1 += slope1;
         x2 += slope2;
     }
 
     // fill bottom half
-    top = std::max(v2.y, 0.0f);
+    top = std::max(std::ceil(v2.y), 0.0f);
     x1 = slope3 * (top - v2.y) + v2.x;
     x2 = slope2 * (top - v1.y) + v1.x;
-    bottom = std::min(v3.y, height-1.0f);
-    // std::cout << "top = " << top << ", bottom = " << bottom << std::endl;
+    bottom = std::min(std::floor(v3.y), height-1.0f);
 
-    for (float y = top; y < bottom; y++) {
-        if (std::isnan(y) || std::isinf(y)) {
-            break;
-        }
+    // std::cout << "FILLING BOTTOM HALF" << std::endl;
+    for (float y = top; y <= bottom; y++) {
+
         float left = x1;
         float right = x2;
 
@@ -303,20 +288,18 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         if (left > right) {
             std::swap(left, right);
         }
+        // right += 1;
         left = std::max(0.0f, left);
         right = std::min(width-1.0f, right);
         int yInt = std::round(y);
-        // std::cout << "left = " << left << ", right = " << right << std::endl;
-        for (float x = left; x < right; x++) {
-            if (std::isnan(x) || std::isinf(x)) {
-                break;
-            }
+
+        // std::cout << "left: " << left << " right: " << right << "at y: " << y << std::endl;
+        for (float x = left; x <= right; x++) {
+
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
-
             int xInt = std::round(x);
-
 
             if (depth < zBuffer.getPixel(xInt, yInt)) {
                 zBuffer.setPixel(xInt, yInt, depth);

@@ -263,7 +263,6 @@ float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& tria
         }
     }
 
-
     if (shadowAmount == 0) {
         return 0; // fully in shadow
     }
