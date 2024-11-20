@@ -84,3 +84,9 @@ int ThreadPool::getNumberOfActiveTasks() {
     // std::cout << "Active tasks: " << active_tasks_.load(std::memory_order_seq_cst) << std::endl;
     return active_tasks_.load(std::memory_order_seq_cst);
 }
+
+void ThreadPool::waitUntilTasksFinished() {
+    while (getNumberOfActiveTasks() > 0) {
+        std::this_thread::sleep_for(std::chrono::microseconds(200));
+    }
+}

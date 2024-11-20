@@ -17,6 +17,7 @@ public:
     ~ThreadPool();
     void addTask(std::function<void()> task);
     int getNumberOfActiveTasks();
+    void waitUntilTasksFinished();
 private: 
     // Vector to store worker threads 
     std::vector<std::thread> threads_; 

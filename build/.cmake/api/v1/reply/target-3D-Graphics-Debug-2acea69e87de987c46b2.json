@@ -26,19 +26,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 51,
+				"line" : 52,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 55,
+				"line" : 56,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 54,
+				"line" : 55,
 				"parent" : 0
 			}
 		]
@@ -102,6 +102,10 @@
 				{
 					"backtrace" : 3,
 					"fragment" : "--tracing"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-g"
 				},
 				{
 					"backtrace" : 3,
@@ -246,6 +250,11 @@
 			{
 				"backtrace" : 2,
 				"fragment" : "--tracing",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "-g",
 				"role" : "flags"
 			},
 			{

@@ -36,6 +36,7 @@ set(EMSCRIPTEN_OPTIONS
     --profiling
     --profiling-funcs
     --tracing
+    -g
     -flto
     -fapprox-func
     -fno-math-errno
