@@ -51,10 +51,10 @@ void Game::setupScene() {
     }
     std::vector<Vec3> curr;
     for (int i = 1; i < iterations; i++) {
-        float z = radius * sin(M_PI / 2.0f - i * M_PI / iterations);
+        float z = radius * std::sin(M_PI / 2.0f - i * M_PI / iterations);
         for (int j = 0; j < iterations; j++) {
-            float x = radius * cos(j * 2.0f * M_PI / iterations) * cos(M_PI / 2.0f - i * M_PI / iterations);
-            float y = radius * sin(j * 2.0f * M_PI / iterations) * cos(M_PI / 2.0f - i * M_PI / iterations);
+            float x = radius * std::cos(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
+            float y = radius * std::sin(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
             curr.push_back(center + Vec3(x,y,z));
         }
         for (int i = 0; i < iterations; i++) {
@@ -102,8 +102,9 @@ void Game::render() {
 
     // 2) render objects
     for (const Object3D& obj : objects) {
-        const std::vector<Vec3> vertices = obj.getVertices(); // THIS IS A COPY
+        const std::vector<Vec3>& vertices = obj.getVertices();
         for (int i = 0; i < vertices.size(); i += 3) {
+            // vertices are copied!
             Vec3 v1 = vertices[i];
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
@@ -235,14 +236,18 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
 
+        int baseIndex = width * y;
+
         for (int x = left; x <= right; x++) {
 
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+            int index = baseIndex + x;
+
+            if (depth < zBuffer.getPixel(index)) {
+                zBuffer.setPixel(index, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -251,11 +256,11 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
 
                 float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
                 lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, (int) (properties.r * lightingAmount));
-                int lightingG = std::min(255, (int) (properties.g * lightingAmount));
-                int lightingB = std::min(255, (int) (properties.b * lightingAmount));
+                int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
+                int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
+                int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
 
-                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(index, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope1;
@@ -285,14 +290,18 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
 
+        int baseIndex = width * y;
+
         for (int x = left; x <= right; x++) {
 
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
 
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+            int index = baseIndex + x;
+
+            if (depth < zBuffer.getPixel(index)) {
+                zBuffer.setPixel(index, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -301,11 +310,11 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
 
                 float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
                 lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, (int) (properties.r * lightingAmount));
-                int lightingG = std::min(255, (int) (properties.g * lightingAmount));
-                int lightingB = std::min(255, (int) (properties.b * lightingAmount));
+                int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
+                int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
+                int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
 
-                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(index, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope3;

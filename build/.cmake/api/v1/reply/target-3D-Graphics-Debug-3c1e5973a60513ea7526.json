@@ -26,19 +26,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 10,
+				"line" : 51,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 13,
+				"line" : 55,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 12,
+				"line" : 54,
 				"parent" : 0
 			}
 		]
@@ -90,6 +90,18 @@
 				{
 					"backtrace" : 3,
 					"fragment" : "-O1"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "--profiling"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "--profiling-funcs"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "--tracing"
 				},
 				{
 					"backtrace" : 3,
@@ -219,6 +231,21 @@
 			{
 				"backtrace" : 2,
 				"fragment" : "-O1",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "--profiling",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "--profiling-funcs",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "--tracing",
 				"role" : "flags"
 			},
 			{

@@ -1,55 +1,55 @@
 [
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/main2.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/main2.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/main2.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/camera.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/camera.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/camera.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/game.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/game.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/game.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/light.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/light.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/light.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/object3D.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/object3D.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/object3D.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/pixelArray.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/pixelArray.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/pixelArray.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/threads.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/threads.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/threads.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/vec3.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/vec3.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/vec3.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o"
 },
 {
   "directory": "/Users/elliottfaa/repos/3D-Graphics-Engine/build",
-  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/zBuffer.cpp",
+  "command": "/Users/elliottfaa/emsdk/upstream/emscripten/em++ -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\\\"WasmModule\\\" -pthread -O1 --profiling --profiling-funcs --tracing -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast -o CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o -c /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/zBuffer.cpp",
   "file": "/Users/elliottfaa/repos/3D-Graphics-Engine/cpp/zBuffer.cpp",
   "output": "CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o"
 }

@@ -31,11 +31,12 @@ void PixelArray::setPixel(int x, int y, int r, int g, int b) {
     //     throw "color value out of bounds";
     // }
     int index = getIndex(x, y);
+    PixelArrayData& pixel = data[index];
     {
-        std::lock_guard<std::mutex> lock(data[index].lock);
-        data[index].r = r;
-        data[index].g = g;
-        data[index].b = b;
+        std::lock_guard<std::mutex> lock(pixel.lock);
+        pixel.r = r;
+        pixel.g = g;
+        pixel.b = b;
     }
 }
 void PixelArray::setPixel(int index, int r, int g, int b) {

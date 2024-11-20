@@ -61,17 +61,17 @@ float Vec3::dot(const Vec3& other) const {
     return this->x * other.x + this->y * other.y + this->z * other.z;
 }
 float Vec3::mag() const {
-    return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+    return std::sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
 }
 void Vec3::normalize() {
     float mag = this->mag();
     if (mag == 0) {
         return;
     }
-    *this /= mag;
+    (*this) /= mag;
 }
 float Vec3::angleWith(const Vec3 &other) const {
-    return acos(this->dot(other) / (this->mag() * other.mag()));
+    return std::acos(this->dot(other) / (this->mag() * other.mag()));
 }
 
 // Operators where Vec3 is right-hand-side
@@ -87,14 +87,14 @@ Vec3 operator/(const float scalar, const Vec3&vec) {
 void Vec3::rotateZ(float thetaZ) {
     Vec3 orig = *this;
 
-    this->x = orig.x * cos(thetaZ) - orig.y * sin(thetaZ);
-    this->y = orig.x * sin(thetaZ) + orig.y * cos(thetaZ);
+    this->x = orig.x * std::cos(thetaZ) - orig.y * std::sin(thetaZ);
+    this->y = orig.x * std::sin(thetaZ) + orig.y * std::cos(thetaZ);
 }
 void Vec3::rotateY(float thetaY) {
     Vec3 orig = *this;
 
-    this->x = orig.x * cos(thetaY) - orig.z * sin(thetaY);
-    this->z = orig.x * sin(thetaY) + orig.z * cos(thetaY);
+    this->x = orig.x * std::cos(thetaY) - orig.z * std::sin(thetaY);
+    this->z = orig.x * std::sin(thetaY) + orig.z * std::cos(thetaY);
 }
 void Vec3::rotate(float thetaZ, float thetaY) {
     rotateZ(thetaZ);
