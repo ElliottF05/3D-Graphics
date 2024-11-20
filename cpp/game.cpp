@@ -1,5 +1,6 @@
 #include "game.h"
 #include "object3D.h"
+#include "threads.h"
 #include "zBuffer.h"
 #include <algorithm>
 #include <chrono>
@@ -93,7 +94,7 @@ void Game::render() {
     // with Phong reflections: 45ms on average
 
     // std::cout << "game.cpp: render() called" << std::endl;
-    // auto startTime = std::chrono::high_resolution_clock::now();
+    auto startTime = std::chrono::high_resolution_clock::now();
     // auto fillTriangleTime = startTime - startTime;
 
     // 1) clear screen
@@ -171,16 +172,22 @@ void Game::render() {
             }
 
             // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-            fillTriangle(v1, v2, v3, obj.getProperties(), normal);
+            // fillTriangle(v1, v2, v3, obj.getProperties(), normal);
             // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
             // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
+            threadPool.addTask([this, v1, v2, v3, &obj, normal] {
+                fillTriangleParallel(v1, v2, v3, obj.getProperties(), normal);
+            });
         }
     }
-    // auto endTime = std::chrono::high_resolution_clock::now();
-    // auto totalDuration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+
+    threadPool.waitUntilTasksFinished();
+
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     // auto fillTriangleDuration = std::chrono::duration_cast<std::chrono::microseconds>(fillTriangleTime);
-    // std::cout << "total frame time: " << totalDuration.count() << std::endl;
+    std::cout << "total frame time: " << totalDuration.count() << std::endl;
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
@@ -320,6 +327,10 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         x1 += slope3;
         x2 += slope2;
     }
+}
+
+void Game::fillTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal) {
+    fillTriangle(v1, v2, v3, properties, normal);
 }
 
 Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
