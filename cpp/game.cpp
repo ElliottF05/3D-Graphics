@@ -290,10 +290,9 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
-            int xInt = std::round(x);
 
-            if (depth < zBuffer.getPixel(xInt, y)) {
-                zBuffer.setPixel(xInt, y, depth);
+            if (depth < zBuffer.getPixel(x, y)) {
+                zBuffer.setPixel(x, y, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -306,7 +305,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
                 int lightingG = std::min(255, (int) (properties.g * lightingAmount));
                 int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
-                pixelArray.setPixel(xInt, y, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope3;
