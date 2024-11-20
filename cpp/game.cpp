@@ -25,8 +25,8 @@ void Game::setupScene() {
     std::vector<Vec3> darkGrey;
     std::vector<Vec3> lightGrey;
     int gridRadius = 5;
-    for (int i = -gridRadius+1; i < gridRadius; i++) {
-        for (int j = -gridRadius+1; j < gridRadius; j++) {
+    for (int i = -gridRadius; i < gridRadius; i++) {
+        for (int j = -gridRadius; j < gridRadius; j++) {
             std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
             addingTo.emplace_back(i,j,0);
             addingTo.emplace_back(i+1,j+1,0);
@@ -212,17 +212,22 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     }
 
     // calculate starting and ending x values
-    float top = std::max(std::ceil(v1.y), 0.0f);
+    int top = std::max(static_cast<int>(std::ceil(v1.y)), 0);
     float x1 = slope1 * (top - v1.y) + v1.x;
     float x2 = slope2 * (top - v1.y) + v1.x;
-    float bottom = std::min(std::floor(v2.y), height-1.0f);
+    int bottom = std::min(static_cast<int>(std::floor(v2.y)), height-1);
 
     // fill top half
-    // std::cout << "FILLING TOP HALF" << std::endl;
-    for (float y = top; y <= bottom; y++) {
-        
-        float left = x1;
-        float right = x2;
+    for (int y = top; y <= bottom; y++) {
+
+        int left, right;
+        if (x1 < x2) {
+            left = std::max(static_cast<int>(std::ceil(x1)), 0);
+            right = std::min(static_cast<int>(std::floor(x2)), width-1);
+        } else {
+            left = std::max(static_cast<int>(std::ceil(x2)), 0);
+            right = std::min(static_cast<int>(std::floor(x1)), width-1);
+        }
         
         float q1 = (y - v1.y) / (v2.y - v1.y);
         float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
@@ -230,24 +235,14 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
 
-        if (left > right) {
-            std::swap(left, right);
-        }
-        // right += 1;
-        left = std::max(0.0f, left);
-        right = std::min(width-1.0f, right);
-        int yInt = std::round(y);
-        // std::cout << "left: " << left << " right: " << right << "at y: " << y << std::endl;
-
-        for (float x = left; x <= right; x++) {
+        for (int x = left; x <= right; x++) {
 
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
-            int xInt = std::round(x);
 
-            if (depth < zBuffer.getPixel(xInt, yInt)) {
-                zBuffer.setPixel(xInt, yInt, depth);
+            if (depth < zBuffer.getPixel(x, y)) {
+                zBuffer.setPixel(x, y, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -260,7 +255,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
                 int lightingG = std::min(255, (int) (properties.g * lightingAmount));
                 int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
-                pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(x, y, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope1;
@@ -268,16 +263,21 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     }
 
     // fill bottom half
-    top = std::max(std::ceil(v2.y), 0.0f);
+    top = std::max(static_cast<int>(std::ceil(v2.y)), 0);
     x1 = slope3 * (top - v2.y) + v2.x;
     x2 = slope2 * (top - v1.y) + v1.x;
-    bottom = std::min(std::floor(v3.y), height-1.0f);
+    bottom = std::min(static_cast<int>(std::floor(v3.y)), height-1);
 
-    // std::cout << "FILLING BOTTOM HALF" << std::endl;
-    for (float y = top; y <= bottom; y++) {
+    for (int y = top; y <= bottom; y++) {
 
-        float left = x1;
-        float right = x2;
+        int left, right;
+        if (x1 < x2) {
+            left = std::max(static_cast<int>(std::ceil(x1)), 0);
+            right = std::min(static_cast<int>(std::floor(x2)), width-1);
+        } else {
+            left = std::max(static_cast<int>(std::ceil(x2)), 0);
+            right = std::min(static_cast<int>(std::floor(x1)), width-1);
+        }
 
         float q1 = (y - v2.y) / (v3.y - v2.y);
         float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
@@ -285,24 +285,15 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
 
-        if (left > right) {
-            std::swap(left, right);
-        }
-        // right += 1;
-        left = std::max(0.0f, left);
-        right = std::min(width-1.0f, right);
-        int yInt = std::round(y);
-
-        // std::cout << "left: " << left << " right: " << right << "at y: " << y << std::endl;
-        for (float x = left; x <= right; x++) {
+        for (int x = left; x <= right; x++) {
 
             float q3 = (float) (x - x1) / (x2 - x1);
             float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
             float depth = 1 / invDepth;
             int xInt = std::round(x);
 
-            if (depth < zBuffer.getPixel(xInt, yInt)) {
-                zBuffer.setPixel(xInt, yInt, depth);
+            if (depth < zBuffer.getPixel(xInt, y)) {
+                zBuffer.setPixel(xInt, y, depth);
 
                 Vec3 worldPos = getPlaneCoords(x, y) * depth;
                 worldPos.rotateY(camera.getThetaY());
@@ -315,7 +306,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
                 int lightingG = std::min(255, (int) (properties.g * lightingAmount));
                 int lightingB = std::min(255, (int) (properties.b * lightingAmount));
 
-                pixelArray.setPixel(xInt, yInt, lightingR, lightingG, lightingB);
+                pixelArray.setPixel(xInt, y, lightingR, lightingG, lightingB);
             }
         }
         x1 += slope3;
