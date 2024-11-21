@@ -325,6 +325,12 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
 
+        // PARALLELIZATION OPTION HERE
+        // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+        // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
+        //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+        // });
+
         int baseIndex = width * y;
 
         for (int x = left; x <= right; x++) {
@@ -378,6 +384,12 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
 
         float q2 = (y - v1.y) / (v3.y - v1.y);
         float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
+
+        // PARALLELIZATION OPTION HERE
+        // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+        // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
+        //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+        // });
 
         int baseIndex = width * y;
 
