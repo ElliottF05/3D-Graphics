@@ -61,7 +61,7 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-sPTHREAD_POOL_SIZE=20"
+					"fragment" : "-sPTHREAD_POOL_SIZE=8"
 				},
 				{
 					"backtrace" : 3,
@@ -199,7 +199,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-sPTHREAD_POOL_SIZE=20",
+				"fragment" : "-sPTHREAD_POOL_SIZE=8",
 				"role" : "flags"
 			},
 			{

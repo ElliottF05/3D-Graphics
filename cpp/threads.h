@@ -39,4 +39,4 @@ private:
     // Atomic counter to keep track of number of active tasks
     std::atomic<int> active_tasks_;
 };
-static ThreadPool threadPool = ThreadPool(20);
+static ThreadPool threadPool = ThreadPool(8);

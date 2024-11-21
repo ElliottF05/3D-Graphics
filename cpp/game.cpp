@@ -93,6 +93,10 @@ void Game::render() {
     // with shadowmap filtering, float math (small impact), and 16x the shadow map res: 45ms on average
     // with Phong reflections: 45ms on average
 
+    // no parallelization: 115ms, cpu usage 99%
+    // each (projectTriangle + fillTriangle()) parallelized: 30ms, cpu usage 480%
+    // projectTriangle sequential, fillTriangle parallelized: 31ms
+
     // std::cout << "game.cpp: render() called" << std::endl;
     auto startTime = std::chrono::high_resolution_clock::now();
     // auto fillTriangleTime = startTime - startTime;
@@ -109,6 +113,11 @@ void Game::render() {
             Vec3 v1 = vertices[i];
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
+
+            threadPool.addTask([this, v1, v2, v3, &obj] {
+                projectTriangleParallel(v1, v2, v3, obj.getProperties());
+            });
+            continue;
 
             // 2.0) do not render if normal is pointing away from cam - BACK FACE CULLING
             Vec3 normal = (v3 - v1).cross(v2 - v1);
@@ -176,9 +185,9 @@ void Game::render() {
             // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
             // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
-            threadPool.addTask([this, v1, v2, v3, &obj, normal] {
-                fillTriangleParallel(v1, v2, v3, obj.getProperties(), normal);
-            });
+            // threadPool.addTask([this, v1, v2, v3, &obj, normal] {
+            //     fillTriangleOwned(v1, v2, v3, obj.getProperties(), normal);
+            // });
         }
     }
 
@@ -189,6 +198,79 @@ void Game::render() {
     // auto fillTriangleDuration = std::chrono::duration_cast<std::chrono::microseconds>(fillTriangleTime);
     std::cout << "total frame time: " << totalDuration.count() << std::endl;
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
+}
+
+void Game::projectTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties) {
+
+    // do not render if normal is pointing away from cam - BACK FACE CULLING
+    Vec3 normal = (v3 - v1).cross(v2 - v1);
+    normal.normalize();
+    Vec3 camToTriangle = v1 - camera.getPos();
+
+    if (normal.dot(camToTriangle) > 0) {
+        return;
+    }
+
+    // 2.1) project vertices
+
+    // 2.1.1) translate vertices to camera space
+    v1 -= camera.getPos();
+    v2 -= camera.getPos();
+    v3 -= camera.getPos();
+
+    // 2.1.2) rotate vertices to camera space
+    v1.rotateZ(-camera.getThetaZ());
+    v2.rotateZ(-camera.getThetaZ());
+    v3.rotateZ(-camera.getThetaZ());
+
+    v1.rotateY(-camera.getThetaY());
+    v2.rotateY(-camera.getThetaY());
+    v3.rotateY(-camera.getThetaY());
+
+    // 2.1.3) project vertices to plane space
+    float depth = v1.x;
+    v1.x = v1.y / depth;
+    v1.y = v1.z / depth;
+    v1.z = depth;
+
+    depth = v2.x;
+    v2.x = v2.y / depth;
+    v2.y = v2.z / depth;
+    v2.z = depth;
+
+    depth = v3.x;
+    v3.x = v3.y / depth;
+    v3.y = v3.z / depth;
+    v3.z = depth;
+
+    // 2.1.4) scale vertices to screen space
+    int width = pixelArray.getWidth();
+    int height = pixelArray.getHeight();
+
+    float maxPlaneCoord = tan(camera.getFov() / 2.0f);
+
+    v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
+    v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
+
+    v2.x = (0.5 * width) * (1 - v2.x / maxPlaneCoord);
+    v2.y = 0.5 * (height - v2.y / maxPlaneCoord * width);
+
+    v3.x = (0.5 * width) * (1 - v3.x / maxPlaneCoord);
+    v3.y = 0.5 * (height - v3.y / maxPlaneCoord * width);
+
+    // 2.2) draw triangle
+    if (v1.z < 0 || v2.z < 0 || v3.z < 0) {
+        return;
+    }
+
+    // auto preFillTriangle = std::chrono::high_resolution_clock::now();
+    fillTriangle(v1, v2, v3, properties, normal);
+    // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
+    // fillTriangleTime += afterFillTriangle - preFillTriangle;
+
+    // threadPool.addTask([this, v1, v2, v3, &properties, normal] {
+    //     fillTriangleParallel(v1, v2, v3, properties, normal);
+    // });
 }
 
 void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal) {
@@ -329,8 +411,48 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     }
 }
 
-void Game::fillTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal) {
+void Game::fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal) {
     fillTriangle(v1, v2, v3, properties, normal);
+}
+
+void Game::fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal) {
+    int left, right;
+    int width = pixelArray.getWidth();
+    if (x1 < x2) {
+        left = std::max(static_cast<int>(std::ceil(x1)), 0);
+        right = std::min(static_cast<int>(std::floor(x2)), width-1);
+    } else {
+        left = std::max(static_cast<int>(std::ceil(x2)), 0);
+        right = std::min(static_cast<int>(std::floor(x1)), width-1);
+    }
+
+    int baseIndex = width * y;
+
+    for (int x = left; x <= right; x++) {
+
+        float q3 = (float) (x - x1) / (x2 - x1);
+        float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
+        float depth = 1 / invDepth;
+
+        int index = baseIndex + x;
+
+        if (depth < zBuffer.getPixel(index)) {
+            zBuffer.setPixel(index, depth);
+
+            Vec3 worldPos = getPlaneCoords(x, y) * depth;
+            worldPos.rotateY(camera.getThetaY());
+            worldPos.rotateZ(camera.getThetaZ());
+            worldPos += camera.getPos();
+
+            float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
+            lightingAmount = std::max(0.2f, lightingAmount);
+            int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
+            int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
+            int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
+
+            pixelArray.setPixel(index, lightingR, lightingG, lightingB);
+        }
+    }
 }
 
 Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {

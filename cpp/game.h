@@ -18,8 +18,13 @@ private:
 
     uint8_t* imageBuffer;
 
+    void projectTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties);
+
     void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal);
-    void fillTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal);
+    void fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal);
+
+    void fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal);
+
     Vec3 getPlaneCoords(int xPixel, int yPixel);
     Vec3 getPlaneCoords(float xPixel, float yPixel);
 
