@@ -18,7 +18,8 @@ private:
 
     uint8_t* imageBuffer;
 
-    void projectTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties);
+    void projectTriangleBatch(std::vector<Vec3>& vertices, std::vector<const ObjectProperties*>& properties, int start, int end);
+    void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties);
 
     void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal);
     void fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal);

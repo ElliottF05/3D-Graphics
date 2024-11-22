@@ -23,6 +23,7 @@ class Object3D {
         Object3D(std::vector<Vec3> vertices, int r, int g, int b);
 
         const std::vector<Vec3>& getVertices() const;
+        std::vector<Vec3>& getMutableVertices();
         const ObjectProperties& getProperties() const;
         ObjectProperties& getMutableProperties();
 };

@@ -15,8 +15,9 @@ ZBuffer::ZBuffer(int width, int height) {
 
 // METHODS
 void ZBuffer::clear() {
+    float defaultDepth = 9999.0f;
     for (int i = 0; i < data.size(); i++) {
-        data[i].z = 9999.0f;
+        data[i].z = defaultDepth;
     }
 }
 int ZBuffer::getIndex(int x, int y) {

@@ -23,8 +23,7 @@ ThreadPool::ThreadPool(int num_threads) : stop_(false), active_tasks_(0) {
                 { 
                     // Locking the queue so that data 
                     // can be shared safely 
-                    std::unique_lock<std::mutex> lock( 
-                        queue_mutex_); 
+                    std::unique_lock<std::mutex> lock(queue_mutex_); 
 
                     // Waiting until there is a task to 
                     // execute or the pool is stopped 

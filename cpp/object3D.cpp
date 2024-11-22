@@ -12,6 +12,9 @@ Object3D::Object3D(std::vector<Vec3> vertices, int r, int g, int b, float k_s, f
 const std::vector<Vec3>& Object3D::getVertices() const {
     return vertices;
 }
+std::vector<Vec3>& Object3D::getMutableVertices() {
+    return vertices;
+}
 const ObjectProperties& Object3D::getProperties() const {
     return properties;
 }

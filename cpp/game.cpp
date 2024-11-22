@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <iostream>
 
 // CONSTRUCTOR
@@ -14,13 +15,6 @@ Game::Game() : pixelArray(500, 500), zBuffer(500, 500), camera(Vec3(0,0,0), 0, 0
 
 void Game::setupScene() {
     std::cout << "game.cpp: setupScene() called" << std::endl;
-
-    // create objects
-    // objects.emplace_back(std::vector<Vec3>{
-    //     Vec3(10,0,1),
-    //     Vec3(10,4,2),
-    //     Vec3(10,0,5)
-    // }, 255, 0, 0);
 
     // make grid
     std::vector<Vec3> darkGrey;
@@ -73,8 +67,6 @@ void Game::setupScene() {
     Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
     objects.push_back(testObj);
 
-    // objects.emplace_back(testObjVertices, 220, 220, 220);
-
     // create light
     lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
     lights[0].resetShadowMap();
@@ -105,93 +97,48 @@ void Game::render() {
     pixelArray.clear();
     zBuffer.clear();
 
-    // 2) render objects
-    for (const Object3D& obj : objects) {
-        const std::vector<Vec3>& vertices = obj.getVertices();
+    for (Object3D& obj : objects) {
+        std::vector<Vec3>& vertices = obj.getMutableVertices();
         for (int i = 0; i < vertices.size(); i += 3) {
-            // vertices are copied!
             Vec3 v1 = vertices[i];
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
-
-            threadPool.addTask([this, v1, v2, v3, &obj] {
-                projectTriangleParallel(v1, v2, v3, obj.getProperties());
+            threadPool.addTask([this, v1, v2, v3, &obj]() mutable {
+                projectTriangle(v1, v2, v3, obj.getProperties());
             });
-            continue;
-
-            // 2.0) do not render if normal is pointing away from cam - BACK FACE CULLING
-            Vec3 normal = (v3 - v1).cross(v2 - v1);
-            normal.normalize();
-            Vec3 camToTriangle = v1 - camera.getPos();
-
-            if (normal.dot(camToTriangle) > 0) {
-                continue;
-            }
-
-            // 2.1) project vertices
-
-            // 2.1.1) translate vertices to camera space
-            v1 -= camera.getPos();
-            v2 -= camera.getPos();
-            v3 -= camera.getPos();
-
-            // 2.1.2) rotate vertices to camera space
-            v1.rotateZ(-camera.getThetaZ());
-            v2.rotateZ(-camera.getThetaZ());
-            v3.rotateZ(-camera.getThetaZ());
-
-            v1.rotateY(-camera.getThetaY());
-            v2.rotateY(-camera.getThetaY());
-            v3.rotateY(-camera.getThetaY());
-
-            // 2.1.3) project vertices to plane space
-            float depth = v1.x;
-            v1.x = v1.y / depth;
-            v1.y = v1.z / depth;
-            v1.z = depth;
-
-            depth = v2.x;
-            v2.x = v2.y / depth;
-            v2.y = v2.z / depth;
-            v2.z = depth;
-
-            depth = v3.x;
-            v3.x = v3.y / depth;
-            v3.y = v3.z / depth;
-            v3.z = depth;
-
-            // 2.1.4) scale vertices to screen space
-            int width = pixelArray.getWidth();
-            int height = pixelArray.getHeight();
-
-            float maxPlaneCoord = tan(camera.getFov() / 2.0f);
-
-            v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
-            v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
-
-            v2.x = (0.5 * width) * (1 - v2.x / maxPlaneCoord);
-            v2.y = 0.5 * (height - v2.y / maxPlaneCoord * width);
-
-            v3.x = (0.5 * width) * (1 - v3.x / maxPlaneCoord);
-            v3.y = 0.5 * (height - v3.y / maxPlaneCoord * width);
-
-            // 2.2) draw triangle
-            if (v1.z < 0 || v2.z < 0 || v3.z < 0) {
-                continue;
-            }
-
-            // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-            // fillTriangle(v1, v2, v3, obj.getProperties(), normal);
-            // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
-            // fillTriangleTime += afterFillTriangle - preFillTriangle;
-
-            // threadPool.addTask([this, v1, v2, v3, &obj, normal] {
-            //     fillTriangleOwned(v1, v2, v3, obj.getProperties(), normal);
-            // });
         }
     }
 
     threadPool.waitUntilTasksFinished();
+
+    // // 2) render objects
+    // // 2.0) set up parallelization
+    // std::vector<Vec3> vertices;
+    // std::vector<const ObjectProperties*> properties;
+    // int numVertices = 0;
+    // for (const Object3D& obj : objects) {
+    //     numVertices += obj.getVertices().size();
+    // }
+    // vertices.reserve(numVertices);
+    // properties.reserve(numVertices);
+
+    // for (const Object3D& obj : objects) {
+    //     for (const Vec3& vertex : obj.getVertices()) {
+    //         vertices.push_back(vertex);
+    //         properties.push_back(&obj.getProperties());
+    //     }
+    // }
+
+    // // 2.1) project vertices
+    // const int BATCH_SIZE = 100;
+    // for (int start = 0; start < vertices.size(); start += BATCH_SIZE * 3) {
+    //     int end = std::min(start + BATCH_SIZE * 3, static_cast<int>(vertices.size()));
+    //     threadPool.addTask([this, start, end, &vertices, &properties] {
+    //         projectTriangleBatch(vertices, properties, start, end);
+    //     });
+    // }
+
+    // threadPool.waitUntilTasksFinished();
 
     auto endTime = std::chrono::high_resolution_clock::now();
     auto totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
@@ -200,7 +147,13 @@ void Game::render() {
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
-void Game::projectTriangleParallel(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties) {
+void Game::projectTriangleBatch(std::vector<Vec3>& vertices, std::vector<const ObjectProperties*>& properties, int start, int end) {
+    for (int i = start; i < end; i += 3) {
+        projectTriangle(vertices[i], vertices[i+1], vertices[i+2], *properties[i]);
+    }
+}
+
+void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties) {
 
     // do not render if normal is pointing away from cam - BACK FACE CULLING
     Vec3 normal = (v3 - v1).cross(v2 - v1);
