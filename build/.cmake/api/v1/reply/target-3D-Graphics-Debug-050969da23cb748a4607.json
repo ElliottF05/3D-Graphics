@@ -26,19 +26,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 58,
+				"line" : 54,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 62,
+				"line" : 58,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 61,
+				"line" : 57,
 				"parent" : 0
 			}
 		]
@@ -61,7 +61,7 @@
 				},
 				{
 					"backtrace" : 3,
-					"fragment" : "-sPTHREAD_POOL_SIZE=8"
+					"fragment" : "-sPTHREAD_POOL_SIZE=10"
 				},
 				{
 					"backtrace" : 3,
@@ -90,22 +90,6 @@
 				{
 					"backtrace" : 3,
 					"fragment" : "-O1"
-				},
-				{
-					"backtrace" : 3,
-					"fragment" : "--profiling"
-				},
-				{
-					"backtrace" : 3,
-					"fragment" : "--profiling-funcs"
-				},
-				{
-					"backtrace" : 3,
-					"fragment" : "--tracing"
-				},
-				{
-					"backtrace" : 3,
-					"fragment" : "-g"
 				},
 				{
 					"backtrace" : 3,
@@ -199,7 +183,7 @@
 			},
 			{
 				"backtrace" : 2,
-				"fragment" : "-sPTHREAD_POOL_SIZE=8",
+				"fragment" : "-sPTHREAD_POOL_SIZE=10",
 				"role" : "flags"
 			},
 			{
@@ -235,26 +219,6 @@
 			{
 				"backtrace" : 2,
 				"fragment" : "-O1",
-				"role" : "flags"
-			},
-			{
-				"backtrace" : 2,
-				"fragment" : "--profiling",
-				"role" : "flags"
-			},
-			{
-				"backtrace" : 2,
-				"fragment" : "--profiling-funcs",
-				"role" : "flags"
-			},
-			{
-				"backtrace" : 2,
-				"fragment" : "--tracing",
-				"role" : "flags"
-			},
-			{
-				"backtrace" : 2,
-				"fragment" : "-g",
 				"role" : "flags"
 			},
 			{

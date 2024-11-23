@@ -109,10 +109,10 @@ void Game::render() {
         }
     }
 
-    threadPool.waitUntilTasksFinished();
+    // threadPool.waitUntilTasksFinished();
 
-    // // 2) render objects
-    // // 2.0) set up parallelization
+    // 2) render objects
+    // 2.0) set up parallelization
     // std::vector<Vec3> vertices;
     // std::vector<const ObjectProperties*> properties;
     // int numVertices = 0;
@@ -130,7 +130,7 @@ void Game::render() {
     // }
 
     // // 2.1) project vertices
-    // const int BATCH_SIZE = 100;
+    // const int BATCH_SIZE = 1;
     // for (int start = 0; start < vertices.size(); start += BATCH_SIZE * 3) {
     //     int end = std::min(start + BATCH_SIZE * 3, static_cast<int>(vertices.size()));
     //     threadPool.addTask([this, start, end, &vertices, &properties] {

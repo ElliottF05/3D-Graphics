@@ -25,7 +25,7 @@ set(SOURCES
 set(EMSCRIPTEN_OPTIONS
     -sALLOW_MEMORY_GROWTH
     -sUSE_PTHREADS
-    -sPTHREAD_POOL_SIZE=8
+    -sPTHREAD_POOL_SIZE=10
     -sMODULARIZE
     -sSINGLE_FILE=1
     -sEXPORT_ES6=1
@@ -33,10 +33,6 @@ set(EMSCRIPTEN_OPTIONS
     -sEXPORT_NAME="WasmModule"
     -pthread
     -O1
-    --profiling
-    --profiling-funcs
-    --tracing
-    -g
     -flto
     -fapprox-func
     -fno-math-errno
