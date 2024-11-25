@@ -6,7 +6,7 @@
 3	888	1732246538802235046	CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o	e8fd3cd810a113f1
 2	2452	1729131409233987420	$./3D-graphics/src/build/3D-Graphics.js	8471d953fec14472
 1	738	1730304634093146074	CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o	7598852413542f57
-4	552	1732328007808929168	build.ninja	af3ba48f5349e11f
+4	552	1732510771136755017	build.ninja	af3ba48f5349e11f
 4	1166	1732305524766522943	CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o	fe2df558cc59b5b7
 1	1197	1730304634093345907	CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o	541d57730fb732ed
 3	2528	1729133794195085878	$/Users/elliottfaa/repos/3D-Graphics-Engine/3D-graphics/src/build/3D-Graphics.js	28fefc997da52f2e
