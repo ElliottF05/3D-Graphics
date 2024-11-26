@@ -1,4 +1,5 @@
 #include "game.h"
+#include "camera.h"
 #include "object3D.h"
 #include "threads.h"
 #include "zBuffer.h"
@@ -17,55 +18,55 @@ void Game::setupScene() {
     std::cout << "game.cpp: setupScene() called" << std::endl;
 
     // make grid
-    std::vector<Vec3> darkGrey;
-    std::vector<Vec3> lightGrey;
-    int gridRadius = 5;
-    for (int i = -gridRadius; i < gridRadius; i++) {
-        for (int j = -gridRadius; j < gridRadius; j++) {
-            std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
-            addingTo.emplace_back(i,j,0);
-            addingTo.emplace_back(i+1,j+1,0);
-            addingTo.emplace_back(i+1,j,0);
-            addingTo.emplace_back(i,j,0);
-            addingTo.emplace_back(i,j+1,0);
-            addingTo.emplace_back(i+1,j+1,0);
-        }
-    }
-    objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
-    objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
+    // std::vector<Vec3> darkGrey;
+    // std::vector<Vec3> lightGrey;
+    // int gridRadius = 5;
+    // for (int i = -gridRadius; i < gridRadius; i++) {
+    //     for (int j = -gridRadius; j < gridRadius; j++) {
+    //         std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
+    //         addingTo.emplace_back(i,j,0);
+    //         addingTo.emplace_back(i+1,j+1,0);
+    //         addingTo.emplace_back(i+1,j,0);
+    //         addingTo.emplace_back(i,j,0);
+    //         addingTo.emplace_back(i,j+1,0);
+    //         addingTo.emplace_back(i+1,j+1,0);
+    //     }
+    // }
+    // objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
+    // objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
 
-    std::vector<Vec3> testObjVertices;
-    float radius = 0.5f;
-    int iterations = 100;
+    // std::vector<Vec3> testObjVertices;
+    // float radius = 0.5f;
+    // int iterations = 100;
 
-    Vec3 center = Vec3(1,1,radius);
+    // Vec3 center = Vec3(1,1,radius);
 
-    std::vector<Vec3> prev;
-    for (int i = 0; i < iterations; i++) {
-        prev.push_back(center + Vec3(0,0,radius));
-    }
-    std::vector<Vec3> curr;
-    for (int i = 1; i < iterations; i++) {
-        float z = radius * std::sin(M_PI / 2.0f - i * M_PI / iterations);
-        for (int j = 0; j < iterations; j++) {
-            float x = radius * std::cos(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
-            float y = radius * std::sin(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
-            curr.push_back(center + Vec3(x,y,z));
-        }
-        for (int i = 0; i < iterations; i++) {
-            testObjVertices.push_back(prev[i]);
-            testObjVertices.push_back(curr[(i+1) % iterations]);
-            testObjVertices.push_back(curr[i]);
-            testObjVertices.push_back(prev[i]);
-            testObjVertices.push_back(prev[(i+1) % iterations]);
-            testObjVertices.push_back(curr[(i+1) % iterations]);
-        }
-        prev = curr;
-        curr.clear();
-    }
+    // std::vector<Vec3> prev;
+    // for (int i = 0; i < iterations; i++) {
+    //     prev.push_back(center + Vec3(0,0,radius));
+    // }
+    // std::vector<Vec3> curr;
+    // for (int i = 1; i < iterations; i++) {
+    //     float z = radius * std::sin(M_PI / 2.0f - i * M_PI / iterations);
+    //     for (int j = 0; j < iterations; j++) {
+    //         float x = radius * std::cos(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
+    //         float y = radius * std::sin(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
+    //         curr.push_back(center + Vec3(x,y,z));
+    //     }
+    //     for (int i = 0; i < iterations; i++) {
+    //         testObjVertices.push_back(prev[i]);
+    //         testObjVertices.push_back(curr[(i+1) % iterations]);
+    //         testObjVertices.push_back(curr[i]);
+    //         testObjVertices.push_back(prev[i]);
+    //         testObjVertices.push_back(prev[(i+1) % iterations]);
+    //         testObjVertices.push_back(curr[(i+1) % iterations]);
+    //     }
+    //     prev = curr;
+    //     curr.clear();
+    // }
 
-    Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
-    objects.push_back(testObj);
+    // Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
+    // objects.push_back(testObj);
 
     // create light
     lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
@@ -476,12 +477,31 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 
 
 void Game::renderRayTracing() {
+
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            int color = (i + j) % 255;
-            pixelArray.setPixel(j, i, color, color, color);
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Vec3 dir = getPlaneCoords(x, y);
+            dir.rotateY(camera.getThetaY());
+            dir.rotateZ(camera.getThetaZ());
+            
+            Ray ray = Ray(camera.getPos(), dir);
+
+            Vec3 center(5,0,0);
+            float radius = 0.5f;
+
+            Vec3 oc = center - ray.getOrigin();
+            auto a = ray.getDirection().dot(ray.getDirection());
+            auto b = -2.0 * ray.getDirection().dot(oc);
+            auto c = oc.dot(oc) - radius*radius;
+            auto discriminant = b*b - 4*a*c;
+            bool hasIntersection = (discriminant >= 0);
+
+            if (hasIntersection) {
+                pixelArray.setPixel(x, y, 255, 255, 255);
+            }
         }
     }
 }

@@ -6,6 +6,7 @@
 #include "camera.h"
 #include "pixelArray.h"
 #include "zBuffer.h"
+#include "ray.h"
 
 class Game {
 private:

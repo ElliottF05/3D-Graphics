@@ -16,6 +16,7 @@ set(SOURCES
     ./cpp/light.cpp
     ./cpp/object3D.cpp
     ./cpp/pixelArray.cpp
+    ./cpp/ray.cpp
     ./cpp/threads.cpp
     ./cpp/vec3.cpp
     ./cpp/zBuffer.cpp
