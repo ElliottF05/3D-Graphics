@@ -33,6 +33,7 @@ public:
     Game();
     void setupScene();
     void render();
+    void renderRayTracing();
     void userCameraInput(float forwardMovement, float sidewaysMovement, float verticalMovement, float rotateZ, float rotateY, float otherInputCode);
     uint8_t* exportImageBuffer();
 };

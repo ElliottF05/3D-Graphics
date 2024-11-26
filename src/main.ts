@@ -22,8 +22,9 @@ async function loop(): Promise<void> {
             readyForNextFrame = true;
         },40);
         if (running) {
-            Input.processInput();
-            CPPInterface.CPPrenderScene();
+            // Input.processInput();
+            // CPPInterface.CPPrenderScene();
+            CPPInterface.CPPrenderSceneRayTracing();
             Graphics.setCanvasImage();
         }
         // Wait for 40ms before the next frame

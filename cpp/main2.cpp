@@ -25,6 +25,11 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    void renderSceneRayTracing() {
+        g_Game.renderRayTracing();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     uint8_t* getImageBuffer() {
         // std::cout << "main2.cpp: getImageBuffer() called" << std::endl;
         return g_Game.exportImageBuffer();

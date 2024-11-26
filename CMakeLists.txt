@@ -47,6 +47,7 @@ set(EMSCRIPTEN_OPTIONS
 # Profiling options
 # --profiling
 # --profiling-funcs
+# -fno-inline
 # --tracing
 # -g
 

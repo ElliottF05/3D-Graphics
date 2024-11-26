@@ -109,7 +109,7 @@ void Game::render() {
         }
     }
 
-    // threadPool.waitUntilTasksFinished();
+    threadPool.waitUntilTasksFinished();
 
     // 2) render objects
     // 2.0) set up parallelization
@@ -472,4 +472,16 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 
     camera.setThetaY(camera.getThetaY() + rotateY);
     camera.setThetaZ(camera.getThetaZ() + rotateZ);
+}
+
+
+void Game::renderRayTracing() {
+    int width = pixelArray.getWidth();
+    int height = pixelArray.getHeight();
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int color = (i + j) % 255;
+            pixelArray.setPixel(j, i, color, color, color);
+        }
+    }
 }
