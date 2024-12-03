@@ -10,6 +10,7 @@ struct ObjectProperties {
     bool isDeletable;
 
     ObjectProperties(int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable);
+    ObjectProperties();
 };
 
 class Object3D {

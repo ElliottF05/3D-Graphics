@@ -26,19 +26,19 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 56,
+				"line" : 58,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 60,
+				"line" : 62,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 59,
+				"line" : 61,
 				"parent" : 0
 			}
 		]
@@ -148,7 +148,9 @@
 				6,
 				7,
 				8,
-				9
+				9,
+				10,
+				11
 			]
 		}
 	],
@@ -292,7 +294,9 @@
 				6,
 				7,
 				8,
-				9
+				9,
+				10,
+				11
 			]
 		}
 	],
@@ -319,6 +323,12 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "cpp/hitRecord.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "cpp/light.cpp",
 			"sourceGroupIndex" : 0
 		},
@@ -338,6 +348,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "cpp/ray.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "cpp/sphere.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

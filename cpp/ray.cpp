@@ -3,10 +3,10 @@
 Ray::Ray() : orig(Vec3()), dir(Vec3()) {}
 Ray::Ray(const Vec3& origin, const Vec3& direction) : orig(origin), dir(direction) {}
 
-Vec3 Ray::getOrigin() {
+const Vec3& Ray::getOrigin() const {
     return orig;
 }
-Vec3 Ray::getDirection() {
+const Vec3& Ray::getDirection() const {
     return dir;
 }
 Vec3& Ray::getMutOrigin() {
@@ -16,6 +16,6 @@ Vec3& Ray::getMutDirection() {
     return dir;
 }
 
-Vec3 Ray::at(float t) {
+Vec3 Ray::at(float t) const {
     return orig + t * dir;
 }

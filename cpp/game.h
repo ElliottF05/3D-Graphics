@@ -7,6 +7,7 @@
 #include "pixelArray.h"
 #include "zBuffer.h"
 #include "ray.h"
+#include "sphere.h"
 
 class Game {
 private:

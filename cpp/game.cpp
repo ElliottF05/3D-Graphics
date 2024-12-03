@@ -1,7 +1,10 @@
 #include "game.h"
 #include "camera.h"
+#include "hitRecord.h"
 #include "object3D.h"
+#include "sphere.h"
 #include "threads.h"
+#include "vec3.h"
 #include "zBuffer.h"
 #include <algorithm>
 #include <chrono>
@@ -477,31 +480,30 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 
 
 void Game::renderRayTracing() {
+    // Made by mostly following guide at https://raytracing.github.io/books/RayTracingInOneWeekend.html
 
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
 
+    Sphere sphere(Vec3(2,0,0), 0.5f);
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
+
             Vec3 dir = getPlaneCoords(x, y);
             dir.rotateY(camera.getThetaY());
             dir.rotateZ(camera.getThetaZ());
             
             Ray ray = Ray(camera.getPos(), dir);
 
-            Vec3 center(5,0,0);
-            float radius = 0.5f;
+            HitRecord hitRecord;
+            sphere.rayHit(ray, 0.001f, 1000.0f, hitRecord);
 
-            Vec3 oc = center - ray.getOrigin();
-            auto a = ray.getDirection().dot(ray.getDirection());
-            auto b = -2.0 * ray.getDirection().dot(oc);
-            auto c = oc.dot(oc) - radius*radius;
-            auto discriminant = b*b - 4*a*c;
-            bool hasIntersection = (discriminant >= 0);
+            Vec3 color = hitRecord.normal;
+            color = 255 * 0.5f * (color + Vec3(1,1,1));
 
-            if (hasIntersection) {
-                pixelArray.setPixel(x, y, 255, 255, 255);
-            }
+            pixelArray.setPixel(x, y, color.x, color.y, color.z);
+
         }
     }
 }

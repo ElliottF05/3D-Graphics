@@ -21,7 +21,8 @@ struct Vec3 {
     Vec3& operator/=(const float scalar);
     Vec3 cross(const Vec3& other) const;
     float dot(const Vec3& other) const;
-    float mag() const;
+    float length() const;
+    float lengthSquared() const;
     void normalize();
     float angleWith(const Vec3& other) const;
 
@@ -35,3 +36,4 @@ struct Vec3 {
 // extra operators for Vec3
 Vec3 operator*(const float scalar, const Vec3& vec);
 Vec3 operator/(const float scalar, const Vec3& vec);
+float dot(const Vec3& a, const Vec3& b);

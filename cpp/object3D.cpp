@@ -2,6 +2,7 @@
 
 // ObjectProperties
 ObjectProperties::ObjectProperties(int r, int g, int b, float k_s, float k_d, float k_a, int shininess, bool isDeletable) : r(r), g(g), b(b), k_s(k_s), k_d(k_d), k_a(k_a), shininess(shininess), isDeletable(isDeletable) {}
+ObjectProperties::ObjectProperties() : r(255), g(255), b(255), k_s(0), k_d(1), k_a(0.2f), shininess(0), isDeletable(true) {}
 
 // CONSTRUCTORS
 Object3D::Object3D() : vertices(), properties(255, 255, 255, 0, 1, 0.2f, 0, true) {}

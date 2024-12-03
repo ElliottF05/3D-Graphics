@@ -60,18 +60,21 @@ Vec3 Vec3::cross(const Vec3& other) const {
 float Vec3::dot(const Vec3& other) const {
     return this->x * other.x + this->y * other.y + this->z * other.z;
 }
-float Vec3::mag() const {
+float Vec3::length() const {
     return std::sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
 }
+float Vec3::lengthSquared() const {
+    return this->x * this->x + this->y * this->y + this->z * this->z;
+}
 void Vec3::normalize() {
-    float mag = this->mag();
+    float mag = this->length();
     if (mag == 0) {
         return;
     }
     (*this) /= mag;
 }
 float Vec3::angleWith(const Vec3 &other) const {
-    return std::acos(this->dot(other) / (this->mag() * other.mag()));
+    return std::acos(this->dot(other) / (this->length() * other.length()));
 }
 
 // Operators where Vec3 is right-hand-side
@@ -81,6 +84,9 @@ Vec3 operator*(const float scalar, const Vec3& vec) {
 Vec3 operator/(const float scalar, const Vec3&vec) {
     float x = 1.0 / scalar;
     return Vec3(vec.x * x, vec.y * x, vec.z * x);
+}
+float dot(const Vec3& a, const Vec3& b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 // ROTATION
