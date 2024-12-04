@@ -9,6 +9,7 @@ struct Interval {
     float size() const;
     bool contains(float value) const;
     bool surrounds(float value) const;
+    float clamp(float value) const;
 
     static const Interval empty;
     static const Interval universe;

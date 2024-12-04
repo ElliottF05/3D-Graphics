@@ -21,6 +21,7 @@ set(SOURCES
     ./cpp/ray.cpp
     ./cpp/sphere.cpp
     ./cpp/threads.cpp
+    ./cpp/utils.cpp
     ./cpp/vec3.cpp
     ./cpp/zBuffer.cpp
 )

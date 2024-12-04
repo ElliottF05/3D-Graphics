@@ -27,6 +27,7 @@ async function loop(): Promise<void> {
             CPPInterface.CPPrenderSceneRayTracing();
             Graphics.setCanvasImage();
         }
+        running = false; // ONLY RUN ONE LOOP FOR NOW
         // Wait for 40ms before the next frame
         while (!readyForNextFrame) {
             await new Promise(r => setTimeout(r, 1));

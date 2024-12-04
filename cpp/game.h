@@ -8,6 +8,7 @@
 #include "zBuffer.h"
 #include "ray.h"
 #include "sphere.h"
+#include "utils.h"
 
 class Game {
 private:
@@ -33,7 +34,15 @@ private:
 
     Ray spawnRay(float xPixel, float yPixel);
 
+
 public:
+
+    // CONSTANTS
+    static const int WINDOW_WIDTH = 500;
+    static const int WINDOW_HEIGHT = 500;
+    static const int CAMERA_FOV = 90 * (M_PI / 180.0f);
+    static const int RAY_SAMPLES_PER_PIXEL = 10;
+
     Game();
     void setupScene();
     void render();

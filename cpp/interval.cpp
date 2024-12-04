@@ -1,4 +1,5 @@
 #include "interval.h"
+#include <algorithm>
 #include <cmath>
 
 // CONSTRUCTORS
@@ -14,6 +15,9 @@ bool Interval::contains(float value) const {
 }
 bool Interval::surrounds(float value) const {
     return min < value && value < max;
+}
+float Interval::clamp(float value) const {
+    return std::clamp(value, min, max);
 }
 
 // STATIC VARIABLES
