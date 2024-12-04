@@ -31,6 +31,8 @@ private:
     Vec3 getPlaneCoords(int xPixel, int yPixel);
     Vec3 getPlaneCoords(float xPixel, float yPixel);
 
+    Ray spawnRay(float xPixel, float yPixel);
+
 public:
     Game();
     void setupScene();

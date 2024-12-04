@@ -16,7 +16,7 @@ const ObjectProperties& Sphere::getProperties() const {
 }
 
 // RAY HIT
-bool Sphere::rayHit(const Ray& ray, float tmin, float tmax, HitRecord& hitRecord) const {
+bool Sphere::rayHit(const Ray& ray, Interval hitInterval, HitRecord& hitRecord) const {
     // ray-sphere intersection code
     Vec3 oc = center - ray.getOrigin();
     auto a = ray.getDirection().lengthSquared();
@@ -31,16 +31,17 @@ bool Sphere::rayHit(const Ray& ray, float tmin, float tmax, HitRecord& hitRecord
     float sqrtd = std::sqrt(discriminant);
 
     float t = (h - sqrtd) / a;
-    if (t <= tmin || t >= tmax) {
+    if (!hitInterval.surrounds(t)) {
         t = (h + sqrtd) / a;
-        if (t <= tmin || t >= tmax) {
+        if (!hitInterval.surrounds(t)) {
             return false;
         }
     }
 
     hitRecord.t = t;
     hitRecord.pos = ray.at(t);
-    hitRecord.normal = (hitRecord.pos - center) / radius;
+    Vec3 sphereOutwardNormal = (hitRecord.pos - center) / radius;
+    hitRecord.setFaceNormal(ray, sphereOutwardNormal);
 
     return true;
 }

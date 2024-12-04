@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hitRecord.h"
+#include "interval.h"
 #include "vec3.h"
 #include "object3D.h"
 #include "ray.h"
@@ -18,5 +19,5 @@ class Sphere {
         float getRadius() const;
         const ObjectProperties& getProperties() const;
 
-        bool rayHit(const Ray& ray, float tmin, float tmax, HitRecord& hitRecord) const;
+        bool rayHit(const Ray& ray, Interval hitInterval, HitRecord& hitRecord) const;
 };

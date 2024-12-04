@@ -1,6 +1,7 @@
 #include "game.h"
 #include "camera.h"
 #include "hitRecord.h"
+#include "interval.h"
 #include "object3D.h"
 #include "sphere.h"
 #include "threads.h"
@@ -11,6 +12,7 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <vector>
 
 // CONSTRUCTOR
 Game::Game() : pixelArray(500, 500), zBuffer(500, 500), camera(Vec3(0,0,0), 0, 0, M_PI/2.0f) {
@@ -77,7 +79,7 @@ void Game::setupScene() {
     lights[0].addObjectsToShadowMap(objects);
 
     // create camera
-    camera = Camera(Vec3(-0.511111f,-0.511111f,1.511111f), 0.0111111, 0.0111111, M_PI/2.0f);
+    camera = Camera(Vec3(0.0000111f,0.0000111f,0.0000111), 0.0000111f, 0.0000111f, M_PI/2.0f);
 
     std::cout << "game.cpp: setupScene() finished" << std::endl;
 }
@@ -485,25 +487,43 @@ void Game::renderRayTracing() {
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
 
-    Sphere sphere(Vec3(2,0,0), 0.5f);
+    std::vector<Sphere> spheres;
+
+    Sphere sphere1(Vec3(2,0,0), 0.5f);
+    Sphere sphere2(Vec3(2,0,-100.5f), 100);
+
+    spheres.push_back(sphere1);
+    spheres.push_back(sphere2);
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-
-            Vec3 dir = getPlaneCoords(x, y);
-            dir.rotateY(camera.getThetaY());
-            dir.rotateZ(camera.getThetaZ());
             
-            Ray ray = Ray(camera.getPos(), dir);
+            Ray ray = spawnRay(x, y);
 
             HitRecord hitRecord;
-            sphere.rayHit(ray, 0.001f, 1000.0f, hitRecord);
+            bool hitAnything = false;
+            Interval hitInterval(0, INFINITY);
 
-            Vec3 color = hitRecord.normal;
-            color = 255 * 0.5f * (color + Vec3(1,1,1));
+            for (const Sphere& sphere : spheres) {
+                if (sphere.rayHit(ray, hitInterval, hitRecord)) {
+                    hitAnything = true;
+                    hitInterval.max = hitRecord.t;
+                }
+            }
 
-            pixelArray.setPixel(x, y, color.x, color.y, color.z);
+            if (hitAnything) {
+                Vec3 color = hitRecord.normal;
+                color = 255 * 0.5f * (color + Vec3(1,1,1));
+                pixelArray.setPixel(x, y, color.x, color.y, color.z);
+            }
 
         }
     }
+}
+
+Ray Game::spawnRay(float xPixel, float yPixel) {
+    Vec3 dir = getPlaneCoords(xPixel, yPixel);
+    dir.rotateY(camera.getThetaY());
+    dir.rotateZ(camera.getThetaZ());
+    return Ray(camera.getPos(), dir);
 }
