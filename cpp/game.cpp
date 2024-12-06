@@ -498,45 +498,54 @@ void Game::renderRayTracing() {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
 
-            Vec3 color(0,0,0);
+            Vec3 pixelColor(0,0,0);
             for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
-            
-                Ray ray = spawnRay(x, y);
-
-                HitRecord hitRecord;
-                bool hitAnything = false;
-                Interval hitInterval(0, INFINITY);
-
-                for (const Sphere& sphere : spheres) {
-                    if (sphere.rayHit(ray, hitInterval, hitRecord)) {
-                        hitAnything = true;
-                        hitInterval.max = hitRecord.t;
-                    }
-                }
-
-                if (hitAnything) {
-                    Vec3 temp_color = 255 * 0.5 * (hitRecord.normal + Vec3(1,1,1));
-                    color += temp_color;
-                }
-
+                Ray ray = spawnRayAtPixel(x, y);
+                pixelColor += traceRay(ray, 50, spheres);
             }
 
-            if (color.x == 0 && color.y == 0 && color.z == 0) {
+            if (pixelColor.x == 0 && pixelColor.y == 0 && pixelColor.z == 0) {
                 continue;
             }
 
-            color /= RAY_SAMPLES_PER_PIXEL;
-
-            pixelArray.setPixel(x, y, color.x, color.y, color.z);
+            pixelColor /= RAY_SAMPLES_PER_PIXEL;
+            pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
         }
     }
 }
 
-Ray Game::spawnRay(float xPixel, float yPixel) {
+Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
     xPixel += -0.5 + randomFloat();
     yPixel += -0.5 + randomFloat();
     Vec3 dir = getPlaneCoords(xPixel, yPixel);
     dir.rotateY(camera.getThetaY());
     dir.rotateZ(camera.getThetaZ());
     return Ray(camera.getPos(), dir);
+}
+
+Vec3 Game::traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres) {
+    if (depth < 0) {
+        return Vec3(0,0,0);
+    }
+
+    HitRecord hitRecord;
+    bool hitAnything = false;
+    Interval hitInterval(0, INFINITY);
+
+    for (const Sphere& sphere : spheres) {
+        if (sphere.rayHit(ray, hitInterval, hitRecord)) {
+            hitAnything = true;
+            hitInterval.max = hitRecord.t;
+        }
+    }
+
+    if (hitAnything) {
+        Vec3 newDirection = Vec3::randomOnHemishpere(hitRecord.normal);
+        return 0.5 * traceRay(Ray(hitRecord.pos, newDirection), depth-1, spheres);
+    }
+
+    // Return the sky color in the case of no hit
+    Vec3 direction = ray.getDirection().normalized();
+    float a = 0.5 * (direction.y + 1.0);
+    return 255 * ((1.0 - a) * Vec3(1.0, 1.0, 1.0) + a * Vec3(0.5, 0.7, 1.0));
 }

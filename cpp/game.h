@@ -32,7 +32,8 @@ private:
     Vec3 getPlaneCoords(int xPixel, int yPixel);
     Vec3 getPlaneCoords(float xPixel, float yPixel);
 
-    Ray spawnRay(float xPixel, float yPixel);
+    Ray spawnRayAtPixel(float xPixel, float yPixel);
+    Vec3 traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres);
 
 
 public:

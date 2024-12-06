@@ -73,6 +73,13 @@ void Vec3::normalize() {
     }
     (*this) /= mag;
 }
+Vec3 Vec3::normalized() const {
+    float mag = this->length();
+    if (mag == 0) {
+        return Vec3();
+    }
+    return (*this) / mag;
+}
 float Vec3::angleWith(const Vec3 &other) const {
     return std::acos(this->dot(other) / (this->length() * other.length()));
 }
@@ -110,4 +117,30 @@ void Vec3::rotate(float thetaZ, float thetaY) {
 // TO STRING
 std::string Vec3::toString() const {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
+}
+
+// STATIC METHODS
+Vec3 Vec3::random() {
+    return Vec3(randomFloat(), randomFloat(), randomFloat());
+}
+Vec3 Vec3::random(float min, float max) {
+    return Vec3(randomFloat(min, max), randomFloat(min, max), randomFloat(min, max));
+}
+Vec3 Vec3::randomUnitVector() {
+    while (true) {
+        Vec3 v = Vec3::random(-1, 1);
+        float lengthSquared = v.lengthSquared();
+        if (1e-80 <= lengthSquared && lengthSquared <= 1) {
+            return v / std::sqrt(lengthSquared);
+        }
+    }
+}
+Vec3 Vec3::randomOnHemishpere(Vec3& normal) {
+    Vec3 v = Vec3::randomUnitVector();
+    if (normal.dot(v) > 0.0f) {
+        return v;
+    } else {
+        return v * -1;
+    }
+    
 }

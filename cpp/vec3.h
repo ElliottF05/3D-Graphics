@@ -2,6 +2,7 @@
 
 #include <string>
 #include <cmath>
+#include "utils.h"
 
 struct Vec3 {
     float x,y,z;
@@ -24,6 +25,7 @@ struct Vec3 {
     float length() const;
     float lengthSquared() const;
     void normalize();
+    Vec3 normalized() const;
     float angleWith(const Vec3& other) const;
 
     // specific functions
@@ -32,6 +34,12 @@ struct Vec3 {
     void rotate(float thetaZ, float thetaY);
 
     std::string toString() const;
+
+    // static methods
+    static Vec3 random();
+    static Vec3 random(float min, float max);
+    static Vec3 randomUnitVector();
+    static Vec3 randomOnHemishpere(Vec3& normal);
 };
 // extra operators for Vec3
 Vec3 operator*(const float scalar, const Vec3& vec);
