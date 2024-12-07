@@ -16,6 +16,7 @@ set(SOURCES
     ./cpp/hitRecord.cpp
     ./cpp/interval.cpp
     ./cpp/light.cpp
+    ./cpp/material.cpp
     ./cpp/object3D.cpp
     ./cpp/pixelArray.cpp
     ./cpp/ray.cpp

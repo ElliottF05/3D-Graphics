@@ -489,11 +489,21 @@ void Game::renderRayTracing() {
 
     std::vector<Sphere> spheres;
 
-    Sphere sphere1(Vec3(2,0,0), 0.5f);
-    Sphere sphere2(Vec3(2,0,-100.5f), 100);
+    auto material_ground = std::make_shared<Lambertian>(Vec3(0.8, 0.8, 0.0));
+    auto material_center = std::make_shared<Lambertian>(Vec3(0.1, 0.2, 0.5));
+    auto material_left = std::make_shared<Dielectric>(Vec3(1.0f, 1.0f, 1.0f), 1.50);
+    auto material_bubble = std::make_shared<Dielectric>(Vec3(1.0f, 1.0f, 1.0f), 1.0 / 1.50);
+    auto material_right = std::make_shared<Metal>(Vec3(0.8, 0.6, 0.2), 1.0);
 
-    spheres.push_back(sphere1);
-    spheres.push_back(sphere2);
+    spheres.emplace_back(Vec3(1.0, 0.0, -100.5), 100.0, material_ground);
+    spheres.emplace_back(Vec3( 1.2, 0.0, 0.0),   0.5, material_center);
+    spheres.emplace_back(Vec3(1.0,1.0, 0.0), 0.5, material_left);
+    spheres.emplace_back(Vec3(1.0, 1.0, 0.0), 0.4, material_bubble);
+    spheres.emplace_back(Vec3(1.0, -1.0, 0.0), 0.5, material_right);
+
+    camera.setPos(Vec3(-2,3,3));
+    camera.setThetaY(-M_PI / 4.0f);
+    camera.setThetaZ(-M_PI / 4.0f);
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -501,7 +511,7 @@ void Game::renderRayTracing() {
             Vec3 pixelColor(0,0,0);
             for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
                 Ray ray = spawnRayAtPixel(x, y);
-                pixelColor += traceRay(ray, 50, spheres);
+                pixelColor += traceRay(ray, MAX_RAY_DEPTH, spheres); // COLOR IS IN [0,1] RANGE
             }
 
             if (pixelColor.x == 0 && pixelColor.y == 0 && pixelColor.z == 0) {
@@ -509,6 +519,9 @@ void Game::renderRayTracing() {
             }
 
             pixelColor /= RAY_SAMPLES_PER_PIXEL;
+            gammaCorrect(pixelColor);
+            transformColorTo255Range(pixelColor);
+
             pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
         }
     }
@@ -524,13 +537,14 @@ Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
 }
 
 Vec3 Game::traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres) {
+    // COLORS ARE IN [0,1] RANGE
     if (depth < 0) {
         return Vec3(0,0,0);
     }
 
     HitRecord hitRecord;
     bool hitAnything = false;
-    Interval hitInterval(0, INFINITY);
+    Interval hitInterval(0.001f, INFINITY);
 
     for (const Sphere& sphere : spheres) {
         if (sphere.rayHit(ray, hitInterval, hitRecord)) {
@@ -540,12 +554,29 @@ Vec3 Game::traceRay(const Ray& ray, int depth, const std::vector<Sphere>& sphere
     }
 
     if (hitAnything) {
-        Vec3 newDirection = Vec3::randomOnHemishpere(hitRecord.normal);
-        return 0.5 * traceRay(Ray(hitRecord.pos, newDirection), depth-1, spheres);
+        Ray rayOut;
+        Vec3 attenuation;
+        if (hitRecord.material->scatter(ray, hitRecord, attenuation, rayOut)) {
+            return attenuation * traceRay(rayOut, depth - 1, spheres);
+        } else {
+            return Vec3(0,0,0);
+        }
     }
 
-    // Return the sky color in the case of no hit
+    // Return the sky color in the case of no hit, COLORS ARE IN [0,1] RANGE
     Vec3 direction = ray.getDirection().normalized();
     float a = 0.5 * (direction.y + 1.0);
-    return 255 * ((1.0 - a) * Vec3(1.0, 1.0, 1.0) + a * Vec3(0.5, 0.7, 1.0));
+    return (1.0 - a) * Vec3(1.0, 1.0, 1.0) + a * Vec3(0.5, 0.7, 1.0); 
+}
+
+void Game::gammaCorrect(Vec3& color) {
+    color.x = std::sqrt(color.x);
+    color.y = std::sqrt(color.y);
+    color.z = std::sqrt(color.z);
+}
+void Game::transformColorTo255Range(Vec3& color) {
+    color *= 255;
+    color.x = std::floor(color.x);
+    color.y = std::floor(color.y);
+    color.z = std::floor(color.z);
 }

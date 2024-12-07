@@ -33,7 +33,10 @@ private:
     Vec3 getPlaneCoords(float xPixel, float yPixel);
 
     Ray spawnRayAtPixel(float xPixel, float yPixel);
-    Vec3 traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres);
+    Vec3 traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres); // USES COLORS IN [0,1] RANGE
+
+    void gammaCorrect(Vec3& color);
+    void transformColorTo255Range(Vec3& color);
 
 
 public:
@@ -42,7 +45,8 @@ public:
     static const int WINDOW_WIDTH = 500;
     static const int WINDOW_HEIGHT = 500;
     static const int CAMERA_FOV = 90 * (M_PI / 180.0f);
-    static const int RAY_SAMPLES_PER_PIXEL = 10;
+    static const int RAY_SAMPLES_PER_PIXEL = 50;
+    static const int MAX_RAY_DEPTH = 50;
 
     Game();
     void setupScene();

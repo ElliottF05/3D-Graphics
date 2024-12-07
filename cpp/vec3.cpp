@@ -26,6 +26,9 @@ Vec3 Vec3::operator/(const float scalar) const {
     float a = 1.0 / scalar;
     return Vec3(this->x * a, this->y * a, this->z * a);
 }
+Vec3 Vec3::operator*(const Vec3& other) const {
+    return Vec3(this->x * other.x, this->y * other.y, this->z * other.z);
+}
 Vec3& Vec3::operator+=(const Vec3& vec) {
     this->x += vec.x;
     this->y += vec.y;
@@ -49,6 +52,9 @@ Vec3& Vec3::operator/=(const float scalar) {
     this->y /= scalar;
     this->z /= scalar;
     return *this;
+}
+Vec3 Vec3::operator-() const {
+    return Vec3(-this->x, -this->y, -this->z);
 }
 Vec3 Vec3::cross(const Vec3& other) const {
     return Vec3(
@@ -114,9 +120,13 @@ void Vec3::rotate(float thetaZ, float thetaY) {
     rotateY(thetaY);
 }
 
-// TO STRING
+// OTHER OPERATIONS
 std::string Vec3::toString() const {
     return std::to_string(this->x) + ", " + std::to_string(this->y) + ", " + std::to_string(this->z);
+}
+bool Vec3::nearZero() const {
+    const float s = 1e-8;
+    return (std::fabs(this->x) < s) && (std::fabs(this->y) < s) && (std::fabs(this->z) < s);
 }
 
 // STATIC METHODS
@@ -142,5 +152,14 @@ Vec3 Vec3::randomOnHemishpere(Vec3& normal) {
     } else {
         return v * -1;
     }
-    
+}
+Vec3 Vec3::reflect(const Vec3& vec, const Vec3& normal) {
+    return vec - 2 * vec.dot(normal) * normal;
+}
+Vec3 Vec3::refract(const Vec3 &rayIn, const Vec3 &normal, float n1, float n2) {
+    float n1Overn2 = n1 / n2;
+    float cosTheta = std::fmin((-1 * rayIn).dot(normal), 1.0f);
+    Vec3 rayOutPerp = n1Overn2 * (rayIn + cosTheta * normal);
+    Vec3 rayOutParallel = -1 * normal * std::sqrt(std::fabs(1.0f - rayOutPerp.lengthSquared()));
+    return rayOutPerp + rayOutParallel;
 }

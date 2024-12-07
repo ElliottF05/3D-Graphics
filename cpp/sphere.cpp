@@ -1,8 +1,12 @@
 #include "sphere.h"
+#include "material.h"
+#include <memory>
 
 // CONSTRUCTORS
-Sphere::Sphere(Vec3 center, float radius, ObjectProperties properties) : center(center), radius(radius), properties(properties) {}
-Sphere::Sphere(Vec3 center, float radius) : center(center), radius(radius) {}
+Sphere::Sphere(Vec3 center, float radius, std::shared_ptr<Material> material) : center(center), radius(radius), material(material) {}
+Sphere::Sphere(Vec3 center, float radius) : center(center), radius(radius) {
+    material = std::make_shared<Lambertian>(Vec3(0.5f, 0.5f, 0.5f));
+}
 
 // GETTERS
 const Vec3& Sphere::getCenter() const {
@@ -11,8 +15,8 @@ const Vec3& Sphere::getCenter() const {
 float Sphere::getRadius() const {
     return radius;
 }
-const ObjectProperties& Sphere::getProperties() const {
-    return properties;
+const std::shared_ptr<Material> Sphere::getProperties() const {
+    return material;
 }
 
 // RAY HIT
@@ -42,6 +46,7 @@ bool Sphere::rayHit(const Ray& ray, Interval hitInterval, HitRecord& hitRecord) 
     hitRecord.pos = ray.at(t);
     Vec3 sphereOutwardNormal = (hitRecord.pos - center) / radius;
     hitRecord.setFaceNormal(ray, sphereOutwardNormal);
+    hitRecord.material = material;
 
     return true;
 }
