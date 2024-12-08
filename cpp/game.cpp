@@ -3,8 +3,10 @@
 #include "hitRecord.h"
 #include "interval.h"
 #include "object3D.h"
+#include "ray.h"
 #include "sphere.h"
 #include "threads.h"
+#include "utils.h"
 #include "vec3.h"
 #include "zBuffer.h"
 #include <algorithm>
@@ -12,6 +14,7 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <sys/ttydefaults.h>
 #include <vector>
 
 // CONSTRUCTOR
@@ -489,21 +492,52 @@ void Game::renderRayTracing() {
 
     std::vector<Sphere> spheres;
 
-    auto material_ground = std::make_shared<Lambertian>(Vec3(0.8, 0.8, 0.0));
-    auto material_center = std::make_shared<Lambertian>(Vec3(0.1, 0.2, 0.5));
-    auto material_left = std::make_shared<Dielectric>(Vec3(1.0f, 1.0f, 1.0f), 1.50);
-    auto material_bubble = std::make_shared<Dielectric>(Vec3(1.0f, 1.0f, 1.0f), 1.0 / 1.50);
-    auto material_right = std::make_shared<Metal>(Vec3(0.8, 0.6, 0.2), 1.0);
+    auto ground_material = std::make_shared<Lambertian>(Vec3(0.5, 0.5, 0.5));
+    spheres.emplace_back(Vec3(0,0,-1000), 1000, ground_material);
 
-    spheres.emplace_back(Vec3(1.0, 0.0, -100.5), 100.0, material_ground);
-    spheres.emplace_back(Vec3( 1.2, 0.0, 0.0),   0.5, material_center);
-    spheres.emplace_back(Vec3(1.0,1.0, 0.0), 0.5, material_left);
-    spheres.emplace_back(Vec3(1.0, 1.0, 0.0), 0.4, material_bubble);
-    spheres.emplace_back(Vec3(1.0, -1.0, 0.0), 0.5, material_right);
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = randomFloat();
+            Vec3 center(a + 0.9*randomFloat(), b + 0.9*randomFloat(), 0.2);
 
-    camera.setPos(Vec3(-2,3,3));
-    camera.setThetaY(-M_PI / 4.0f);
-    camera.setThetaZ(-M_PI / 4.0f);
+            if ((center - Vec3(4, 0, 0.2)).length() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = Vec3(randomFloat(), randomFloat(), randomFloat()) * Vec3(randomFloat(), randomFloat(), randomFloat());
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = Vec3(0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()));
+                    auto fuzz = randomFloat(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                }
+            }
+        }
+    }
+
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    spheres.emplace_back(Vec3(0,0,1), 1, material1);
+
+    auto material2 = std::make_shared<Lambertian>(Vec3(0.4, 0.2, 0.1));
+    spheres.emplace_back(Vec3(-4, 0, 1), 1, material2);
+
+    auto material3 = std::make_shared<Metal>(Vec3(0.7, 0.6, 0.5), 0.0);
+    spheres.emplace_back(Vec3(4, 0, 1), 1, material3);
+
+    camera.setFovDegrees(20);
+    camera.setPos(Vec3(13,3,2));
+    camera.lookAt(Vec3(0,0,0));
+
+    camera.setDefocusAngleDegrees(0.6);
+    camera.setFocusDistance(10.0);
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -528,12 +562,29 @@ void Game::renderRayTracing() {
 }
 
 Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
+
     xPixel += -0.5 + randomFloat();
     yPixel += -0.5 + randomFloat();
-    Vec3 dir = getPlaneCoords(xPixel, yPixel);
-    dir.rotateY(camera.getThetaY());
-    dir.rotateZ(camera.getThetaZ());
-    return Ray(camera.getPos(), dir);
+
+    Vec3 pixelPos = camera.getFocusDistance() * getPlaneCoords(xPixel, yPixel);
+    pixelPos.rotateY(camera.getThetaY());
+    pixelPos.rotateZ(camera.getThetaZ());
+    pixelPos += camera.getPos();
+
+    Vec3 rayOrigin = camera.getPos();
+
+    if (camera.getDefocusAngle() != 0) {
+        float defocusRadius = camera.getFocusDistance() * std::tan(camera.getDefocusAngle() / 2.0f);
+        Vec3 defocusOffset = randomInUnitDisk() * defocusRadius;
+        defocusOffset.z = defocusOffset.x;
+        defocusOffset.x = 0;
+        defocusOffset.rotateY(camera.getThetaY());
+        defocusOffset.rotateZ(camera.getThetaZ());
+        rayOrigin += defocusOffset;
+    }
+
+    Vec3 rayDirection = pixelPos - rayOrigin;
+    return Ray(rayOrigin, rayDirection);
 }
 
 Vec3 Game::traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres) {

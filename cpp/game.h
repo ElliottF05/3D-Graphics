@@ -45,7 +45,7 @@ public:
     static const int WINDOW_WIDTH = 500;
     static const int WINDOW_HEIGHT = 500;
     static const int CAMERA_FOV = 90 * (M_PI / 180.0f);
-    static const int RAY_SAMPLES_PER_PIXEL = 50;
+    static const int RAY_SAMPLES_PER_PIXEL = 100;
     static const int MAX_RAY_DEPTH = 50;
 
     Game();
