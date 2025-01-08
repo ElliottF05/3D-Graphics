@@ -25,8 +25,8 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
-    void renderSceneRayTracing() {
-        g_Game.renderRayTracing();
+    int renderSceneRayTracing(int startIndex) {
+        return g_Game.renderRayTracing(startIndex);
     }
 
     EMSCRIPTEN_KEEPALIVE

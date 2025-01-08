@@ -14,6 +14,7 @@ class Game {
 private:
     std::vector<Object3D> objects;
     std::vector<Light> lights;
+    std::vector<Sphere> spheres;
     Camera camera;
 
     PixelArray pixelArray;
@@ -45,13 +46,13 @@ public:
     static const int WINDOW_WIDTH = 500;
     static const int WINDOW_HEIGHT = 500;
     static const int CAMERA_FOV = 90 * (M_PI / 180.0f);
-    static const int RAY_SAMPLES_PER_PIXEL = 100;
-    static const int MAX_RAY_DEPTH = 50;
+    static const int RAY_SAMPLES_PER_PIXEL = 30;
+    static const int MAX_RAY_DEPTH = 30;
 
     Game();
     void setupScene();
     void render();
-    void renderRayTracing();
+    int renderRayTracing(int startIndex);
     void userCameraInput(float forwardMovement, float sidewaysMovement, float verticalMovement, float rotateZ, float rotateY, float otherInputCode);
     uint8_t* exportImageBuffer();
 };

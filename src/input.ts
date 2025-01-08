@@ -98,6 +98,12 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
             Main.unpause();
         }
     }
+    if (event.key == 'r') {
+        console.log('R pressed');
+        if (!Main.isRayTracing()) {
+            Main.beginRayTracing();
+        }
+    }
     if (event.key == '9') {
         // Database.exportSceneData("testName");
     }

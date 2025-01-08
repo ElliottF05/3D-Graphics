@@ -26,55 +26,55 @@ void Game::setupScene() {
     std::cout << "game.cpp: setupScene() called" << std::endl;
 
     // make grid
-    // std::vector<Vec3> darkGrey;
-    // std::vector<Vec3> lightGrey;
-    // int gridRadius = 5;
-    // for (int i = -gridRadius; i < gridRadius; i++) {
-    //     for (int j = -gridRadius; j < gridRadius; j++) {
-    //         std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
-    //         addingTo.emplace_back(i,j,0);
-    //         addingTo.emplace_back(i+1,j+1,0);
-    //         addingTo.emplace_back(i+1,j,0);
-    //         addingTo.emplace_back(i,j,0);
-    //         addingTo.emplace_back(i,j+1,0);
-    //         addingTo.emplace_back(i+1,j+1,0);
-    //     }
-    // }
-    // objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
-    // objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
+    std::vector<Vec3> darkGrey;
+    std::vector<Vec3> lightGrey;
+    int gridRadius = 5;
+    for (int i = -gridRadius; i < gridRadius; i++) {
+        for (int j = -gridRadius; j < gridRadius; j++) {
+            std::vector<Vec3>& addingTo = ((i + j) % 2 == 0) ? lightGrey : darkGrey;
+            addingTo.emplace_back(i,j,0);
+            addingTo.emplace_back(i+1,j+1,0);
+            addingTo.emplace_back(i+1,j,0);
+            addingTo.emplace_back(i,j,0);
+            addingTo.emplace_back(i,j+1,0);
+            addingTo.emplace_back(i+1,j+1,0);
+        }
+    }
+    objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
+    objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
 
-    // std::vector<Vec3> testObjVertices;
-    // float radius = 0.5f;
-    // int iterations = 100;
+    std::vector<Vec3> testObjVertices;
+    float radius = 0.5f;
+    int iterations = 100;
 
-    // Vec3 center = Vec3(1,1,radius);
+    Vec3 center = Vec3(1,1,radius);
 
-    // std::vector<Vec3> prev;
-    // for (int i = 0; i < iterations; i++) {
-    //     prev.push_back(center + Vec3(0,0,radius));
-    // }
-    // std::vector<Vec3> curr;
-    // for (int i = 1; i < iterations; i++) {
-    //     float z = radius * std::sin(M_PI / 2.0f - i * M_PI / iterations);
-    //     for (int j = 0; j < iterations; j++) {
-    //         float x = radius * std::cos(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
-    //         float y = radius * std::sin(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
-    //         curr.push_back(center + Vec3(x,y,z));
-    //     }
-    //     for (int i = 0; i < iterations; i++) {
-    //         testObjVertices.push_back(prev[i]);
-    //         testObjVertices.push_back(curr[(i+1) % iterations]);
-    //         testObjVertices.push_back(curr[i]);
-    //         testObjVertices.push_back(prev[i]);
-    //         testObjVertices.push_back(prev[(i+1) % iterations]);
-    //         testObjVertices.push_back(curr[(i+1) % iterations]);
-    //     }
-    //     prev = curr;
-    //     curr.clear();
-    // }
+    std::vector<Vec3> prev;
+    for (int i = 0; i < iterations; i++) {
+        prev.push_back(center + Vec3(0,0,radius));
+    }
+    std::vector<Vec3> curr;
+    for (int i = 1; i < iterations; i++) {
+        float z = radius * std::sin(M_PI / 2.0f - i * M_PI / iterations);
+        for (int j = 0; j < iterations; j++) {
+            float x = radius * std::cos(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
+            float y = radius * std::sin(j * 2.0f * M_PI / iterations) * std::cos(M_PI / 2.0f - i * M_PI / iterations);
+            curr.push_back(center + Vec3(x,y,z));
+        }
+        for (int i = 0; i < iterations; i++) {
+            testObjVertices.push_back(prev[i]);
+            testObjVertices.push_back(curr[(i+1) % iterations]);
+            testObjVertices.push_back(curr[i]);
+            testObjVertices.push_back(prev[i]);
+            testObjVertices.push_back(prev[(i+1) % iterations]);
+            testObjVertices.push_back(curr[(i+1) % iterations]);
+        }
+        prev = curr;
+        curr.clear();
+    }
 
-    // Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
-    // objects.push_back(testObj);
+    Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
+    objects.push_back(testObj);
 
     // create light
     lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
@@ -82,7 +82,49 @@ void Game::setupScene() {
     lights[0].addObjectsToShadowMap(objects);
 
     // create camera
-    camera = Camera(Vec3(0.0000111f,0.0000111f,0.0000111), 0.0000111f, 0.0000111f, M_PI/2.0f);
+    camera = Camera(Vec3(0.0000111f,0.0000111f,1.0000111), 0.0000111f, 0.0000111f, M_PI/2.0f);
+
+
+    // setting up ray tracing
+    auto ground_material = std::make_shared<Lambertian>(Vec3(0.5, 0.5, 0.5));
+    spheres.emplace_back(Vec3(0,0,-1000), 1000, ground_material);
+
+    for (int a = -11; a < 11; a++) {
+        for (int b = -11; b < 11; b++) {
+            auto choose_mat = randomFloat();
+            Vec3 center(a + 0.9*randomFloat(), b + 0.9*randomFloat(), 0.2);
+
+            if ((center - Vec3(4, 0, 0.2)).length() > 0.9) {
+                std::shared_ptr<Material> sphere_material;
+
+                if (choose_mat < 0.8) {
+                    // diffuse
+                    auto albedo = Vec3(randomFloat(), randomFloat(), randomFloat()) * Vec3(randomFloat(), randomFloat(), randomFloat());
+                    sphere_material = std::make_shared<Lambertian>(albedo);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                } else if (choose_mat < 0.95) {
+                    // metal
+                    auto albedo = Vec3(0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()));
+                    auto fuzz = randomFloat(0, 0.5);
+                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                } else {
+                    // glass
+                    sphere_material = std::make_shared<Dielectric>(1.5);
+                    spheres.emplace_back(center, 0.2, sphere_material);
+                }
+            }
+        }
+    }
+
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    spheres.emplace_back(Vec3(0,0,1), 1, material1);
+
+    auto material2 = std::make_shared<Lambertian>(Vec3(0.4, 0.2, 0.1));
+    spheres.emplace_back(Vec3(-4, 0, 1), 1, material2);
+
+    auto material3 = std::make_shared<Metal>(Vec3(0.7, 0.6, 0.5), 0.0);
+    spheres.emplace_back(Vec3(4, 0, 1), 1, material3);
 
     std::cout << "game.cpp: setupScene() finished" << std::endl;
 }
@@ -484,53 +526,13 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 }
 
 
-void Game::renderRayTracing() {
+int Game::renderRayTracing(int startIndex) {
     // Made by mostly following guide at https://raytracing.github.io/books/RayTracingInOneWeekend.html
+
+    auto startTime = std::chrono::high_resolution_clock::now();
 
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
-
-    std::vector<Sphere> spheres;
-
-    auto ground_material = std::make_shared<Lambertian>(Vec3(0.5, 0.5, 0.5));
-    spheres.emplace_back(Vec3(0,0,-1000), 1000, ground_material);
-
-    for (int a = -11; a < 11; a++) {
-        for (int b = -11; b < 11; b++) {
-            auto choose_mat = randomFloat();
-            Vec3 center(a + 0.9*randomFloat(), b + 0.9*randomFloat(), 0.2);
-
-            if ((center - Vec3(4, 0, 0.2)).length() > 0.9) {
-                std::shared_ptr<Material> sphere_material;
-
-                if (choose_mat < 0.8) {
-                    // diffuse
-                    auto albedo = Vec3(randomFloat(), randomFloat(), randomFloat()) * Vec3(randomFloat(), randomFloat(), randomFloat());
-                    sphere_material = std::make_shared<Lambertian>(albedo);
-                    spheres.emplace_back(center, 0.2, sphere_material);
-                } else if (choose_mat < 0.95) {
-                    // metal
-                    auto albedo = Vec3(0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()), 0.5 * (1 + randomFloat()));
-                    auto fuzz = randomFloat(0, 0.5);
-                    sphere_material = std::make_shared<Metal>(albedo, fuzz);
-                    spheres.emplace_back(center, 0.2, sphere_material);
-                } else {
-                    // glass
-                    sphere_material = std::make_shared<Dielectric>(1.5);
-                    spheres.emplace_back(center, 0.2, sphere_material);
-                }
-            }
-        }
-    }
-
-    auto material1 = std::make_shared<Dielectric>(1.5);
-    spheres.emplace_back(Vec3(0,0,1), 1, material1);
-
-    auto material2 = std::make_shared<Lambertian>(Vec3(0.4, 0.2, 0.1));
-    spheres.emplace_back(Vec3(-4, 0, 1), 1, material2);
-
-    auto material3 = std::make_shared<Metal>(Vec3(0.7, 0.6, 0.5), 0.0);
-    spheres.emplace_back(Vec3(4, 0, 1), 1, material3);
 
     camera.setFovDegrees(20);
     camera.setPos(Vec3(13,3,2));
@@ -539,8 +541,20 @@ void Game::renderRayTracing() {
     camera.setDefocusAngleDegrees(0.6);
     camera.setFocusDistance(10.0);
 
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
+    int startY = startIndex / width;
+    int startX = startIndex % width;
+    std::cout << startY << ", " << startX << std::endl;
+
+    for (int y = startY; y < height; y++) {
+        if (y != startY) {
+            startX = 0;
+        }
+        for (int x = startX; x < width; x++) {
+            auto currTime = std::chrono::high_resolution_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currTime - startTime);
+            if (elapsed.count() > 500) {
+                return y * width + x;
+            }
 
             Vec3 pixelColor(0,0,0);
             for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
@@ -559,6 +573,8 @@ void Game::renderRayTracing() {
             pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
         }
     }
+    camera.setFovDegrees(90.0f);
+    return -1;
 }
 
 Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
