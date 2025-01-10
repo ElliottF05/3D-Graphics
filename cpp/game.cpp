@@ -18,7 +18,7 @@
 #include <vector>
 
 // CONSTRUCTOR
-Game::Game() : pixelArray(WINDOW_WIDTH, WINDOW_HEIGHT), zBuffer(WINDOW_WIDTH, WINDOW_HEIGHT), camera(Vec3(0,0,0), 0, 0, CAMERA_FOV) {
+Game::Game() : pixelArray(WINDOW_WIDTH, WINDOW_HEIGHT), zBuffer(WINDOW_WIDTH, WINDOW_HEIGHT), camera(Vec3(0,0,0), 0, 0, CAMERA_FOV), rtCamera(Vec3(0,0,0), 0, 0, CAMERA_FOV) {
     imageBuffer = new uint8_t[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
 }
 
@@ -348,7 +348,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
             if (depth < zBuffer.getPixel(index)) {
                 zBuffer.setPixel(index, depth);
 
-                Vec3 worldPos = getPlaneCoords(x, y) * depth;
+                Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
                 worldPos.rotateY(camera.getThetaY());
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
@@ -408,7 +408,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
             if (depth < zBuffer.getPixel(index)) {
                 zBuffer.setPixel(index, depth);
 
-                Vec3 worldPos = getPlaneCoords(x, y) * depth;
+                Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
                 worldPos.rotateY(camera.getThetaY());
                 worldPos.rotateZ(camera.getThetaZ());
                 worldPos += camera.getPos();
@@ -455,7 +455,7 @@ void Game::fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, flo
         if (depth < zBuffer.getPixel(index)) {
             zBuffer.setPixel(index, depth);
 
-            Vec3 worldPos = getPlaneCoords(x, y) * depth;
+            Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
             worldPos.rotateY(camera.getThetaY());
             worldPos.rotateZ(camera.getThetaZ());
             worldPos += camera.getPos();
@@ -471,10 +471,10 @@ void Game::fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, flo
     }
 }
 
-Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
+Vec3 Game::getPlaneCoords(int xPixel, int yPixel, Camera& cam) {
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
-    float maxPlaneCoord = tan(camera.getFov() / 2.0f);
+    float maxPlaneCoord = tan(cam.getFov() / 2.0f);
 
     // v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
     // v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
@@ -485,10 +485,10 @@ Vec3 Game::getPlaneCoords(int xPixel, int yPixel) {
         -((yPixel * 2.0f - height) / width * maxPlaneCoord)
     );
 }
-Vec3 Game::getPlaneCoords(float xPixel, float yPixel) {
+Vec3 Game::getPlaneCoords(float xPixel, float yPixel, Camera &cam) {
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
-    float maxPlaneCoord = tan(camera.getFov() / 2.0f);
+    float maxPlaneCoord = tan(cam.getFov() / 2.0f);
 
     // v1.x = (0.5 * width) * (1 - v1.x / maxPlaneCoord);
     // v1.y = 0.5 * (height - v1.y / maxPlaneCoord * width);
@@ -534,12 +534,12 @@ int Game::renderRayTracing(int startIndex) {
     int width = pixelArray.getWidth();
     int height = pixelArray.getHeight();
 
-    camera.setFovDegrees(20);
-    camera.setPos(Vec3(13,3,2));
-    camera.lookAt(Vec3(0,0,0));
+    rtCamera.setFovDegrees(20);
+    rtCamera.setPos(Vec3(13,3,2));
+    rtCamera.lookAt(Vec3(0,0,0));
 
-    camera.setDefocusAngleDegrees(0.6);
-    camera.setFocusDistance(10.0);
+    rtCamera.setDefocusAngleDegrees(0.6);
+    rtCamera.setFocusDistance(10.0);
 
     int startY = startIndex / width;
     int startX = startIndex % width;
@@ -553,28 +553,50 @@ int Game::renderRayTracing(int startIndex) {
             auto currTime = std::chrono::high_resolution_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currTime - startTime);
             if (elapsed.count() > 500) {
+                threadPool.waitUntilTasksFinished();
                 return y * width + x;
             }
 
-            Vec3 pixelColor(0,0,0);
-            for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
-                Ray ray = spawnRayAtPixel(x, y);
-                pixelColor += traceRay(ray, MAX_RAY_DEPTH, spheres); // COLOR IS IN [0,1] RANGE
-            }
+            threadPool.addTask([this, x, y] {
+                rayTracePixel(x, y);
+            });
 
-            if (pixelColor.x == 0 && pixelColor.y == 0 && pixelColor.z == 0) {
-                continue;
-            }
+            // Vec3 pixelColor(0,0,0);
+            // for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
+            //     Ray ray = spawnRayAtPixel(x, y);
+            //     pixelColor += traceRay(ray, MAX_RAY_DEPTH, spheres); // COLOR IS IN [0,1] RANGE
+            // }
 
-            pixelColor /= RAY_SAMPLES_PER_PIXEL;
-            gammaCorrect(pixelColor);
-            transformColorTo255Range(pixelColor);
+            // if (pixelColor.x == 0 && pixelColor.y == 0 && pixelColor.z == 0) {
+            //     continue;
+            // }
 
-            pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
+            // pixelColor /= RAY_SAMPLES_PER_PIXEL;
+            // gammaCorrect(pixelColor);
+            // transformColorTo255Range(pixelColor);
+
+            // pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
         }
     }
-    camera.setFovDegrees(90.0f);
     return -1;
+}
+
+void Game::rayTracePixel(int xPixel, int yPixel) {
+    Vec3 pixelColor(0,0,0);
+    for (int sample = 0; sample < RAY_SAMPLES_PER_PIXEL; sample++) {
+        Ray ray = spawnRayAtPixel(xPixel, yPixel);
+        pixelColor += traceRay(ray, MAX_RAY_DEPTH, spheres); // COLOR IS IN [0,1] RANGE
+    }
+
+    if (pixelColor.x == 0 && pixelColor.y == 0 && pixelColor.z == 0) {
+        return;
+    }
+
+    pixelColor /= RAY_SAMPLES_PER_PIXEL;
+    gammaCorrect(pixelColor);
+    transformColorTo255Range(pixelColor);
+
+    pixelArray.setPixel(xPixel, yPixel, pixelColor.x, pixelColor.y, pixelColor.z);
 }
 
 Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
@@ -582,20 +604,20 @@ Ray Game::spawnRayAtPixel(float xPixel, float yPixel) {
     xPixel += -0.5 + randomFloat();
     yPixel += -0.5 + randomFloat();
 
-    Vec3 pixelPos = camera.getFocusDistance() * getPlaneCoords(xPixel, yPixel);
-    pixelPos.rotateY(camera.getThetaY());
-    pixelPos.rotateZ(camera.getThetaZ());
-    pixelPos += camera.getPos();
+    Vec3 pixelPos = rtCamera.getFocusDistance() * getPlaneCoords(xPixel, yPixel, rtCamera);
+    pixelPos.rotateY(rtCamera.getThetaY());
+    pixelPos.rotateZ(rtCamera.getThetaZ());
+    pixelPos += rtCamera.getPos();
 
-    Vec3 rayOrigin = camera.getPos();
+    Vec3 rayOrigin = rtCamera.getPos();
 
-    if (camera.getDefocusAngle() != 0) {
-        float defocusRadius = camera.getFocusDistance() * std::tan(camera.getDefocusAngle() / 2.0f);
+    if (rtCamera.getDefocusAngle() != 0) {
+        float defocusRadius = rtCamera.getFocusDistance() * std::tan(rtCamera.getDefocusAngle() / 2.0f);
         Vec3 defocusOffset = randomInUnitDisk() * defocusRadius;
         defocusOffset.z = defocusOffset.x;
         defocusOffset.x = 0;
-        defocusOffset.rotateY(camera.getThetaY());
-        defocusOffset.rotateZ(camera.getThetaZ());
+        defocusOffset.rotateY(rtCamera.getThetaY());
+        defocusOffset.rotateZ(rtCamera.getThetaZ());
         rayOrigin += defocusOffset;
     }
 

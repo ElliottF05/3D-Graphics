@@ -41,6 +41,30 @@ export function CPPuserInput(a: number, b: number, c: number, d: number, e: numb
 }
 
 
+export function CPPgetDataBufferSize(): number {
+    // @ts-ignore
+    return CPPmodule._EXTERN_getDataBufferSize();
+}
+export function CPPgetDataBufferPointer(): number {
+    // @ts-ignore
+    return CPPmodule._EXTERN_getDataBufferPointer();
+}
+
+export function CPPsetDataBufferPointer(size: number): number {
+    // @ts-ignore
+    return CPPmodule._EXTERN_setDataBufferPointer(size);
+}
+export function CPPloadScene(data: number): void {
+    // @ts-ignore
+    return CPPmodule._EXTERN_loadScene(data);
+}
+
+export function CPPsetSelectedColors(r: number, g: number, b: number): void {
+    // @ts-ignore
+    return CPPmodule._EXTERN_setSelectedColors(r, g, b);
+}
+
+
 // export function CPPsetupScene(): void {
 //     // @ts-ignore
 //     //_EXTERN_setupScene();
@@ -50,28 +74,4 @@ export function CPPuserInput(a: number, b: number, c: number, d: number, e: numb
 //     // @ts-ignore
 //     return CPPmodule._EXTERN_getBuffer();
 // }
-// export function CPPuserInput(a: number, b: number, c: number, d: number, e: number, f: number): void {
-//     // @ts-ignore
-//     CPPmodule._EXTERN_userInput(a,b,c,d,e,f);
-// }
 
-// export function CPPgetDataBufferSize(): number {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_getDataBufferSize();
-// }
-// export function CPPgetDataBufferPointer(): number {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_getDataBufferPointer();
-// }
-// export function CPPsetDataBufferPointer(size: number): number {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_setDataBufferPointer(size);
-// }
-// export function CPPloadScene(data: number): void {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_loadScene(data);
-// }
-// export function CPPsetSelectedColors(r: number, g: number, b: number): void {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_setSelectedColors(r, g, b);
-// }

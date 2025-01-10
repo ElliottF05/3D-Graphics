@@ -16,6 +16,7 @@ private:
     std::vector<Light> lights;
     std::vector<Sphere> spheres;
     Camera camera;
+    Camera rtCamera;
 
     PixelArray pixelArray;
     ZBuffer zBuffer;
@@ -30,8 +31,10 @@ private:
 
     void fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal);
 
-    Vec3 getPlaneCoords(int xPixel, int yPixel);
-    Vec3 getPlaneCoords(float xPixel, float yPixel);
+    Vec3 getPlaneCoords(int xPixel, int yPixel, Camera& cam);
+    Vec3 getPlaneCoords(float xPixel, float yPixel, Camera& cam);
+
+    void rayTracePixel(int xPixel, int yPixel);
 
     Ray spawnRayAtPixel(float xPixel, float yPixel);
     Vec3 traceRay(const Ray& ray, int depth, const std::vector<Sphere>& spheres); // USES COLORS IN [0,1] RANGE
