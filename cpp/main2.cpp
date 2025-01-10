@@ -41,4 +41,19 @@ extern "C" {
         // std::cout << "forwardMovement: " << forwardMovement << "sidewaysMovement: " << sidewaysMovement << "verticalMovement: " << verticalMovement << "rotateZ: " << rotateZ << "rotateY: " << rotateY << "otherInputCode: " << otherInputCode << std::endl;
         g_Game.userCameraInput(forwardMovement, sidewaysMovement, verticalMovement, rotateZ, rotateY, otherInputCode);
     }
+
+    EMSCRIPTEN_KEEPALIVE
+    float* getSceneDataBuffer() {
+        return g_Game.getSceneDataBuffer();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    float* allocateSceneDataBuffer(int size) {
+        return g_Game.allocateSceneDataBuffer(size);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void loadSceneToCPP(float data[]) {
+        g_Game.loadSceneToCPP(data);
+    }
 }

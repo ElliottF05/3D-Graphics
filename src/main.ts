@@ -19,7 +19,6 @@ let startIndexRayTracing = 0;
 async function loop(): Promise<void> {
     let readyForNextFrame: boolean = true;
     while (true) {
-        console.log(running, raytracing);
         readyForNextFrame = false;
         setTimeout(() => {
             readyForNextFrame = true;

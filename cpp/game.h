@@ -23,6 +23,8 @@ private:
 
     uint8_t* imageBuffer;
 
+    std::vector<float> sceneDataBuffer;
+
     void projectTriangleBatch(std::vector<Vec3>& vertices, std::vector<const ObjectProperties*>& properties, int start, int end);
     void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties);
 
@@ -49,8 +51,8 @@ public:
     static const int WINDOW_WIDTH = 500;
     static const int WINDOW_HEIGHT = 500;
     static const int CAMERA_FOV = 90 * (M_PI / 180.0f);
-    static const int RAY_SAMPLES_PER_PIXEL = 30;
-    static const int MAX_RAY_DEPTH = 30;
+    static const int RAY_SAMPLES_PER_PIXEL = 200;
+    static const int MAX_RAY_DEPTH = 50;
 
     Game();
     void setupScene();
@@ -58,4 +60,14 @@ public:
     int renderRayTracing(int startIndex);
     void userCameraInput(float forwardMovement, float sidewaysMovement, float verticalMovement, float rotateZ, float rotateY, float otherInputCode);
     uint8_t* exportImageBuffer();
+
+
+    // exporting from cpp
+    float* getSceneDataBuffer();
+
+    // importing to cpp
+    float* allocateSceneDataBuffer(int size);
+    void loadSceneToCPP(float data[]);
+
+    
 };

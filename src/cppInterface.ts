@@ -41,28 +41,24 @@ export function CPPuserInput(a: number, b: number, c: number, d: number, e: numb
 }
 
 
-export function CPPgetDataBufferSize(): number {
+export function CPPgetSceneDataBuffer(): number {
     // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferSize();
+    return CPPmodule._getSceneDataBuffer();
 }
-export function CPPgetDataBufferPointer(): number {
+export function CPPallocateSceneDataBuffer(size: number): number {
     // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferPointer();
+    return CPPmodule._allocateSceneDataBuffer(size);
 }
-
-export function CPPsetDataBufferPointer(size: number): number {
+export function CPPloadSceneToCPP(dataPointer: number) {
     // @ts-ignore
-    return CPPmodule._EXTERN_setDataBufferPointer(size);
-}
-export function CPPloadScene(data: number): void {
-    // @ts-ignore
-    return CPPmodule._EXTERN_loadScene(data);
+    CPPmodule._loadSceneToCPP(dataPointer);
 }
 
-export function CPPsetSelectedColors(r: number, g: number, b: number): void {
-    // @ts-ignore
-    return CPPmodule._EXTERN_setSelectedColors(r, g, b);
-}
+// export function CPPsetSelectedColors(r: number, g: number, b: number): void {
+//     // @ts-ignore
+//     return CPPmodule._EXTERN_setSelectedColors(r, g, b);
+// }
+
 
 
 // export function CPPsetupScene(): void {

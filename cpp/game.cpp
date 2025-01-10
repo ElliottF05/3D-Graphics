@@ -194,7 +194,7 @@ void Game::render() {
     auto endTime = std::chrono::high_resolution_clock::now();
     auto totalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     // auto fillTriangleDuration = std::chrono::duration_cast<std::chrono::microseconds>(fillTriangleTime);
-    std::cout << "total frame time: " << totalDuration.count() << std::endl;
+    // std::cout << "total frame time: " << totalDuration.count() << std::endl;
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
@@ -524,6 +524,94 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
     camera.setThetaY(camera.getThetaY() + rotateY);
     camera.setThetaZ(camera.getThetaZ() + rotateZ);
 }
+
+float* Game::getSceneDataBuffer() {
+    // for now, just keep track of camera pos, camera angle, objects3D's
+
+    // first element gives final length of array, reserving space for this
+    sceneDataBuffer.push_back(0.0f); 
+
+    // camera pos
+    sceneDataBuffer.push_back(camera.getPos().x);
+    sceneDataBuffer.push_back(camera.getPos().y);
+    sceneDataBuffer.push_back(camera.getPos().z);
+
+    // camera angles
+    sceneDataBuffer.push_back(camera.getThetaZ());
+    sceneDataBuffer.push_back(camera.getThetaY());
+
+    // number of object3D's
+    sceneDataBuffer.push_back(objects.size());
+
+    for (auto& obj : objects) {
+        sceneDataBuffer.push_back(obj.getProperties().r);
+        sceneDataBuffer.push_back(obj.getProperties().g);
+        sceneDataBuffer.push_back(obj.getProperties().b);
+
+        sceneDataBuffer.push_back(obj.getProperties().k_s);
+        sceneDataBuffer.push_back(obj.getProperties().k_d);
+        sceneDataBuffer.push_back(obj.getProperties().k_a);
+
+        sceneDataBuffer.push_back(obj.getProperties().shininess);
+
+        sceneDataBuffer.push_back(obj.getProperties().isDeletable);
+
+        sceneDataBuffer.push_back(obj.getVertices().size());
+        for (auto& v : obj.getVertices()) {
+            sceneDataBuffer.push_back(v.x);
+            sceneDataBuffer.push_back(v.y);
+            sceneDataBuffer.push_back(v.z);
+        }
+    }
+
+    // update first element, which holds size of array
+    sceneDataBuffer[0] = sceneDataBuffer.size();
+    
+    return &sceneDataBuffer[0];
+}
+
+float* Game::allocateSceneDataBuffer(int size) {
+    sceneDataBuffer.clear();
+    sceneDataBuffer.resize(size*2);
+
+    return &sceneDataBuffer[0];
+}
+void Game::loadSceneToCPP(float data[]) {
+
+    setupScene();
+    objects.clear();
+
+    int size = data[0];
+    int i = 1;
+
+    camera.setPos(Vec3(data[i], data[i+1], data[i+2]));
+    i += 3;
+
+    camera.setThetaZ(data[i]);
+    camera.setThetaY(data[i+1]);
+    i += 2;
+
+    int numObjects = data[i];
+    i += 1;
+
+    for (int j = 0; j < numObjects; j++) {
+        ObjectProperties properties = ObjectProperties(data[i], data[i+1], data[i+2], data[i+3], data[i+4], data[i+5], data[i+6], data[i+7]);
+        i += 8;
+
+        int numVertices = data[i];
+        i += 1;
+
+        std::vector<Vec3> vertices;
+        for (int k = 0; k < numVertices; k++) {
+            vertices.push_back(Vec3(data[i], data[i+1], data[i+2]));
+            i += 3;
+        }
+
+        objects.push_back(Object3D(vertices, properties));
+    }
+}
+
+
 
 
 int Game::renderRayTracing(int startIndex) {
