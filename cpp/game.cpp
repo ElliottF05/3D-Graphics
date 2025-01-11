@@ -22,6 +22,10 @@
 Game::Game() : pixelArray(WINDOW_WIDTH, WINDOW_HEIGHT), zBuffer(WINDOW_WIDTH, WINDOW_HEIGHT), camera(Vec3(0,0,0), 0, 0, CAMERA_FOV), rtCamera(Vec3(0,0,0), 0, 0, CAMERA_FOV) {
     imageBuffer = new uint8_t[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
     lookingAtObject = nullptr;
+    
+    selectedR = 125;
+    selectedG = 125;
+    selectedB = 125;
 }
 
 void Game::setupScene() {
@@ -47,7 +51,7 @@ void Game::setupScene() {
 
     std::vector<Vec3> testObjVertices;
     float radius = 0.5f;
-    int iterations = 100;
+    int iterations = 30;
 
     Vec3 center = Vec3(1,1,radius);
 
@@ -179,7 +183,7 @@ void Game::render() {
         viewCenter.z = std::round(viewCenter.z + 0.5) - 0.5;
 
         ghostObj = Game::buildCube(viewCenter, 1.0f, ObjectProperties(
-            100, 100, 100, 1.0f, 1.0f, 0.2f, 5, true
+            selectedR, selectedG, selectedB, 1.0f, 1.0f, 0.2f, 5, true
         ));
 
         std::vector<Vec3>& vertices = ghostObj.getMutableVertices();
@@ -679,6 +683,8 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 float* Game::getSceneDataBuffer() {
     // for now, just keep track of camera pos, camera angle, objects3D's
 
+    sceneDataBuffer.clear();
+
     // first element gives final length of array, reserving space for this
     sceneDataBuffer.push_back(0.0f); 
 
@@ -762,7 +768,12 @@ void Game::loadSceneToCPP(float data[]) {
     }
 }
 
-
+void Game::setSelectedColors(int r, int g, int b) {
+    std::cout << "setSelectedColors: " << r << ", " << g << ", " << b << "\n";
+    selectedR = r;
+    selectedG = g;
+    selectedB = b;
+}
 
 
 int Game::renderRayTracing(int startIndex) {

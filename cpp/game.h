@@ -22,6 +22,8 @@ private:
     Vec3 lookingAtNormal;
     Object3D ghostObj;
 
+    int selectedR, selectedG, selectedB;
+
     PixelArray pixelArray;
     ZBuffer zBuffer;
 
@@ -74,5 +76,5 @@ public:
     float* allocateSceneDataBuffer(int size);
     void loadSceneToCPP(float data[]);
 
-    
+    void setSelectedColors(int r, int g, int b);
 };

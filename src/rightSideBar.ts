@@ -61,6 +61,7 @@ export async function updateExistingScene(sceneName: string): Promise<void> {
     if (error) {
         console.error('Error updating data:', error.message)
     } else {
+        console.log("supabase updated with no error code");
         LeftSideBar.renderScenes();
     }
 }

@@ -18,10 +18,10 @@ let b: number = 0;
 window.onkeyup = function(e: KeyboardEvent) { pressedKeys[e.key] = false; }
 window.onkeydown = function(e: KeyboardEvent) { pressedKeys[e.key] = true; }
 
-// // Pre set color picker
-// colorPicker.value = "#888888";
-// hexToRgb(colorPicker.value);
-// CPPInterface.CPPsetSelectedColors(r, g, b);
+// Pre set color picker
+colorPicker.value = "#7d7d7d";
+hexToRgb(colorPicker.value);
+CPPInterface.CPPsetSelectedColors(r, g, b);
 
 // Process user input and send it to the C++ code
 export function processInput(): void {
@@ -144,12 +144,12 @@ function hexToRgb(hex: string) {
 colorPicker.addEventListener('input', () => {
     const hexColor = colorPicker.value; // Get the hexadecimal color value
     hexToRgb(hexColor); // Convert hex to RGB
-    console.log(r + ", " + g + ", " + b);
+    // console.log(r + ", " + g + ", " + b);
 });
-// colorPicker.addEventListener('change', () => {
-//     console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
-//     CPPInterface.CPPsetSelectedColors(r, g, b);
-// });
+colorPicker.addEventListener('change', () => {
+    console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
+    CPPInterface.CPPsetSelectedColors(r, g, b);
+});
 
 canvas.addEventListener('mousemove', (event) => {
     if (Main.isRunning() && pointerLocked) {

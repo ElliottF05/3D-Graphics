@@ -56,4 +56,9 @@ extern "C" {
     void loadSceneToCPP(float data[]) {
         g_Game.loadSceneToCPP(data);
     }
+
+    EMSCRIPTEN_KEEPALIVE
+    void setSelectedColors(int r, int g, int b) {
+        g_Game.setSelectedColors(r,g,b);
+    }
 }

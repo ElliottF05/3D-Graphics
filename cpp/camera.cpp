@@ -20,6 +20,12 @@ float Camera::getThetaY() const {
 }
 void Camera::setThetaY(float thetaY) {
     this->thetaY = thetaY;
+    if (thetaY < -M_PI / 2.0) {
+        this->thetaY = -M_PI / 2.0;
+    }
+    if (thetaY > M_PI / 2.0) {
+        this->thetaY = M_PI / 2.0;
+    }
 }
 void Camera::setThetaZ(float thetaZ) {
     this->thetaZ = thetaZ;

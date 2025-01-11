@@ -54,20 +54,8 @@ export function CPPloadSceneToCPP(dataPointer: number) {
     CPPmodule._loadSceneToCPP(dataPointer);
 }
 
-// export function CPPsetSelectedColors(r: number, g: number, b: number): void {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_setSelectedColors(r, g, b);
-// }
-
-
-
-// export function CPPsetupScene(): void {
-//     // @ts-ignore
-//     //_EXTERN_setupScene();
-//     CPPmodule._EXTERN_setupScene();
-// }
-// export function CPPgetBuffer(): number {
-//     // @ts-ignore
-//     return CPPmodule._EXTERN_getBuffer();
-// }
+export function CPPsetSelectedColors(r: number, g: number, b: number): void {
+    // @ts-ignore
+    return CPPmodule._setSelectedColors(r, g, b);
+}
 
