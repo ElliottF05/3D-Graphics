@@ -7,6 +7,7 @@ const colorPicker = document.getElementById('color-picker') as HTMLInputElement;
 
 // User input variables
 var pressedKeys: { [key: string]: boolean } = {};
+var keysPressedInLastFrame: { [key: string]: boolean } = {}
 let mouseX: number = 0;
 let mouseY: number = 0;
 let moveMultiplier: number = 0.25;
@@ -28,6 +29,26 @@ export function processInput(): void {
     if (!pointerLocked) {
         return;
     }
+
+    if (keysPressedInLastFrame['p']) {
+        console.log("processing P pressed");
+        if (Main.isRunning()) {
+            Main.pause();
+        } else {
+            Main.unpause();
+        }
+    }
+
+    if (keysPressedInLastFrame['r']) {
+        console.log("processing R pressed");
+        if (!Main.isRayTracing()) {
+            Main.beginRayTracing();
+        }
+    }
+
+    keysPressedInLastFrame = {};
+
+
     // INFO FOR _user_input:
     // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
     let cameraMoveFoward: number = 0;
@@ -35,74 +56,72 @@ export function processInput(): void {
     let cameraMoveUp: number = 0;
     let cameraRotateZ: number = 0;
     let cameraRotateY: number = 0;
-    if (pressedKeys['w']) {
-        cameraMoveFoward += 1;
-        // CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['s']) {
-        cameraMoveFoward -= 1;
-        // CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['a']) {
-        cameraMoveSide += 1;
-        // CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
-    }
-    if (pressedKeys['d']) {
-        cameraMoveSide -= 1;
-        // CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
-    }
-    if (pressedKeys[' ']) {
-        cameraMoveUp += 1;
-        // CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
-    }
-    if (pressedKeys['Shift']) {
-        cameraMoveUp -= 1;
-        // CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
+
+    if (Main.isRunning()) {
+        if (pressedKeys['w']) {
+            cameraMoveFoward += 1;
+            // CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
+        }
+        if (pressedKeys['s']) {
+            cameraMoveFoward -= 1;
+            // CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
+        }
+        if (pressedKeys['a']) {
+            cameraMoveSide += 1;
+            // CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
+        }
+        if (pressedKeys['d']) {
+            cameraMoveSide -= 1;
+            // CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
+        }
+        if (pressedKeys[' ']) {
+            cameraMoveUp += 1;
+            // CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
+        }
+        if (pressedKeys['Shift']) {
+            cameraMoveUp -= 1;
+            // CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
+        }
+
+        if (pressedKeys['ArrowLeft']) {
+            cameraRotateZ += 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
+        }
+        if (pressedKeys['ArrowRight']) {
+            cameraRotateZ -= 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
+        }
+        if (pressedKeys['ArrowUp']) {
+            cameraRotateY += 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
+        }
+        if (pressedKeys['ArrowDown']) {
+            cameraRotateY -= 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
+        }
+        if (pointerLocked) {
+            CPPInterface.CPPuserInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
+            mouseX = 0;
+            mouseY = 0;
+        }
+
+        cameraMoveFoward *= moveMultiplier;
+        cameraMoveSide *= moveMultiplier;
+        cameraMoveUp *= moveMultiplier;
+        CPPInterface.CPPuserInput(cameraMoveFoward, cameraMoveSide, cameraMoveUp, cameraRotateZ, cameraRotateY, 0);
     }
 
-    if (pressedKeys['ArrowLeft']) {
-        cameraRotateZ += 1;
-        // CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
-    }
-    if (pressedKeys['ArrowRight']) {
-        cameraRotateZ -= 1;
-        // CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
-    }
-    if (pressedKeys['ArrowUp']) {
-        cameraRotateY += 1;
-        // CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
-    }
-    if (pressedKeys['ArrowDown']) {
-        cameraRotateY -= 1;
-        // CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
-    }
-    if (pointerLocked) {
-        CPPInterface.CPPuserInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
-        mouseX = 0;
-        mouseY = 0;
-    }
-
-    cameraMoveFoward *= moveMultiplier;
-    cameraMoveSide *= moveMultiplier;
-    cameraMoveUp *= moveMultiplier;
-    CPPInterface.CPPuserInput(cameraMoveFoward, cameraMoveSide, cameraMoveUp, cameraRotateZ, cameraRotateY, 0);
 }
 
 // Event listeners...
 document.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key == 'p') {
         console.log('P pressed');
-        if (Main.isRunning()) {
-            Main.pause();
-        } else {
-            Main.unpause();
-        }
+        keysPressedInLastFrame['p'] = true;
     }
     if (event.key == 'r') {
         console.log('R pressed');
-        if (!Main.isRayTracing()) {
-            Main.beginRayTracing();
-        }
+        keysPressedInLastFrame['r'] = true;
     }
     if (event.key == '9') {
         // Database.exportSceneData("testName");
@@ -121,7 +140,7 @@ document.addEventListener('pointerlockchange', () => {
 });
 
 document.addEventListener('click', (event) => {
-    if (pointerLocked) {
+    if (pointerLocked && Main.isRunning()) {
         if (event.button == 0) {
             CPPInterface.CPPuserInput(0,0,0,0,0, 1)
         } else if (event.button == 2) {

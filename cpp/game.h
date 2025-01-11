@@ -64,7 +64,7 @@ public:
     Game();
     void setupScene();
     void render();
-    int renderRayTracing(int startIndex);
+    int renderRayTracing(int startY);
     void userCameraInput(float forwardMovement, float sidewaysMovement, float verticalMovement, float rotateZ, float rotateY, float otherInputCode);
     uint8_t* exportImageBuffer();
 

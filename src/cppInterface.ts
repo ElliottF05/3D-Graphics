@@ -26,9 +26,9 @@ export function CPPrenderScene(): void {
     // @ts-ignore
     CPPmodule._renderScene();
 }
-export function CPPrenderSceneRayTracing(startIndex: number): number {
+export function CPPrenderSceneRayTracing(startY: number): number {
     // @ts-ignore
-    return CPPmodule._renderSceneRayTracing(startIndex);
+    return CPPmodule._renderSceneRayTracing(startY);
 }
 export function CPPgetImageBuffer(): number {
     // console.log("cppInterface.ts: CPPgetImageBuffer()");

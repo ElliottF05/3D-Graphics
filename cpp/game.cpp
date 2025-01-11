@@ -738,6 +738,10 @@ void Game::loadSceneToCPP(float data[]) {
     setupScene();
     objects.clear();
 
+    for (Light& l : lights) {
+        l.resetShadowMap();
+    }
+
     int size = data[0];
     int i = 1;
 
@@ -776,8 +780,10 @@ void Game::setSelectedColors(int r, int g, int b) {
 }
 
 
-int Game::renderRayTracing(int startIndex) {
+int Game::renderRayTracing(int startY) {
     // Made by mostly following guide at https://raytracing.github.io/books/RayTracingInOneWeekend.html
+
+    std::cout << "cpp Game::renderRayTracing() called!" << std::endl;
 
     auto startTime = std::chrono::high_resolution_clock::now();
 
@@ -791,22 +797,8 @@ int Game::renderRayTracing(int startIndex) {
     rtCamera.setDefocusAngleDegrees(0.6);
     rtCamera.setFocusDistance(10.0);
 
-    int startY = startIndex / width;
-    int startX = startIndex % width;
-    std::cout << startY << ", " << startX << std::endl;
-
     for (int y = startY; y < height; y++) {
-        if (y != startY) {
-            startX = 0;
-        }
-        for (int x = startX; x < width; x++) {
-            auto currTime = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currTime - startTime);
-            if (elapsed.count() > 500) {
-                threadPool.waitUntilTasksFinished();
-                return y * width + x;
-            }
-
+        for (int x = 0; x < width; x++) {
             threadPool.addTask([this, x, y] {
                 rayTracePixel(x, y);
             });
@@ -827,7 +819,16 @@ int Game::renderRayTracing(int startIndex) {
 
             // pixelArray.setPixel(x, y, pixelColor.x, pixelColor.y, pixelColor.z);
         }
+        threadPool.waitUntilTasksFinished();
+        auto currTime = std::chrono::high_resolution_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(currTime - startTime);
+        if (elapsed.count() > 500) {
+            std::cout << "returning from cpp Game::renderRayTracing" << std::endl;
+            return y + 1;
+        }
     }
+    threadPool.waitUntilTasksFinished();
+    std::cout << "returning from cpp Game::renderRayTracing" << std::endl;
     return -1;
 }
 

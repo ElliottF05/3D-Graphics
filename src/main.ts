@@ -13,9 +13,9 @@ while (!CPPInterface.CPPmoduleInitialized) {
 console.log("Hello from main.ts!");
 
 // Main game/simulation loop
-let running: boolean = true;
-let raytracing: boolean = false;
-let startIndexRayTracing = 0;
+var running: boolean = true;
+var raytracing: boolean = false;
+var startYRayTracing = 0;
 async function loop(): Promise<void> {
     let readyForNextFrame: boolean = true;
     while (true) {
@@ -24,16 +24,18 @@ async function loop(): Promise<void> {
             readyForNextFrame = true;
         },40);
         Input.processInput();
+        console.log("raytracing = ", raytracing, ", running = ", running);
         if (running) {
+            console.log("Main.ts: rendering scene");
             CPPInterface.CPPrenderScene();
             // CPPInterface.CPPrenderSceneRayTracing(0);
         }
         if (raytracing && !running) {
             console.log("raytracing!!!");
-            startIndexRayTracing = CPPInterface.CPPrenderSceneRayTracing(startIndexRayTracing);
-            console.log(startIndexRayTracing);
-            if (startIndexRayTracing < 0) {
-                startIndexRayTracing = 0;
+            startYRayTracing = CPPInterface.CPPrenderSceneRayTracing(startYRayTracing);
+            // console.log(startIndexRayTracing);
+            if (startYRayTracing < 0) {
+                startYRayTracing = 0;
                 raytracing = false;
             }
         }
@@ -46,6 +48,7 @@ async function loop(): Promise<void> {
 }
 
 export function pause(): void {
+    startYRayTracing = 0;
     running = false;
 }
 export function unpause(): void {
@@ -56,9 +59,10 @@ export function isRunning(): boolean {
     return running;
 }
 export function beginRayTracing() {
-    console.log("beginning ray tracing");
+    console.log("Main.beginRayTracing()");
     raytracing = true;
     running = false;
+    console.log("raytracing = ", raytracing, ", running = ", running);
 }
 export function isRayTracing(): boolean {
     return raytracing;
