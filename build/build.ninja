@@ -49,21 +49,93 @@ cmake_ninja_workdir = /Users/elliottfaa/repos/3D-Graphics-Engine/build/
 
 build cmake_object_order_depends_target_3D-Graphics: phony || .
 
-build CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/main.cpp || cmake_object_order_depends_target_3D-Graphics
-  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o.d
-  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+build CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/main2.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
 
-build CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/graphics.cpp || cmake_object_order_depends_target_3D-Graphics
-  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o.d
-  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+build CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/camera.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/game.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/hitRecord.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/hitRecord.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/hitRecord.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/interval.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/interval.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/interval.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/light.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/material.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/material.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/material.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/object3D.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/pixelArray.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/ray.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/ray.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/ray.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/sphere.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/sphere.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/sphere.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
 
 build CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/threads.cpp || cmake_object_order_depends_target_3D-Graphics
   DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o.d
-  FLAGS = -g -std=gnu++17 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/utils.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/utils.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/utils.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/vec3.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  OBJECT_DIR = CMakeFiles/3D-Graphics.dir
+  OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
+
+build CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o: CXX_COMPILER__3D-Graphics_unscanned_Debug /Users/elliottfaa/repos/3D-Graphics-Engine/cpp/zBuffer.cpp || cmake_object_order_depends_target_3D-Graphics
+  DEP_FILE = CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o.d
+  FLAGS = -g -std=gnu++20 -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   OBJECT_FILE_DIR = CMakeFiles/3D-Graphics.dir/cpp
 
@@ -75,9 +147,9 @@ build CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o: CXX_COMPILER__3D-Graphics_un
 #############################################
 # Link the executable /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js
 
-build /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main.cpp.o CMakeFiles/3D-Graphics.dir/cpp/graphics.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o
+build /Users/elliottfaa/repos/3D-Graphics-Engine/src/cpp/3D-Graphics.js: CXX_EXECUTABLE_LINKER__3D-Graphics_Debug CMakeFiles/3D-Graphics.dir/cpp/main2.cpp.o CMakeFiles/3D-Graphics.dir/cpp/camera.cpp.o CMakeFiles/3D-Graphics.dir/cpp/game.cpp.o CMakeFiles/3D-Graphics.dir/cpp/hitRecord.cpp.o CMakeFiles/3D-Graphics.dir/cpp/interval.cpp.o CMakeFiles/3D-Graphics.dir/cpp/light.cpp.o CMakeFiles/3D-Graphics.dir/cpp/material.cpp.o CMakeFiles/3D-Graphics.dir/cpp/object3D.cpp.o CMakeFiles/3D-Graphics.dir/cpp/pixelArray.cpp.o CMakeFiles/3D-Graphics.dir/cpp/ray.cpp.o CMakeFiles/3D-Graphics.dir/cpp/sphere.cpp.o CMakeFiles/3D-Graphics.dir/cpp/threads.cpp.o CMakeFiles/3D-Graphics.dir/cpp/utils.cpp.o CMakeFiles/3D-Graphics.dir/cpp/vec3.cpp.o CMakeFiles/3D-Graphics.dir/cpp/zBuffer.cpp.o
   FLAGS = -g
-  LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=20 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O3 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
+  LINK_FLAGS = -sALLOW_MEMORY_GROWTH -sUSE_PTHREADS -sPTHREAD_POOL_SIZE=10 -sMODULARIZE -sSINGLE_FILE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker -sEXPORT_NAME=\"WasmModule\" -pthread -O1 -flto -fapprox-func -fno-math-errno -fassociative-math -freciprocal-math -fno-signed-zeros -fno-trapping-math -fno-rounding-math -ffp-contract=fast
   OBJECT_DIR = CMakeFiles/3D-Graphics.dir
   POST_BUILD = :
   PRE_LINK = :

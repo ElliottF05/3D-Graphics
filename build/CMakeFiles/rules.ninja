@@ -12,6 +12,36 @@
 # =============================================================================
 
 #############################################
+# Rule for generating CXX dependencies.
+
+rule CXX_SCAN__3D-Graphics_Debug
+  depfile = $DEP_FILE
+  command = "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS-NOTFOUND" -format=p1689 -- /Users/elliottfaa/emsdk/upstream/emscripten/em++ $DEFINES $INCLUDES $FLAGS -x c++ $in -c -o $OBJ_FILE -MT $DYNDEP_INTERMEDIATE_FILE -MD -MF $DEP_FILE > $DYNDEP_INTERMEDIATE_FILE.tmp && mv $DYNDEP_INTERMEDIATE_FILE.tmp $DYNDEP_INTERMEDIATE_FILE
+  description = Scanning $in for CXX dependencies
+
+
+#############################################
+# Rule to generate ninja dyndep files for CXX.
+
+rule CXX_DYNDEP__3D-Graphics_Debug
+  command = /opt/homebrew/Cellar/cmake/3.29.3/bin/cmake -E cmake_ninja_dyndep --tdi=CMakeFiles/3D-Graphics.dir/CXXDependInfo.json --lang=CXX --modmapfmt=clang --dd=$out @$out.rsp
+  description = Generating CXX dyndep file $out
+  rspfile = $out.rsp
+  rspfile_content = $in
+  restat = 1
+
+
+#############################################
+# Rule for compiling CXX files.
+
+rule CXX_COMPILER__3D-Graphics_scanned_Debug
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ${LAUNCHER}${CODE_CHECK}/Users/elliottfaa/emsdk/upstream/emscripten/em++ $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE @$DYNDEP_MODULE_MAP_FILE -o $out -c $in
+  description = Building CXX object $out
+
+
+#############################################
 # Rule for compiling CXX files.
 
 rule CXX_COMPILER__3D-Graphics_unscanned_Debug

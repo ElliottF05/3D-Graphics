@@ -99,18 +99,26 @@ export async function importSceneData(sceneID: number): Promise<void> {
         return;
     } else {
         // console.log(data)
-        let scene_data = data[0].data;
-        console.log(scene_data);
+        let sceneData = data[0].data;
+        console.log(sceneData);
 
-        let size = scene_data.length;
+        let size = sceneData.length;
 
-        let data_buffer_pointer = CPPInterface.CPPsetDataBufferPointer(size);
-        let data_buffer = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, data_buffer_pointer, scene_data.length);
-        for (let i = 0; i < data_buffer.length; i++) {
-            data_buffer[i] = scene_data[i];
+        // let data_buffer_pointer = CPPInterface.CPPsetDataBufferPointer(size);
+        // let data_buffer = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, data_buffer_pointer, scene_data.length);
+        // for (let i = 0; i < data_buffer.length; i++) {
+        //     data_buffer[i] = scene_data[i];
+        // }
+
+        // CPPInterface.CPPloadScene(data_buffer_pointer);
+
+        let dataBufferPointer = CPPInterface.CPPallocateSceneDataBuffer(size);
+        let dataBuffer = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, dataBufferPointer, size);
+        for (let i = 0; i < size; i++) {
+            dataBuffer[i] = sceneData[i];
         }
 
-        CPPInterface.CPPloadScene(data_buffer_pointer);
+        CPPInterface.CPPloadSceneToCPP(dataBufferPointer);
 
     }
 }

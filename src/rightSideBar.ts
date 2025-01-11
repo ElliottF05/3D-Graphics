@@ -23,12 +23,18 @@ let deletedImageIDs: number[] = [];
 // EXPORT AND IMPORT SCENE DATA
 function getCurrentSceneData(): Float32Array {
     console.log("Getting scene data...");
-    var data_buffer_size: number = CPPInterface.CPPgetDataBufferSize();
-    var data_buffer_pointer: number = CPPInterface.CPPgetDataBufferPointer();
+    // var data_buffer_size: number = CPPInterface.CPPgetDataBufferSize();
+    // var data_buffer_pointer: number = CPPInterface.CPPgetDataBufferPointer();
 
-    var scene_data = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, data_buffer_pointer, data_buffer_size);
-    return scene_data;
+    // var scene_data = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, data_buffer_pointer, data_buffer_size);
+    // return scene_data;
 
+    let dataBufferPointer: number = CPPInterface.CPPgetSceneDataBuffer();
+    let dataBufferSize = (new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, dataBufferPointer, 1))[0];
+
+    let dataBuffer = new Float32Array(CPPInterface.CPPmodule.HEAPF32.buffer, dataBufferPointer, dataBufferSize);
+
+    return dataBuffer;
 }
 
 export async function uploadNewScene(sceneName: string, user_id: string): Promise<void>  {
@@ -55,6 +61,7 @@ export async function updateExistingScene(sceneName: string): Promise<void> {
     if (error) {
         console.error('Error updating data:', error.message)
     } else {
+        console.log("supabase updated with no error code");
         LeftSideBar.renderScenes();
     }
 }

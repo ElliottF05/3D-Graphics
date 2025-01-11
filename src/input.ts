@@ -5,11 +5,17 @@ import * as Main from './main.ts';
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const colorPicker = document.getElementById('color-picker') as HTMLInputElement;
 
+const openPopup = document.getElementById('open-controls-popup') as HTMLAnchorElement;
+const closePopup = document.getElementById('close-controls-popup') as HTMLSpanElement;
+const popup = document.getElementById('controls-popup') as HTMLDivElement;
+
 // User input variables
 var pressedKeys: { [key: string]: boolean } = {};
+var keysPressedInLastFrame: { [key: string]: boolean } = {}
 let mouseX: number = 0;
 let mouseY: number = 0;
-let mouseMultiplier: number = 1;
+let moveMultiplier: number = 0.25;
+let mouseMultiplier: number = 0.01;
 let pointerLocked: boolean = false;
 let r: number = 0;
 let g: number = 0;
@@ -18,7 +24,7 @@ window.onkeyup = function(e: KeyboardEvent) { pressedKeys[e.key] = false; }
 window.onkeydown = function(e: KeyboardEvent) { pressedKeys[e.key] = true; }
 
 // Pre set color picker
-colorPicker.value = "#888888";
+colorPicker.value = "#7d7d7d";
 hexToRgb(colorPicker.value);
 CPPInterface.CPPsetSelectedColors(r, g, b);
 
@@ -27,55 +33,99 @@ export function processInput(): void {
     if (!pointerLocked) {
         return;
     }
-    // INFO FOR _user_input:
-    // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
-    if (pressedKeys['w']) {
-        CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['s']) {
-        CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
-    }
-    if (pressedKeys['a']) {
-        CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
-    }
-    if (pressedKeys['d']) {
-        CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
-    }
-    if (pressedKeys[' ']) {
-        CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
-    }
-    if (pressedKeys['Shift']) {
-        CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
+
+    if (keysPressedInLastFrame['p']) {
+        console.log("processing P pressed");
+        if (Main.isRunning()) {
+            Main.pause();
+        } else {
+            Main.unpause();
+        }
     }
 
-    if (pressedKeys['ArrowLeft']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
+    if (keysPressedInLastFrame['r']) {
+        console.log("processing R pressed");
+        if (!Main.isRayTracing()) {
+            Main.beginRayTracing();
+        }
     }
-    if (pressedKeys['ArrowRight']) {
-        CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
+
+    keysPressedInLastFrame = {};
+
+
+    // INFO FOR _user_input:
+    // user_input(int cameraMoveFoward, int cameraMoveSide, int cameraMoveUp, int cameraRotateZ, int cameraRotateY, int userInputCode)
+    let cameraMoveFoward: number = 0;
+    let cameraMoveSide: number = 0;
+    let cameraMoveUp: number = 0;
+    let cameraRotateZ: number = 0;
+    let cameraRotateY: number = 0;
+
+    if (Main.isRunning()) {
+        if (pressedKeys['w']) {
+            cameraMoveFoward += 1;
+            // CPPInterface.CPPuserInput(1, 0, 0, 0, 0, 0);
+        }
+        if (pressedKeys['s']) {
+            cameraMoveFoward -= 1;
+            // CPPInterface.CPPuserInput(-1, 0, 0, 0, 0, 0);
+        }
+        if (pressedKeys['a']) {
+            cameraMoveSide += 1;
+            // CPPInterface.CPPuserInput(0, -1, 0, 0, 0, 0);
+        }
+        if (pressedKeys['d']) {
+            cameraMoveSide -= 1;
+            // CPPInterface.CPPuserInput(0, 1, 0, 0, 0, 0);
+        }
+        if (pressedKeys[' ']) {
+            cameraMoveUp += 1;
+            // CPPInterface.CPPuserInput(0, 0, 1, 0, 0, 0);
+        }
+        if (pressedKeys['Shift']) {
+            cameraMoveUp -= 1;
+            // CPPInterface.CPPuserInput(0, 0, -1, 0, 0, 0);
+        }
+
+        if (pressedKeys['ArrowLeft']) {
+            cameraRotateZ += 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 1, 0, 0);
+        }
+        if (pressedKeys['ArrowRight']) {
+            cameraRotateZ -= 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, -1, 0, 0);
+        }
+        if (pressedKeys['ArrowUp']) {
+            cameraRotateY += 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
+        }
+        if (pressedKeys['ArrowDown']) {
+            cameraRotateY -= 1;
+            // CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
+        }
+        if (pointerLocked) {
+            CPPInterface.CPPuserInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
+            mouseX = 0;
+            mouseY = 0;
+        }
+
+        cameraMoveFoward *= moveMultiplier;
+        cameraMoveSide *= moveMultiplier;
+        cameraMoveUp *= moveMultiplier;
+        CPPInterface.CPPuserInput(cameraMoveFoward, cameraMoveSide, cameraMoveUp, cameraRotateZ, cameraRotateY, 0);
     }
-    if (pressedKeys['ArrowUp']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 0, 1, 0);
-    }
-    if (pressedKeys['ArrowDown']) {
-        CPPInterface.CPPuserInput(0, 0, 0, 0, -1, 0);
-    }
-    if (pointerLocked) {
-        CPPInterface.CPPuserInput(0, 0, 0, - mouseX * mouseMultiplier, - mouseY * mouseMultiplier, 0);
-        mouseX = 0;
-        mouseY = 0;
-    }
+
 }
 
 // Event listeners...
 document.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key == 'p') {
         console.log('P pressed');
-        if (Main.isRunning()) {
-            Main.pause();
-        } else {
-            Main.unpause();
-        }
+        keysPressedInLastFrame['p'] = true;
+    }
+    if (event.key == 'r') {
+        console.log('R pressed');
+        keysPressedInLastFrame['r'] = true;
     }
     if (event.key == '9') {
         // Database.exportSceneData("testName");
@@ -94,7 +144,7 @@ document.addEventListener('pointerlockchange', () => {
 });
 
 document.addEventListener('click', (event) => {
-    if (pointerLocked) {
+    if (pointerLocked && Main.isRunning()) {
         if (event.button == 0) {
             CPPInterface.CPPuserInput(0,0,0,0,0, 1)
         } else if (event.button == 2) {
@@ -117,7 +167,7 @@ function hexToRgb(hex: string) {
 colorPicker.addEventListener('input', () => {
     const hexColor = colorPicker.value; // Get the hexadecimal color value
     hexToRgb(hexColor); // Convert hex to RGB
-    console.log(r + ", " + g + ", " + b);
+    // console.log(r + ", " + g + ", " + b);
 });
 colorPicker.addEventListener('change', () => {
     console.log("Color picker change with colors: " + r + ", " + g + ", " + b);
@@ -134,4 +184,22 @@ canvas.addEventListener('mousemove', (event) => {
 canvas.addEventListener('click', () => {
     console.log("Requesting pointer lock...");
     canvas.requestPointerLock();
+});
+
+// ppen popup
+openPopup.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent default link behavior
+    popup.classList.add('visible'); // Add visible class to show the popup
+});
+
+// close popup
+closePopup.addEventListener('click', () => {
+    popup.classList.remove('visible'); // Remove visible class to hide the popup
+});
+
+// close popup when clicking outside of it
+popup.addEventListener('click', (event) => {
+    if (event.target === popup) {
+        popup.classList.remove('visible');
+    }
 });

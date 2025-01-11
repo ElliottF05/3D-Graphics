@@ -1,4 +1,3 @@
-import './style.css'
 // @ts-ignore
 import WasmModule from './cpp/3D-Graphics.js'
 
@@ -22,37 +21,41 @@ while (!CPPmoduleInitialized) {
 console.log("Module loaded!!");
 
 
-export function CPPsetupScene(): void {
+
+export function CPPrenderScene(): void {
     // @ts-ignore
-    //_EXTERN_setupScene();
-    CPPmodule._EXTERN_setupScene();
+    CPPmodule._renderScene();
 }
-export function CPPgetBuffer(): number {
+export function CPPrenderSceneRayTracing(startY: number): number {
     // @ts-ignore
-    return CPPmodule._EXTERN_getBuffer();
+    return CPPmodule._renderSceneRayTracing(startY);
 }
+export function CPPgetImageBuffer(): number {
+    // console.log("cppInterface.ts: CPPgetImageBuffer()");
+    // @ts-ignore
+    return CPPmodule._getImageBuffer();
+};
 export function CPPuserInput(a: number, b: number, c: number, d: number, e: number, f: number): void {
     // @ts-ignore
-    CPPmodule._EXTERN_userInput(a,b,c,d,e,f);
+    CPPmodule._userInput(a,b,c,d,e,f);
 }
 
-export function CPPgetDataBufferSize(): number {
+
+export function CPPgetSceneDataBuffer(): number {
     // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferSize();
+    return CPPmodule._getSceneDataBuffer();
 }
-export function CPPgetDataBufferPointer(): number {
+export function CPPallocateSceneDataBuffer(size: number): number {
     // @ts-ignore
-    return CPPmodule._EXTERN_getDataBufferPointer();
+    return CPPmodule._allocateSceneDataBuffer(size);
 }
-export function CPPsetDataBufferPointer(size: number): number {
+export function CPPloadSceneToCPP(dataPointer: number) {
     // @ts-ignore
-    return CPPmodule._EXTERN_setDataBufferPointer(size);
+    CPPmodule._loadSceneToCPP(dataPointer);
 }
-export function CPPloadScene(data: number): void {
-    // @ts-ignore
-    return CPPmodule._EXTERN_loadScene(data);
-}
+
 export function CPPsetSelectedColors(r: number, g: number, b: number): void {
     // @ts-ignore
-    return CPPmodule._EXTERN_setSelectedColors(r, g, b);
+    return CPPmodule._setSelectedColors(r, g, b);
 }
+

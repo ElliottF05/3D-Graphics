@@ -1,3 +1,6 @@
+// Made with the help of GeeksForGeeks
+// https://www.geeksforgeeks.org/thread-pool-in-cpp/
+
 #include "threads.h"
 #include <atomic>
 #include <functional>
@@ -6,10 +9,7 @@
 #include <utility>
 #include <iostream>
 
-using namespace threads;
-
 // CONSTRUCTOR
-ThreadPool threadPool = ThreadPool(20);
 ThreadPool::ThreadPool(int num_threads) : stop_(false), active_tasks_(0) {
     // Creating worker threads 
     for (int i = 0; i < num_threads; ++i) { 
@@ -23,8 +23,7 @@ ThreadPool::ThreadPool(int num_threads) : stop_(false), active_tasks_(0) {
                 { 
                     // Locking the queue so that data 
                     // can be shared safely 
-                    std::unique_lock<std::mutex> lock( 
-                        queue_mutex_); 
+                    std::unique_lock<std::mutex> lock(queue_mutex_); 
 
                     // Waiting until there is a task to 
                     // execute or the pool is stopped 
@@ -83,4 +82,10 @@ void ThreadPool::addTask(std::function<void()> task) {
 int ThreadPool::getNumberOfActiveTasks() {
     // std::cout << "Active tasks: " << active_tasks_.load(std::memory_order_seq_cst) << std::endl;
     return active_tasks_.load(std::memory_order_seq_cst);
+}
+
+void ThreadPool::waitUntilTasksFinished() {
+    while (getNumberOfActiveTasks() > 0) {
+        std::this_thread::sleep_for(std::chrono::microseconds(200));
+    }
 }
