@@ -5,6 +5,10 @@ import * as Main from './main.ts';
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const colorPicker = document.getElementById('color-picker') as HTMLInputElement;
 
+const openPopup = document.getElementById('open-controls-popup') as HTMLAnchorElement;
+const closePopup = document.getElementById('close-controls-popup') as HTMLSpanElement;
+const popup = document.getElementById('controls-popup') as HTMLDivElement;
+
 // User input variables
 var pressedKeys: { [key: string]: boolean } = {};
 var keysPressedInLastFrame: { [key: string]: boolean } = {}
@@ -180,4 +184,22 @@ canvas.addEventListener('mousemove', (event) => {
 canvas.addEventListener('click', () => {
     console.log("Requesting pointer lock...");
     canvas.requestPointerLock();
+});
+
+// ppen popup
+openPopup.addEventListener('click', (event) => {
+    event.preventDefault(); // Prevent default link behavior
+    popup.classList.add('visible'); // Add visible class to show the popup
+});
+
+// close popup
+closePopup.addEventListener('click', () => {
+    popup.classList.remove('visible'); // Remove visible class to hide the popup
+});
+
+// close popup when clicking outside of it
+popup.addEventListener('click', (event) => {
+    if (event.target === popup) {
+        popup.classList.remove('visible');
+    }
 });

@@ -32,12 +32,31 @@
         </div>
         <div id="main-div">
             <canvas id="canvas" width="500" height="500"></canvas>
-            <p id="controls-text"><b>Controls</b><br>
-                Click on the image to control it! <br>
-                Use W,A,S,D,Space,LShift, and the mouse to move the camera! <br>
-                Left click and right click to place and delete objects! <br>
-                Use Chrome for the best experience!
-            </p>
+
+            <div id="controls-section">
+                <a href="#" id="open-controls-popup" class="controls-link controls-text">Click here to see the controls!</a>
+            </div>
+
+            <div id="controls-popup" class="popup hidden">
+                <div class="popup-content">
+                    <span id="close-controls-popup" class="popup-close controls-text">&times;</span>
+                    <h2 id="control-popup-header" class="controls-text">Controls</h2>
+                    <p class="controls-text">
+                        Begin by clicking on the image window!<br/> 
+                        <ul id="controls-list" class="controls-text">
+                            <li class="controls-text"><strong>Move the Camera:</strong> WASD</li>
+                            <li class="controls-text"><strong>Rotate/Look Around:</strong> Use your mouse or the arrow keys</li>
+                            <li class="controls-text"><strong>Pause:</strong> Press P</li>
+                            <li class="controls-text"><strong>Exit the Image Window:</strong> Press escape</li>
+                            <li class="controls-text"><strong>Place a Cube:</strong> Left click</li>
+                            <li class="controls-text"><strong>Delete a Cube:</strong> Right click</li>
+                            <li class="controls-text"><strong>Change Cube Color:</strong> Use the color picker in the top right</li>
+                            <li class="controls-text"><strong>Make Raytraced Image (EXPERIMENTAL!!!):</strong> Press R</li>
+                        </ul>
+                    </p>
+                </div>
+            </div>
+
         </div>
         <div id="scene-management">
             <h2>Scene Management</h2>
