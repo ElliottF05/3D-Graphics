@@ -47,6 +47,9 @@ void PixelArray::setPixel(int index, int r, int g, int b) {
         data[index].b = b;
     }
 }
+PixelArrayData& PixelArray::getDataObject(int index) {
+    return data[index];
+}
 const std::vector<PixelArrayData>& PixelArray::getData() const {
     return data;
 }

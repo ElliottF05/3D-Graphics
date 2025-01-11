@@ -18,6 +18,10 @@ private:
     Camera camera;
     Camera rtCamera;
 
+    Object3D* lookingAtObject;
+    Vec3 lookingAtNormal;
+    Object3D ghostObj;
+
     PixelArray pixelArray;
     ZBuffer zBuffer;
 
@@ -25,11 +29,10 @@ private:
 
     std::vector<float> sceneDataBuffer;
 
-    void projectTriangleBatch(std::vector<Vec3>& vertices, std::vector<const ObjectProperties*>& properties, int start, int end);
-    void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties);
+    void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj);
 
-    void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal);
-    void fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal);
+    void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal);
+    void fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& obj, Vec3 normal);
 
     void fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal);
 
@@ -43,6 +46,8 @@ private:
 
     void gammaCorrect(Vec3& color);
     void transformColorTo255Range(Vec3& color);
+
+    Object3D buildCube(Vec3 pos, float sideLength, ObjectProperties properties);
 
 
 public:

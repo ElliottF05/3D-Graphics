@@ -13,7 +13,7 @@ class Light {
 
         ZBuffer zBuffer;
 
-        void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3);
+        void fillTriangle(Vec3 v1, Vec3 v2, Vec3 v3);
 
     public:
         Light(Vec3 position, float thetaZ, float thetaY, float fov, int r, int g, int b, float luminosity);

@@ -21,13 +21,13 @@ void Light::addVerticesToShadowMap(const std::vector<Vec3>& vertices) {
 
         // 2.0) do not render if normal is pointing towards light - FRONT FACE CULLING
         Vec3 normal = (v3 - v1).cross(v2 - v1);
-            normal.normalize();
-            Vec3 camToTriangle = v1 - camera.getPos();
+        normal.normalize();
+        Vec3 camToTriangle = v1 - camera.getPos();
 
-            if (normal.dot(camToTriangle) < 0) {
-                // std::cout << "triangle pointing towards light" << std::endl;
-                continue;
-            }
+        if (normal.dot(camToTriangle) < 0) {
+            // std::cout << "triangle pointing towards light" << std::endl;
+            continue;
+        }
 
         // 2.1) project vertices
 
@@ -88,7 +88,7 @@ void Light::addVerticesToShadowMap(const std::vector<Vec3>& vertices) {
     }
 }
 
-void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
+void Light::fillTriangle(Vec3 v1, Vec3 v2, Vec3 v3) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
     // sort vertices by y (v1 has lowest y, v3 has highest y)
@@ -110,7 +110,7 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     float slope2 = (v3.x - v1.x) / (v3.y - v1.y); // slope of line from v1 to v3
     float slope3 = (v3.x - v2.x) / (v3.y - v2.y); // slope of line from v2 to v3
 
-    if (v1.y == v2.y || v1.y == v3.y || v2.y == v3.y) {
+    if (v1.y == v3.y) { // triangle has no height
         return;
     }
 
@@ -121,35 +121,36 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     int bottom = std::min(static_cast<int>(std::floor(v2.y)), height-1);
 
     // fill top half
-    for (int y = top; y <= bottom; y++) {
-
-        int left, right;
-        if (x1 < x2) {
-            left = std::max(static_cast<int>(std::ceil(x1)), 0);
-            right = std::min(static_cast<int>(std::floor(x2)), width-1);
-        } else {
-            left = std::max(static_cast<int>(std::ceil(x2)), 0);
-            right = std::min(static_cast<int>(std::floor(x1)), width-1);
-        }
-        
-        float q1 = (y - v1.y) / (v2.y - v1.y);
-        float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
-
-        float q2 = (y - v1.y) / (v3.y - v1.y);
-        float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
-
-        for (int x = left; x <= right; x++) {
-
-            float q3 = (float) (x - x1) / (x2 - x1);
-            float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
-            float depth = 1 / invDepth;
-
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+    if (v1.y != v2.y) {
+        for (int y = top; y <= bottom; y++) {
+            int left, right;
+            if (x1 < x2) {
+                left = std::max(static_cast<int>(std::ceil(x1)), 0);
+                right = std::min(static_cast<int>(std::floor(x2)), width-1);
+            } else {
+                left = std::max(static_cast<int>(std::ceil(x2)), 0);
+                right = std::min(static_cast<int>(std::floor(x1)), width-1);
             }
+            
+            float q1 = (y - v1.y) / (v2.y - v1.y);
+            float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
+
+            float q2 = (y - v1.y) / (v3.y - v1.y);
+            float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
+
+            for (int x = left; x <= right; x++) {
+
+                float q3 = (float) (x - x1) / (x2 - x1);
+                float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
+                float depth = 1 / invDepth;
+
+                if (depth < zBuffer.getPixel(x, y)) {
+                    zBuffer.setPixel(x, y, depth);
+                }
+            }
+            x1 += slope1;
+            x2 += slope2;
         }
-        x1 += slope1;
-        x2 += slope2;
     }
 
     // fill bottom half
@@ -158,35 +159,36 @@ void Light::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3) {
     x2 = slope2 * (top - v1.y) + v1.x;
     bottom = std::min(static_cast<int>(std::floor(v3.y)), height-1);
 
-    for (int y = top; y <= bottom; y++) {
-
-        int left, right;
-        if (x1 < x2) {
-            left = std::max(static_cast<int>(std::ceil(x1)), 0);
-            right = std::min(static_cast<int>(std::floor(x2)), width-1);
-        } else {
-            left = std::max(static_cast<int>(std::ceil(x2)), 0);
-            right = std::min(static_cast<int>(std::floor(x1)), width-1);
-        }
-
-        float q1 = (y - v2.y) / (v3.y - v2.y);
-        float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
-
-        float q2 = (y - v1.y) / (v3.y - v1.y);
-        float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
-
-        for (int x = left; x <= right; x++) {
-
-            float q3 = (float) (x - x1) / (x2 - x1);
-            float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
-            float depth = 1 / invDepth;
-
-            if (depth < zBuffer.getPixel(x, y)) {
-                zBuffer.setPixel(x, y, depth);
+    if (v2.y != v3.y) {
+        for (int y = top; y <= bottom; y++) {
+            int left, right;
+            if (x1 < x2) {
+                left = std::max(static_cast<int>(std::ceil(x1)), 0);
+                right = std::min(static_cast<int>(std::floor(x2)), width-1);
+            } else {
+                left = std::max(static_cast<int>(std::ceil(x2)), 0);
+                right = std::min(static_cast<int>(std::floor(x1)), width-1);
             }
+
+            float q1 = (y - v2.y) / (v3.y - v2.y);
+            float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
+
+            float q2 = (y - v1.y) / (v3.y - v1.y);
+            float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
+
+            for (int x = left; x <= right; x++) {
+
+                float q3 = (float) (x - x1) / (x2 - x1);
+                float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
+                float depth = 1 / invDepth;
+
+                if (depth < zBuffer.getPixel(x, y)) {
+                    zBuffer.setPixel(x, y, depth);
+                }
+            }
+            x1 += slope3;
+            x2 += slope2;
         }
-        x1 += slope3;
-        x2 += slope2;
     }
 }
 
@@ -250,14 +252,14 @@ float Light::getLightingAmount(Vec3& worldPos, const Vec3& cameraPos, Vec3& tria
         }
     }
 
-    if (shadowAmount == 0) {
-        return 0; // fully in shadow
-    }
+    // if (shadowAmount == 0) {
+    //     return 0; // fully in shadow
+    // }
 
     // compute lighting components
     float ambientLight = properties.k_a;
     float angleMultiplier = pixelToLight.dot(triangleNormal);
-    if (angleMultiplier <= 0.0f) {
+    if (angleMultiplier <= 0.0f || shadowAmount == 0) {
         return ambientLight; // light is behind or parallel to the surface
     }
 

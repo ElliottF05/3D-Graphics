@@ -23,6 +23,8 @@ class ZBuffer {
         float getPixel(int x, int y);
         float getPixel(int index);
 
+        ZBufferData& getDataObject(int index);
+
         int getWidth();
         int getHeight();
         const std::vector<ZBufferData>& getData() const;

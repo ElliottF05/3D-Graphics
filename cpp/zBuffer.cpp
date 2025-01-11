@@ -58,6 +58,9 @@ float ZBuffer::getPixel(int index) {
         return data[index].z;
     }
 }
+ZBufferData& ZBuffer::getDataObject(int index) {
+    return data[index];
+}
 const std::vector<ZBufferData>& ZBuffer::getData() const {
     return data;
 }

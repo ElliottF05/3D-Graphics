@@ -17,6 +17,8 @@ class Object3D {
     private:
         std::vector<Vec3> vertices;
         ObjectProperties properties;
+        int id;
+        static int numObjects;
     public:
         Object3D();
         Object3D(std::vector<Vec3> vertices, ObjectProperties properties);
@@ -27,4 +29,5 @@ class Object3D {
         std::vector<Vec3>& getMutableVertices();
         const ObjectProperties& getProperties() const;
         ObjectProperties& getMutableProperties();
+        int getId() const;
 };

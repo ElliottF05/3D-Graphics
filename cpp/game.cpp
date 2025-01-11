@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <iostream>
 #include <sys/ttydefaults.h>
@@ -20,6 +21,7 @@
 // CONSTRUCTOR
 Game::Game() : pixelArray(WINDOW_WIDTH, WINDOW_HEIGHT), zBuffer(WINDOW_WIDTH, WINDOW_HEIGHT), camera(Vec3(0,0,0), 0, 0, CAMERA_FOV), rtCamera(Vec3(0,0,0), 0, 0, CAMERA_FOV) {
     imageBuffer = new uint8_t[WINDOW_WIDTH * WINDOW_HEIGHT * 4];
+    lookingAtObject = nullptr;
 }
 
 void Game::setupScene() {
@@ -77,7 +79,7 @@ void Game::setupScene() {
     objects.push_back(testObj);
 
     // create light
-    lights.emplace_back(Vec3(-10,0,10), 0, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
+    lights.emplace_back(Vec3(-10.001,0.001,10.001), 0.001, -M_PI/4.0f, M_PI/4.0f, 255, 255, 255, 12);
     lights[0].resetShadowMap();
     lights[0].addObjectsToShadowMap(objects);
 
@@ -148,6 +150,9 @@ void Game::render() {
     pixelArray.clear();
     zBuffer.clear();
 
+    // set lookingAtObject to nullptr
+    lookingAtObject = nullptr;
+
     for (Object3D& obj : objects) {
         std::vector<Vec3>& vertices = obj.getMutableVertices();
         for (int i = 0; i < vertices.size(); i += 3) {
@@ -155,12 +160,40 @@ void Game::render() {
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
             threadPool.addTask([this, v1, v2, v3, &obj]() mutable {
-                projectTriangle(v1, v2, v3, obj.getProperties());
+                projectTriangle(v1, v2, v3, obj);
             });
         }
     }
 
     threadPool.waitUntilTasksFinished();
+
+    if (lookingAtObject != nullptr) {
+        Vec3 viewCenter = Vec3(1,0,0) * zBuffer.getPixel(zBuffer.getWidth() / 2, zBuffer.getHeight() / 2);
+        viewCenter.rotateY(camera.getThetaY());
+        viewCenter.rotateZ(camera.getThetaZ());
+        viewCenter += camera.getPos();
+
+        viewCenter += 0.5 * lookingAtNormal.normalized();
+        viewCenter.x = std::round(viewCenter.x + 0.5) - 0.5;
+        viewCenter.y = std::round(viewCenter.y + 0.5) - 0.5;
+        viewCenter.z = std::round(viewCenter.z + 0.5) - 0.5;
+
+        ghostObj = Game::buildCube(viewCenter, 1.0f, ObjectProperties(
+            100, 100, 100, 1.0f, 1.0f, 0.2f, 5, true
+        ));
+
+        std::vector<Vec3>& vertices = ghostObj.getMutableVertices();
+        for (int i = 0; i < vertices.size(); i += 3) {
+            Vec3 v1 = vertices[i];
+            Vec3 v2 = vertices[i+1];
+            Vec3 v3 = vertices[i+2];
+            threadPool.addTask([this, v1, v2, v3]() mutable {
+                projectTriangle(v1, v2, v3, ghostObj);
+            });
+        }
+
+        threadPool.waitUntilTasksFinished();
+    }
 
     // 2) render objects
     // 2.0) set up parallelization
@@ -198,13 +231,7 @@ void Game::render() {
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
-void Game::projectTriangleBatch(std::vector<Vec3>& vertices, std::vector<const ObjectProperties*>& properties, int start, int end) {
-    for (int i = start; i < end; i += 3) {
-        projectTriangle(vertices[i], vertices[i+1], vertices[i+2], *properties[i]);
-    }
-}
-
-void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties) {
+void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj) {
 
     // do not render if normal is pointing away from cam - BACK FACE CULLING
     Vec3 normal = (v3 - v1).cross(v2 - v1);
@@ -268,7 +295,7 @@ void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties&
     }
 
     // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-    fillTriangle(v1, v2, v3, properties, normal);
+    fillTriangle(v1, v2, v3, obj, normal);
     // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
     // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
@@ -277,10 +304,12 @@ void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties&
     // });
 }
 
-void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& properties, Vec3& normal) {
+void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
     // std::cout << "v1: " << v1.toString() << " v2: " << v2.toString() << " v3: " << v3.toString() << std::endl;
+
+    const ObjectProperties& properties = obj.getProperties();
 
     // sort vertices by y (v1 has lowest y, v3 has highest y)
     if (v1.y > v2.y) {
@@ -301,7 +330,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     float slope2 = (v3.x - v1.x) / (v3.y - v1.y); // slope of line from v1 to v3
     float slope3 = (v3.x - v2.x) / (v3.y - v2.y); // slope of line from v2 to v3
 
-    if (v1.y == v2.y || v1.y == v3.y || v2.y == v3.y) {
+    if (v1.y == v3.y) { // triangle has no height
         return;
     }
 
@@ -312,58 +341,75 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     int bottom = std::min(static_cast<int>(std::floor(v2.y)), height-1);
 
     // fill top half
-    for (int y = top; y <= bottom; y++) {
-
-        int left, right;
-        if (x1 < x2) {
-            left = std::max(static_cast<int>(std::ceil(x1)), 0);
-            right = std::min(static_cast<int>(std::floor(x2)), width-1);
-        } else {
-            left = std::max(static_cast<int>(std::ceil(x2)), 0);
-            right = std::min(static_cast<int>(std::floor(x1)), width-1);
-        }
-        
-        float q1 = (y - v1.y) / (v2.y - v1.y);
-        float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
-
-        float q2 = (y - v1.y) / (v3.y - v1.y);
-        float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
-
-        // PARALLELIZATION OPTION HERE
-        // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
-        // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
-        //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
-        // });
-
-        int baseIndex = width * y;
-
-        for (int x = left; x <= right; x++) {
-
-            float q3 = (float) (x - x1) / (x2 - x1);
-            float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
-            float depth = 1 / invDepth;
-
-            int index = baseIndex + x;
-
-            if (depth < zBuffer.getPixel(index)) {
-                zBuffer.setPixel(index, depth);
-
-                Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
-                worldPos.rotateY(camera.getThetaY());
-                worldPos.rotateZ(camera.getThetaZ());
-                worldPos += camera.getPos();
-
-                float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
-                lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
-                int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
-                int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
-
-                pixelArray.setPixel(index, lightingR, lightingG, lightingB);
+    if (v1.y != v2.y) {
+        for (int y = top; y <= bottom; y++) {
+            int left, right;
+            if (x1 < x2) {
+                left = std::max(static_cast<int>(std::ceil(x1)), 0);
+                right = std::min(static_cast<int>(std::floor(x2)), width-1);
+            } else {
+                left = std::max(static_cast<int>(std::ceil(x2)), 0);
+                right = std::min(static_cast<int>(std::floor(x1)), width-1);
             }
+            
+            float q1 = (y - v1.y) / (v2.y - v1.y);
+            float invLeftDepth = (1 / v1.z) * (1 - q1) + (1 / v2.z) * q1;
+
+            float q2 = (y - v1.y) / (v3.y - v1.y);
+            float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
+
+            // PARALLELIZATION OPTION HERE
+            // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+            // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
+            //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+            // });
+
+            int baseIndex = width * y;
+
+            for (int x = left; x <= right; x++) {
+
+                float q3 = (float) (x - x1) / (x2 - x1);
+                float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
+                float depth = 1 / invDepth;
+
+                int index = baseIndex + x;
+
+                ZBufferData& zBufData = zBuffer.getDataObject(index);
+                PixelArrayData& pixArrData = pixelArray.getDataObject(index);
+
+                zBufData.lock.lock();
+                pixArrData.lock.lock();
+
+                if (depth < zBufData.z) {
+
+                    if (y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
+                        lookingAtObject = &obj;
+                        lookingAtNormal = normal;
+                    }
+
+                    Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
+                    worldPos.rotateY(camera.getThetaY());
+                    worldPos.rotateZ(camera.getThetaZ());
+                    worldPos += camera.getPos();
+
+                    float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
+                    // lightingAmount = std::max(0.2f, lightingAmount);
+                    int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
+                    int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
+                    int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
+
+                    zBufData.z = depth;
+                    pixArrData.r = lightingR;
+                    pixArrData.b = lightingB;
+                    pixArrData.g = lightingG;
+                }
+
+                zBufData.lock.unlock();
+                pixArrData.lock.unlock();
+            }
+            x1 += slope1;
+            x2 += slope2;
         }
-        x1 += slope1;
-        x2 += slope2;
     }
 
     // fill bottom half
@@ -372,63 +418,76 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, const ObjectProperties& pr
     x2 = slope2 * (top - v1.y) + v1.x;
     bottom = std::min(static_cast<int>(std::floor(v3.y)), height-1);
 
-    for (int y = top; y <= bottom; y++) {
-
-        int left, right;
-        if (x1 < x2) {
-            left = std::max(static_cast<int>(std::ceil(x1)), 0);
-            right = std::min(static_cast<int>(std::floor(x2)), width-1);
-        } else {
-            left = std::max(static_cast<int>(std::ceil(x2)), 0);
-            right = std::min(static_cast<int>(std::floor(x1)), width-1);
-        }
-
-        float q1 = (y - v2.y) / (v3.y - v2.y);
-        float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
-
-        float q2 = (y - v1.y) / (v3.y - v1.y);
-        float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
-
-        // PARALLELIZATION OPTION HERE
-        // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
-        // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
-        //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
-        // });
-
-        int baseIndex = width * y;
-
-        for (int x = left; x <= right; x++) {
-
-            float q3 = (float) (x - x1) / (x2 - x1);
-            float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
-            float depth = 1 / invDepth;
-
-            int index = baseIndex + x;
-
-            if (depth < zBuffer.getPixel(index)) {
-                zBuffer.setPixel(index, depth);
-
-                Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
-                worldPos.rotateY(camera.getThetaY());
-                worldPos.rotateZ(camera.getThetaZ());
-                worldPos += camera.getPos();
-
-                float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
-                lightingAmount = std::max(0.2f, lightingAmount);
-                int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
-                int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
-                int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
-
-                pixelArray.setPixel(index, lightingR, lightingG, lightingB);
+    if (v2.y != v3.y) {
+        for (int y = top; y <= bottom; y++) {
+            int left, right;
+            if (x1 < x2) {
+                left = std::max(static_cast<int>(std::ceil(x1)), 0);
+                right = std::min(static_cast<int>(std::floor(x2)), width-1);
+            } else {
+                left = std::max(static_cast<int>(std::ceil(x2)), 0);
+                right = std::min(static_cast<int>(std::floor(x1)), width-1);
             }
-        }
-        x1 += slope3;
-        x2 += slope2;
-    }
-}
 
-void Game::fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& properties, Vec3 normal) {
-    fillTriangle(v1, v2, v3, properties, normal);
+            float q1 = (y - v2.y) / (v3.y - v2.y);
+            float invLeftDepth = (1 / v2.z) * (1 - q1) + (1 / v3.z) * q1;
+
+            float q2 = (y - v1.y) / (v3.y - v1.y);
+            float invRightDepth = (1 / v1.z) * (1 - q2) + (1 / v3.z) * q2;
+
+            // PARALLELIZATION OPTION HERE
+            // fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+            // threadPool.addTask([this, y, x1, x2, invLeftDepth, invRightDepth, properties, normal] {
+            //     fillHorizontalLine(y, x1, x2, invLeftDepth, invRightDepth, properties, normal);
+            // });
+
+            int baseIndex = width * y;
+
+            for (int x = left; x <= right; x++) {
+
+                float q3 = (float) (x - x1) / (x2 - x1);
+                float invDepth = invLeftDepth * (1 - q3) + invRightDepth * q3;
+                float depth = 1 / invDepth;
+
+                int index = baseIndex + x;
+
+                ZBufferData& zBufData = zBuffer.getDataObject(index);
+                PixelArrayData& pixArrData = pixelArray.getDataObject(index);
+
+                zBufData.lock.lock();
+                pixArrData.lock.lock();
+
+                if (depth < zBufData.z) {
+
+                    if (y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
+                        lookingAtObject = &obj;
+                        lookingAtNormal = normal;
+                    }
+
+                    Vec3 worldPos = getPlaneCoords(x, y, camera) * depth;
+                    worldPos.rotateY(camera.getThetaY());
+                    worldPos.rotateZ(camera.getThetaZ());
+                    worldPos += camera.getPos();
+
+                    float lightingAmount = lights[0].getLightingAmount(worldPos, camera.getPos(), normal, properties);
+                    // lightingAmount = std::max(0.2f, lightingAmount);
+                    int lightingR = std::min(255, static_cast<int>(properties.r * lightingAmount));
+                    int lightingG = std::min(255, static_cast<int>(properties.g * lightingAmount));
+                    int lightingB = std::min(255, static_cast<int>(properties.b * lightingAmount));
+
+                    zBufData.z = depth;
+                    pixArrData.r = lightingR;
+                    pixArrData.b = lightingB;
+                    pixArrData.g = lightingG;
+                }
+
+                zBufData.lock.unlock();
+                pixArrData.lock.unlock();
+            }
+            x1 += slope3;
+            x2 += slope2;
+        }
+    }
 }
 
 void Game::fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal) {
@@ -500,6 +559,64 @@ Vec3 Game::getPlaneCoords(float xPixel, float yPixel, Camera &cam) {
     );
 }
 
+Object3D Game::buildCube(Vec3 pos, float sideLength, ObjectProperties properties) {
+    Vec3 a = pos - Vec3(sideLength / 2, sideLength / 2, sideLength / 2);
+    Vec3 b = a + Vec3(0, sideLength, 0);
+    Vec3 c = a + Vec3(sideLength, sideLength, 0);
+    Vec3 d = a + Vec3(sideLength, 0, 0);
+
+    Vec3 e = a + Vec3(0, 0, sideLength);
+    Vec3 f = b + Vec3(0, 0, sideLength);
+    Vec3 g = c + Vec3(0, 0, sideLength);
+    Vec3 h = d + Vec3(0, 0, sideLength);
+
+    std::vector<Vec3> vertices;
+
+    vertices.push_back(a);
+    vertices.push_back(b);
+    vertices.push_back(c);
+    vertices.push_back(c);
+    vertices.push_back(d);
+    vertices.push_back(a);
+
+    vertices.push_back(a);
+    vertices.push_back(b);
+    vertices.push_back(f);
+    vertices.push_back(f);
+    vertices.push_back(e);
+    vertices.push_back(a);
+
+    vertices.push_back(b);
+    vertices.push_back(c);
+    vertices.push_back(g);
+    vertices.push_back(g);
+    vertices.push_back(f);
+    vertices.push_back(b);
+
+    vertices.push_back(d);
+    vertices.push_back(h);
+    vertices.push_back(g);
+    vertices.push_back(g);
+    vertices.push_back(c);
+    vertices.push_back(d);
+
+    vertices.push_back(a);
+    vertices.push_back(e);
+    vertices.push_back(h);
+    vertices.push_back(h);
+    vertices.push_back(d);
+    vertices.push_back(a);
+
+    vertices.push_back(e);
+    vertices.push_back(f);
+    vertices.push_back(g);
+    vertices.push_back(g);
+    vertices.push_back(h);
+    vertices.push_back(e);
+
+    return Object3D(vertices, properties);
+}
+
 uint8_t* Game::exportImageBuffer() {
     // std::cout << "game.cpp: exportImageBuffer() called" << std::endl;
     for (int i = 0; i < pixelArray.getWidth() * pixelArray.getHeight(); i++) {
@@ -523,6 +640,40 @@ void Game::userCameraInput(float forwardMovement, float sidewaysMovement, float 
 
     camera.setThetaY(camera.getThetaY() + rotateY);
     camera.setThetaZ(camera.getThetaZ() + rotateZ);
+
+    if (otherInputCode == 1) { // place cube
+        if (lookingAtObject != nullptr) {
+            Object3D newObj = ghostObj;
+            objects.push_back(newObj);
+
+            for (Light &l : lights) {
+                l.addVerticesToShadowMap(newObj.getVertices());
+            }
+
+        }
+    } else if (otherInputCode == 2) { // delete cube
+        std::cout << "deleting cube\n";
+        if (lookingAtObject != nullptr && lookingAtObject->getProperties().isDeletable) {
+
+            int indexToDelete = -1;
+            int idToDelete = lookingAtObject->getId();
+            for (int i = 0; i < objects.size(); i++) {
+                if (objects[i].getId() == idToDelete) {
+                    indexToDelete = i;
+                    break;
+                }
+            }
+
+            if (indexToDelete != -1) {
+                objects.erase(objects.begin() + indexToDelete);
+                for (Light &l : lights) {
+                    l.resetShadowMap();
+                    l.addObjectsToShadowMap(objects);
+                }
+                threadPool.waitUntilTasksFinished();
+            }
+        }
+    }
 }
 
 float* Game::getSceneDataBuffer() {
