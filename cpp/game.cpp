@@ -42,8 +42,8 @@ void Game::setupScene() {
             addingTo.emplace_back(i+1,j+1,0);
         }
     }
-    objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, true);
-    objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, true);
+    objects.emplace_back(darkGrey, 140, 140, 140, 1.0f, 1.0f, 0.2f, 20, false);
+    objects.emplace_back(lightGrey, 200, 200, 200, 1.0f, 1.0f, 0.2f, 20, false);
 
     std::vector<Vec3> testObjVertices;
     float radius = 0.5f;
@@ -75,7 +75,7 @@ void Game::setupScene() {
         curr.clear();
     }
 
-    Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, true);
+    Object3D testObj = Object3D(testObjVertices, 220, 220, 220, 1.0f, 1.0f, 0.2f, 20, false);
     objects.push_back(testObj);
 
     // create light
@@ -160,7 +160,7 @@ void Game::render() {
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
             threadPool.addTask([this, v1, v2, v3, &obj]() mutable {
-                projectTriangle(v1, v2, v3, obj);
+                projectTriangle(v1, v2, v3, obj, false);
             });
         }
     }
@@ -188,7 +188,7 @@ void Game::render() {
             Vec3 v2 = vertices[i+1];
             Vec3 v3 = vertices[i+2];
             threadPool.addTask([this, v1, v2, v3]() mutable {
-                projectTriangle(v1, v2, v3, ghostObj);
+                projectTriangle(v1, v2, v3, ghostObj, true);
             });
         }
 
@@ -231,7 +231,7 @@ void Game::render() {
     // std::cout << "total triangle fill time: " << fillTriangleDuration.count() << std::endl;
 }
 
-void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj) {
+void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, bool isGhost) {
 
     // do not render if normal is pointing away from cam - BACK FACE CULLING
     Vec3 normal = (v3 - v1).cross(v2 - v1);
@@ -295,7 +295,7 @@ void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj) {
     }
 
     // auto preFillTriangle = std::chrono::high_resolution_clock::now();
-    fillTriangle(v1, v2, v3, obj, normal);
+    fillTriangle(v1, v2, v3, obj, normal, isGhost);
     // auto afterFillTriangle = std::chrono::high_resolution_clock::now();
     // fillTriangleTime += afterFillTriangle - preFillTriangle;
 
@@ -304,7 +304,7 @@ void Game::projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj) {
     // });
 }
 
-void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal) {
+void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal, bool isGhost) {
     // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
     // std::cout << "v1: " << v1.toString() << " v2: " << v2.toString() << " v3: " << v3.toString() << std::endl;
@@ -382,7 +382,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& norma
 
                 if (depth < zBufData.z) {
 
-                    if (y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
+                    if (!isGhost && y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
                         lookingAtObject = &obj;
                         lookingAtNormal = normal;
                     }
@@ -459,7 +459,7 @@ void Game::fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& norma
 
                 if (depth < zBufData.z) {
 
-                    if (y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
+                    if (!isGhost && y == zBuffer.getHeight() / 2 && x == zBuffer.getWidth() / 2) {
                         lookingAtObject = &obj;
                         lookingAtNormal = normal;
                     }

@@ -29,9 +29,9 @@ private:
 
     std::vector<float> sceneDataBuffer;
 
-    void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj);
+    void projectTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, bool isGhost);
 
-    void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal);
+    void fillTriangle(Vec3& v1, Vec3& v2, Vec3& v3, Object3D& obj, Vec3& normal, bool isGhost);
     void fillTriangleOwned(Vec3 v1, Vec3 v2, Vec3 v3, const ObjectProperties& obj, Vec3 normal);
 
     void fillHorizontalLine(int y, float x1, float x2, float invLeftDepth, float invRightDepth, const ObjectProperties& properties, Vec3 normal);
