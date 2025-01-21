@@ -67,7 +67,7 @@ pub fn init_and_begin_game_loop() {
     let game_clone = game.clone();
     add_event_listener(&window, "keydown", move |event: Event| {
         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keydown event to KeyboardEvent");
-        console_log!("Key pressed: {}", event.key());
+        // console_log!("Key pressed: {}", event.key());
         game_clone.borrow_mut().keys_currently_pressed.insert(event.key());
         game_clone.borrow_mut().keys_pressed_last_frame.insert(event.key());
     });

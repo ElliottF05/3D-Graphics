@@ -1,3 +1,4 @@
+use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
 
 use crate::{console_log, utils::math::Vec3, wasm::wasm::get_time};
@@ -20,12 +21,7 @@ impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
-            camera: Camera {
-                pos: Vec3::new(0.0, 0.0, 0.0),
-                theta_y: 0.0,
-                theta_z: 0.0,
-                fov: PI / 2.0,
-            },
+            camera: Camera::new(Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
@@ -36,17 +32,27 @@ impl Game {
 
         game.add_scene_object(build_cube(
             Vec3::new(10.0, 0.0, 0.0),
-            2.0,
+            1.0,
             MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
         ));
         game.add_scene_objects(
             build_checkerboard(
-                &Vec3::new(0.0, 0.0, 0.0), 
+                &Vec3::new(10.0, 0.0, 0.0), 
                 5, 
                 &Vec3::new(0.8, 0.8, 0.8), 
                 &Vec3::new(0.6, 0.6, 0.6)
             )
         );
+
+        // let obj = VertexObject::new(
+        //     vec![
+        //         Vec3::new(10.0, 1.0, 0.0),
+        //         Vec3::new(10.0, 1.0, 6.0),
+        //         Vec3::new(20.0, 1.0, 0.0),
+        //     ],
+        //     MaterialProperties::default_from_color(Vec3::new(0.8, 0.8, 0.8)),
+        // );
+        // game.add_scene_object(obj);
 
         return game;
     }
@@ -132,56 +138,46 @@ impl Game {
         }
 
         // translate vertices to camera space
-        v1 -= self.camera.pos;
-        v2 -= self.camera.pos;
-        v3 -= self.camera.pos;
+        self.camera.vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
 
-        // rotate vertices to camera space
-        v1.rotate_z(-self.camera.theta_z);
-        v2.rotate_z(-self.camera.theta_z);
-        v3.rotate_z(-self.camera.theta_z);
-
-        v1.rotate_y(-self.camera.theta_y);
-        v2.rotate_y(-self.camera.theta_y);
-        v3.rotate_y(-self.camera.theta_y);
-
-        // project vertices to plane space
-        let mut depth = v1.x;
-        v1.x = v1.y / depth;
-        v1.y = v1.z / depth;
-        v1.z = depth;
-
-        depth = v2.x;
-        v2.x = v2.y / depth;
-        v2.y = v2.z / depth;
-        v2.z = depth;
-
-        depth = v3.x;
-        v3.x = v3.y / depth;
-        v3.y = v3.z / depth;
-        v3.z = depth;
-
-        // scale vertices to screen space
-        let width = 500.0; // TODO: replace hardcoded values
-        let height = 500.0;
-
-        let max_plane_coord = f32::tan(0.5 * self.camera.fov);
-
-        v1.x = (0.5 * width) * (1.0 - v1.x / max_plane_coord);
-        v1.y = 0.5 * (height - v1.y / max_plane_coord * width);
-
-        v2.x = (0.5 * width) * (1.0 - v2.x / max_plane_coord);
-        v2.y = 0.5 * (height - v2.y / max_plane_coord * width);
-
-        v3.x = (0.5 * width) * (1.0 - v3.x / max_plane_coord);
-        v3.y = 0.5 * (height - v3.y / max_plane_coord * width);
-
-        if v1.z < 0.0 || v2.z < 0.0 || v3.z < 0.0 {
-            return;
+        // sort vertices by depth (v1 has lowest depth, v3 has highest)
+        if v1.x > v2.x {
+            std::mem::swap(&mut v1, &mut v2);
+        }
+        if v2.x > v3.x {
+            std::mem::swap(&mut v2, &mut v3);
+        }
+        if v1.x > v2.x {
+            std::mem::swap(&mut v1, &mut v2);
         }
 
-        // draw triangle
-        self.fill_triangle(v1, v2, v3, scene_obj);
+        // CLIPPING VERTICES
+        // Some basic clipping info: https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
+        const NEAR_PLANE: f32 = 0.001;
+        if v1.x > 0.0 { // all vertices in view
+            self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
+            self.fill_triangle(v1, v2, v3, scene_obj);
+        } else if v2.x > 0.0 { // 2 vertices in view
+            let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
+            let mut v1_new_1 = v2 + (v1 - v2) * q;
+            let q = (NEAR_PLANE - v3.x) / (v1.x - v3.x);
+            let mut v1_new_2 = v3 + (v1 - v3) * q;
+
+            self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
+            self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
+            self.fill_triangle(v1_new_1, v2, v3, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, scene_obj);
+        } else if v3.x > 0.0 { // 1 vertex in view
+            let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
+            let mut v2_new = v2 + (v3 - v2) * q;
+            let q = (NEAR_PLANE - v1.x) / (v3.x - v1.x);
+            let mut v1_new = v1 + (v3 - v1) * q;
+
+            self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
+            self.fill_triangle(v1_new, v2_new, v3, scene_obj);
+        } else { // no vertices in view
+            return;
+        }
     }
 
 
