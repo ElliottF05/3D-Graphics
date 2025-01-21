@@ -76,7 +76,7 @@ pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -
     let mut vertices = Vec::with_capacity(36);
 
     let faces = [
-        [a, b, c, c, d, a], // Front
+        [a, d, c, c, b, a], // Front
         [a, b, f, f, e, a], // Left
         [b, c, g, g, f, b], // Top
         [d, h, g, g, c, d], // Right
