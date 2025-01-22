@@ -47,6 +47,14 @@ impl Vec3 {
         self.x = x * cos - z * sin;
         self.z = x * sin + z * cos;
     }
+    pub fn pairwise_mul(&mut self, other: &Self) {
+        self.x *= other.x;
+        self.y *= other.y;
+        self.z *= other.z;
+    }
+    pub fn pairwise_mul_new(a: &Vec3, b: &Vec3) -> Vec3 {
+        return Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z);
+    }
 }
 
 impl Add for Vec3 {

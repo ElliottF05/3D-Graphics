@@ -3,11 +3,12 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
 
 use crate::{console_log, utils::math::Vec3, wasm::wasm::get_time};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, scene::{build_checkerboard, build_cube, MaterialProperties, SceneObject, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, MaterialProperties, SceneObject, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
     pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
+    pub lights: Vec<Light>,
 
     pub pixel_buf: PixelBuf,
     pub zbuf: ZBuffer,
@@ -23,6 +24,7 @@ impl Game {
         let mut game = Game {
             camera: Camera::new(Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
+            lights: Vec::new(),
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
             keys_currently_pressed: HashSet::new(),
@@ -35,8 +37,7 @@ impl Game {
             1.0,
             MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
         ));
-        game.add_scene_objects(
-            build_checkerboard(
+        game.add_scene_objects(build_checkerboard(
                 &Vec3::new(10.0, 0.0, 0.0), 
                 5, 
                 &Vec3::new(0.8, 0.8, 0.8), 
@@ -44,15 +45,18 @@ impl Game {
             )
         );
 
-        // let obj = VertexObject::new(
-        //     vec![
-        //         Vec3::new(10.0, 1.0, 0.0),
-        //         Vec3::new(10.0, 1.0, 6.0),
-        //         Vec3::new(20.0, 1.0, 0.0),
-        //     ],
-        //     MaterialProperties::default_from_color(Vec3::new(0.8, 0.8, 0.8)),
-        // );
-        // game.add_scene_object(obj);
+        let mut light = Light::new(
+            Camera::new(Vec3::new(0.0, 10.0, 10.0), 0.0, 0.0, PI/2.0, 2000, 2000),
+            Vec3::new(1.0, 1.0, 1.0),
+            70000.0,
+            ZBuffer::new(2000, 2000),
+        );
+        light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
+        game.lights.push(light);
+
+        for light in game.lights.iter_mut() {
+            light.add_objects_to_shadow_map(game.objects.borrow().as_ref());
+        }
 
         return game;
     }
@@ -124,7 +128,7 @@ impl Game {
         self.objects.replace(objects);
 
         let t2 = get_time();
-        // console_log!("Frame time: {}", t2 - t1);
+        console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
@@ -152,11 +156,11 @@ impl Game {
         }
 
         // CLIPPING VERTICES
-        // Some basic clipping info: https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
+        // Some basic clipping info (why is there so little info online): https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, scene_obj);
+            self.fill_triangle(v1, v2, v3, &normal, scene_obj);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -165,8 +169,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, scene_obj);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, scene_obj);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -174,14 +178,14 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, scene_obj);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, scene_obj);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, scene_obj: &Box<dyn SceneObject>) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
         let properties = scene_obj.get_properties();
@@ -241,8 +245,25 @@ impl Game {
                     let depth = 1.0 / inv_depth;
 
                     if depth < self.zbuf.get_depth(x, y) {
+
+                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                        let sky_color = Vec3::new(0.9, 0.9, 1.0); // TODO: ESTABLISH SKY COLOR
+
+                        // start as ambient light
+                        let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
+
+                        for light in &self.lights {
+                            color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, properties);
+                        }
+                        color.x = color.x.min(1.0);
+                        color.y = color.y.min(1.0);
+                        color.z = color.z.min(1.0);
+
                         self.zbuf.set_depth(x, y, depth);
-                        self.pixel_buf.set_pixel(x, y, properties.color);
+                        self.pixel_buf.set_pixel(x, y, color);
                     }
                 }
                 x1 += slope1;
@@ -283,8 +304,25 @@ impl Game {
                     let depth = 1.0 / inv_depth;
 
                     if depth < self.zbuf.get_depth(x, y) {
+
+                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                        let sky_color = Vec3::new(0.9, 0.9, 1.0); // TODO: ESTABLISH SKY COLOR
+
+                        // start as ambient light
+                        let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
+
+                        for light in &self.lights {
+                            color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, properties);
+                        }
+                        color.x = color.x.min(1.0);
+                        color.y = color.y.min(1.0);
+                        color.z = color.z.min(1.0);
+
                         self.zbuf.set_depth(x, y, depth);
-                        self.pixel_buf.set_pixel(x, y, properties.color);
+                        self.pixel_buf.set_pixel(x, y, color);
                     }
                 }
                 x1 += slope3;
