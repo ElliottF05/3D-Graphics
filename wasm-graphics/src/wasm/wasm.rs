@@ -32,9 +32,15 @@ pub fn get_time() -> f64 {
         .now();
 }
 
+#[wasm_bindgen]
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
+}
 
 #[wasm_bindgen]
 pub fn init_and_begin_game_loop() {
+
+    init_panic_hook();
 
     let game = Rc::new(RefCell::new(Game::new()));
 
