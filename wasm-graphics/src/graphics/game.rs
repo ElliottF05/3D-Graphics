@@ -46,9 +46,9 @@ impl Game {
         );
 
         let mut light = Light::new(
-            Camera::new(Vec3::new(0.0, 10.0, 10.0), 0.0, 0.0, PI/2.0, 2000, 2000),
+            Camera::new(Vec3::new(0.0, 10.0, 10.0), 0.0, 0.0, PI/4.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            70000.0,
+            700.0,
             ZBuffer::new(2000, 2000),
         );
         light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
@@ -90,36 +90,51 @@ impl Game {
         if self.keys_currently_pressed.contains("Shift") {
             move_dir.z -= 1.0;
         }
-        move_dir.rotate_z(self.camera.theta_z);
+        move_dir.rotate_z(self.camera.get_theta_z());
         self.camera.pos += move_dir * MOVE_SPEED;
 
+        let mut d_theta_z = 0.0;
+        let mut d_theta_y = 0.0;
         if self.keys_currently_pressed.contains("ArrowLeft") {
-            self.camera.theta_z += KEY_ROTATE_SPEED;
+            d_theta_z += KEY_ROTATE_SPEED;
         }
         if self.keys_currently_pressed.contains("ArrowRight") {
-            self.camera.theta_z -= KEY_ROTATE_SPEED;
+            d_theta_z -= KEY_ROTATE_SPEED;
         }
         if self.keys_currently_pressed.contains("ArrowUp") {
-            self.camera.theta_y += KEY_ROTATE_SPEED;
+            d_theta_y += KEY_ROTATE_SPEED;
         }
         if self.keys_currently_pressed.contains("ArrowDown") {
-            self.camera.theta_y -= KEY_ROTATE_SPEED;
+            d_theta_y -= KEY_ROTATE_SPEED;
         }
-        self.camera.theta_z -= self.mouse_move.x * ROTATE_SPEED;
-        self.camera.theta_y -= self.mouse_move.y * ROTATE_SPEED;
+        d_theta_z -= self.mouse_move.x * ROTATE_SPEED;
+        d_theta_y -= self.mouse_move.y * ROTATE_SPEED;
         self.mouse_move = Vec3::new(0.0, 0.0, 0.0);
-        self.camera.theta_y = self.camera.theta_y.clamp(-0.5 * PI, 0.5 * PI);
+
+        self.camera.set_theta_y(self.camera.get_theta_y() + d_theta_y);
+        self.camera.set_theta_z(self.camera.get_theta_z() + d_theta_z);
     }
 
     fn render_frame(&mut self) {
+        // curr time is ~73ms (finished adding lighting)
+        // ~57ms (after precomputing sin/cos)
 
         let t1 = get_time();
 
         self.pixel_buf.clear();
         self.zbuf.clear();
 
-        let objects = self.objects.take();
+
+        let mut objects = self.objects.take();
+        objects.sort_by(|a, b| 
+            (a.get_center() - self.camera.pos).len_squared()
+            .partial_cmp(&(b.get_center() - self.camera.pos).len_squared())
+            .unwrap_or(std::cmp::Ordering::Equal));
+
         for obj in &objects {
+            if obj.get_properties().alpha < 1.0 {
+                continue;
+            }
             let vertices = obj.get_vertices();
             for i in (0..vertices.len()).step_by(3) {
                 self.render_triangle(vertices[i], vertices[i+1], vertices[i+2], &obj);

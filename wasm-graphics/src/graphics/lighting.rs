@@ -10,7 +10,7 @@ pub struct Light {
 }
 
 impl Light {
-    pub fn new( camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer) -> Light {
+    pub fn new(camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer) -> Light {
         return Light {
             color,
             intensity,
@@ -240,14 +240,14 @@ impl Light {
 
         // compute lighting components
         let angle_multiplier = pixel_to_light.dot(normal);
-        if angle_multiplier <= 0.0 || proportion_in_light == 0.0 {
+        if angle_multiplier <= 0.0 || proportion_in_light == 0.0 || samples == 0 {
             return Vec3::new(0.0, 0.0, 0.0) // light is behind or parallel to the surface
         }
 
         let inv_dist = 1.0 / (v.x * v.x + v.y * v.y + depth * depth).sqrt();
         // console_log!("inv_dist: {}", inv_dist);
 
-        let diffuse_light = properties.diffuse * angle_multiplier * inv_dist * inv_dist * self.intensity * proportion_in_light * properties.color;
+        let diffuse_light = properties.diffuse * angle_multiplier * inv_dist * self.intensity * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
         let mut specular_light = Vec3::new(0.0, 0.0, 0.0);
 
         if properties.specular > 0.0 {
@@ -260,7 +260,7 @@ impl Light {
             let NdotH = normal.dot(&H);
             let exp_multiplier = 4.0;
             if NdotH >= 0.0 {
-                specular_light = properties.specular * NdotH.powf(exp_multiplier * properties.shininess) * self.intensity * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
+                specular_light = properties.specular * NdotH.powf(exp_multiplier * properties.shininess) * self.intensity * inv_dist * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
             }
         }
         return diffuse_light + specular_light;

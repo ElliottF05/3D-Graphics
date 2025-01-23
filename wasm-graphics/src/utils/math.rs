@@ -29,12 +29,16 @@ impl Vec3 {
     pub fn len(&self) -> f32 {
         return (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
     }
+    pub fn len_squared(&self) -> f32 {
+        return self.x * self.x + self.y * self.y + self.z * self.z;
+    }
     pub fn normalize(&mut self) {
         *self /= self.len();
     }
     pub fn normalized(&self) -> Self {
         return self.clone() / self.len();
     }
+
     pub fn rotate_z(&mut self, theta_z: f32) {
         let (sin, cos) = theta_z.sin_cos();
         let (x, y) = (self.x, self.y);
@@ -47,6 +51,18 @@ impl Vec3 {
         self.x = x * cos - z * sin;
         self.z = x * sin + z * cos;
     }
+    pub fn rotate_z_fast(&mut self, sin_z: f32, cos_z: f32) {
+        let (x, y) = (self.x, self.y);
+        self.x = x * cos_z - y * sin_z;
+        self.y = x * sin_z + y * cos_z;
+    }
+    pub fn rotate_y_fast(&mut self, sin_y: f32, cos_y: f32) {
+        let (x, z) = (self.x, self.z);
+        self.x = x * cos_y - z * sin_y;
+        self.z = x * sin_y + z * cos_y;
+    }
+
+
     pub fn pairwise_mul(&mut self, other: &Self) {
         self.x *= other.x;
         self.y *= other.y;

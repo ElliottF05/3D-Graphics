@@ -5,6 +5,7 @@ static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
 pub struct MaterialProperties {
     pub color: Vec3,
+    pub alpha: f32,
     pub ambient: f32,
     pub diffuse: f32,
     pub specular: f32,
@@ -12,8 +13,9 @@ pub struct MaterialProperties {
 }
 
 impl MaterialProperties {
-    pub fn new(color: Vec3, ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> MaterialProperties {
+    pub fn new(color: Vec3, alpha: f32, ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> MaterialProperties {
         MaterialProperties {
+            alpha,
             color,
             ambient,
             diffuse,
@@ -22,7 +24,7 @@ impl MaterialProperties {
         }
     }
     pub fn default_from_color(color: Vec3) -> MaterialProperties {
-        MaterialProperties::new(color, 0.1, 1.0, 0.000014, 32.0)
+        MaterialProperties::new(color, 1.0, 0.1, 1.0, 1.0, 32.0)
     }
 }
 
@@ -30,12 +32,14 @@ pub trait SceneObject {
     fn get_vertices(&self) -> &Vec<Vec3>;
     fn get_properties(&self) -> &MaterialProperties;
     fn get_id(&self) -> usize;
+    fn get_center(&self) -> Vec3;
 }
 
 pub struct VertexObject {
     pub vertices: Vec<Vec3>,
     pub properties: MaterialProperties,
     pub id: usize,
+    pub center: Vec3,
 }
 
 impl SceneObject for VertexObject {
@@ -48,14 +52,23 @@ impl SceneObject for VertexObject {
     fn get_id(&self) -> usize {
         return self.id;
     }
+    fn get_center(&self) -> Vec3 {
+        return self.center;
+    }
 }
 
 impl VertexObject {
     pub fn new(vertices: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
+        let mut center = Vec3::new(0.0, 0.0, 0.0);
+        for v in & vertices {
+            center += *v;
+        }
+        center /= vertices.len() as f32;
         VertexObject {
             vertices,
             properties,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
+            center,
         }
     }
 }

@@ -14,7 +14,7 @@ wasm-bindgen="0.2.100"
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
-console_error_panic_hook = { version = "0.1.7", optional = true }
+console_error_panic_hook = { version = "0.1.7"}
 web-sys = { version = "0.3.77", features = [
     "Window",
     "Document",
@@ -27,3 +27,7 @@ web-sys = { version = "0.3.77", features = [
     "KeyboardEvent",
     "MouseEvent",
 ] }
+
+[package.metadata.wasm-pack.profile.dev]
+wasm-opt = ['-O4']
+
