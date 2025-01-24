@@ -109,7 +109,7 @@ pub fn init_and_begin_game_loop() {
         game.borrow_mut().game_loop();
 
         // Draw the pixel buffer onto the canvas
-        let image_data = ImageData::new_with_u8_clamped_array(wasm_bindgen::Clamped(&game.borrow().pixel_buf.get_buf()), width)
+        let image_data = ImageData::new_with_u8_clamped_array(wasm_bindgen::Clamped(&game.borrow().pixel_buf.get_buf_as_u8()), width)
             .expect("Failed to create ImageData");
         ctx.put_image_data(&image_data, 0.0, 0.0)
             .expect("Failed to put image data on canvas");
