@@ -24,7 +24,7 @@ impl MaterialProperties {
         }
     }
     pub fn default_from_color(color: Vec3) -> MaterialProperties {
-        MaterialProperties::new(color, 1.0, 0.1, 1.0, 1.0, 32.0)
+        MaterialProperties::new(color, 1.0, 0.8, 1.0, 1.0, 32.0)
     }
 }
 

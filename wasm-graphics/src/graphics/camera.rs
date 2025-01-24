@@ -49,8 +49,8 @@ impl Camera {
     }
     pub fn set_theta_y(&mut self, theta_y: f32) {
         self.theta_y = theta_y;
-        self.theta_y.clamp(-0.5 * PI, 0.5 * PI);
-        (self.sin_theta_y, self.cos_theta_y) = theta_y.sin_cos();
+        self.theta_y = self.theta_y.clamp(-0.5 * PI, 0.5 * PI);
+        (self.sin_theta_y, self.cos_theta_y) = self.theta_y.sin_cos();
     }
     pub fn set_theta_z(&mut self, theta_z: f32) {
         self.theta_z = theta_z;
@@ -102,12 +102,15 @@ impl Camera {
         v.x = 1.0;
         *v *= depth;
     }
-
     pub fn vertex_camera_to_world_space(&self, v: &mut Vec3) {
         // v.rotate_y(self.theta_y);
         // v.rotate_z(self.theta_z);
         v.rotate_y_fast(self.sin_theta_y, self.cos_theta_y);
         v.rotate_z_fast(self.sin_theta_z, self.cos_theta_z);
         *v += self.pos;
+    }
+    pub fn vertex_screen_to_world_space(&self, v: &mut Vec3) {
+        self.vertex_screen_to_camera_space(v);
+        self.vertex_camera_to_world_space(v);
     }
 }

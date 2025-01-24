@@ -33,7 +33,7 @@ impl PixelBuf {
             self.pixels[i+2] as f32 / 255.0,
         );
     }
-    pub fn clear(&mut self) {
+    pub fn clear_to_black(&mut self) {
         for i in (0..self.pixels.len()).step_by(4) {
             self.pixels[i] = 0;
             self.pixels[i+1] = 0;
@@ -42,6 +42,9 @@ impl PixelBuf {
     }
     pub fn get_buf(&self) -> &Vec<u8> {
         return &self.pixels;
+    }
+    pub fn get_mut_buf(&mut self) -> &mut Vec<u8> {
+        return &mut self.pixels;
     }
 }
 
