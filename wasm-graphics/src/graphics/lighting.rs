@@ -258,9 +258,9 @@ impl Light {
             let H = (V + pixel_to_light).normalized();
 
             let NdotH = normal.dot(&H);
-            let exp_multiplier = 4.0;
+            let exp_multiplier = 4;
             if NdotH >= 0.0 {
-                specular_light = properties.specular * NdotH.powf(exp_multiplier * properties.shininess) * self.intensity * inv_dist * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
+                specular_light = properties.specular * NdotH.powi(exp_multiplier * properties.shininess) * self.intensity * inv_dist * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
             }
         }
         return diffuse_light + specular_light;
