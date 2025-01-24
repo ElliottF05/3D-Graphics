@@ -9,11 +9,11 @@ pub struct MaterialProperties {
     pub ambient: f32,
     pub diffuse: f32,
     pub specular: f32,
-    pub shininess: f32,
+    pub shininess: i32,
 }
 
 impl MaterialProperties {
-    pub fn new(color: Vec3, alpha: f32, ambient: f32, diffuse: f32, specular: f32, shininess: f32) -> MaterialProperties {
+    pub fn new(color: Vec3, alpha: f32, ambient: f32, diffuse: f32, specular: f32, shininess: i32) -> MaterialProperties {
         MaterialProperties {
             alpha,
             color,
@@ -24,7 +24,7 @@ impl MaterialProperties {
         }
     }
     pub fn default_from_color(color: Vec3) -> MaterialProperties {
-        MaterialProperties::new(color, 1.0, 0.8, 1.0, 1.0, 32.0)
+        MaterialProperties::new(color, 1.0, 0.8, 1.0, 1.0, 32)
     }
 }
 

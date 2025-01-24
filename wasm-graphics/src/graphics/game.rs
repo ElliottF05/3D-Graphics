@@ -51,9 +51,9 @@ impl Game {
         );
 
         let mut light = Light::new(
-            Camera::new(Vec3::new(0.0, 10.0, 10.0), 0.0, 0.0, PI/4.0, 2000, 2000),
+            Camera::new(Vec3::new(0.0, 10.0, 20.0), 0.0, 0.0, PI/8.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            6.0,
+            8.0,
             ZBuffer::new(2000, 2000),
         );
         light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
