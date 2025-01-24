@@ -42,6 +42,30 @@ impl Game {
             1.0,
             MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
         ));
+        game.add_scene_object(build_cube(
+            Vec3::new(12.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(1.0, 0.0, 0.0),
+                0.5,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(14.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(0.0, 0.0, 1.0),
+                0.5,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
         game.add_scene_objects(build_checkerboard(
                 &Vec3::new(10.0, 0.0, 0.0), 
                 20, 
@@ -297,8 +321,15 @@ impl Game {
                         color.y = color.y.min(1.0);
                         color.z = color.z.min(1.0);
 
-                        self.zbuf.set_depth(x, y, depth);
-                        self.pixel_buf.set_pixel(x, y, color);
+                        if properties.alpha == 1.0 {
+                            self.zbuf.set_depth(x, y, depth);
+                            self.pixel_buf.set_pixel(x, y, color);
+                        } else {
+                            // alpha blending, don't set depth
+                            let old_color = self.pixel_buf.get_pixel(x, y);
+                            let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
+                            self.pixel_buf.set_pixel(x, y, new_color);
+                        }
                     }
                 }
                 x1 += slope1;
@@ -356,8 +387,15 @@ impl Game {
                         color.y = color.y.min(1.0);
                         color.z = color.z.min(1.0);
 
-                        self.zbuf.set_depth(x, y, depth);
-                        self.pixel_buf.set_pixel(x, y, color);
+                        if properties.alpha == 1.0 {
+                            self.zbuf.set_depth(x, y, depth);
+                            self.pixel_buf.set_pixel(x, y, color);
+                        } else {
+                            // alpha blending, don't set depth
+                            let old_color = self.pixel_buf.get_pixel(x, y);
+                            let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
+                            self.pixel_buf.set_pixel(x, y, new_color);
+                        }
                     }
                 }
                 x1 += slope3;
