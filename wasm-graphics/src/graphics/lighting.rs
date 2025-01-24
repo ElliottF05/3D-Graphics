@@ -212,6 +212,9 @@ impl Light {
             return Vec3::new(0.0, 0.0, 0.0);
         }
 
+        let inv_dist = 1.0 / v.len();
+        // console_log!("inv_dist: {}", inv_dist);
+
         // transform world position to screen space
         self.camera.vertex_camera_to_screen_space(&mut v);
 
@@ -243,9 +246,6 @@ impl Light {
         if angle_multiplier <= 0.0 || proportion_in_light == 0.0 || samples == 0 {
             return Vec3::new(0.0, 0.0, 0.0) // light is behind or parallel to the surface
         }
-
-        let inv_dist = 1.0 / (v.x * v.x + v.y * v.y + depth * depth).sqrt();
-        // console_log!("inv_dist: {}", inv_dist);
 
         let diffuse_light = properties.diffuse * angle_multiplier * inv_dist * self.intensity * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
         let mut specular_light = Vec3::new(0.0, 0.0, 0.0);

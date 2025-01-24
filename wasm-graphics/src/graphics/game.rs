@@ -10,6 +10,9 @@ pub struct Game {
     pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
     pub lights: Vec<Light>,
 
+    pub max_sky_color: Vec3,
+    pub min_sky_color: Vec3,
+
     pub pixel_buf: PixelBuf,
     pub zbuf: ZBuffer,
 
@@ -22,9 +25,11 @@ impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
-            camera: Camera::new(Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, PI/2.0, 500, 500),
+            camera: Camera::new(Vec3::new(0.001, 0.001, 1.001), 0.001, 0.001, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
+            max_sky_color: Vec3::new(0.15, 0.15, 0.2),
+            min_sky_color: Vec3::new(0.15, 0.15, 0.17),
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
             keys_currently_pressed: HashSet::new(),
@@ -39,7 +44,7 @@ impl Game {
         ));
         game.add_scene_objects(build_checkerboard(
                 &Vec3::new(10.0, 0.0, 0.0), 
-                5, 
+                20, 
                 &Vec3::new(0.8, 0.8, 0.8), 
                 &Vec3::new(0.6, 0.6, 0.6)
             )
@@ -48,7 +53,7 @@ impl Game {
         let mut light = Light::new(
             Camera::new(Vec3::new(0.0, 10.0, 10.0), 0.0, 0.0, PI/4.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            700.0,
+            6.0,
             ZBuffer::new(2000, 2000),
         );
         light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
@@ -121,7 +126,8 @@ impl Game {
 
         let t1 = get_time();
 
-        self.pixel_buf.clear();
+        // clear buffers
+        self.clear_pixel_buf_to_sky();
         self.zbuf.clear();
 
 
@@ -131,7 +137,8 @@ impl Game {
             .partial_cmp(&(b.get_center() - self.camera.pos).len_squared())
             .unwrap_or(std::cmp::Ordering::Equal));
 
-        for obj in &objects {
+        // opaque objects
+        for obj in objects.iter().rev() {
             if obj.get_properties().alpha < 1.0 {
                 continue;
             }
@@ -140,6 +147,19 @@ impl Game {
                 self.render_triangle(vertices[i], vertices[i+1], vertices[i+2], &obj);
             }
         }
+
+        // transparent objects
+        for obj in &objects {
+            if obj.get_properties().alpha == 1.0 {
+                continue;
+            }
+            let vertices = obj.get_vertices();
+            for i in (0..vertices.len()).step_by(3) {
+                self.render_triangle(vertices[i], vertices[i+1], vertices[i+2], &obj);
+            }
+        }
+
+
         self.objects.replace(objects);
 
         let t2 = get_time();
@@ -265,7 +285,7 @@ impl Game {
                         self.camera.vertex_screen_to_camera_space(&mut world_pos);
                         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                        let sky_color = Vec3::new(0.9, 0.9, 1.0); // TODO: ESTABLISH SKY COLOR
+                        let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
                         let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
@@ -324,7 +344,7 @@ impl Game {
                         self.camera.vertex_screen_to_camera_space(&mut world_pos);
                         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                        let sky_color = Vec3::new(0.9, 0.9, 1.0); // TODO: ESTABLISH SKY COLOR
+                        let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
                         let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
@@ -342,6 +362,25 @@ impl Game {
                 }
                 x1 += slope3;
                 x2 += slope2;
+            }
+        }
+    }
+
+    pub fn get_sky_color(&self, dir: &Vec3) -> Vec3 {
+        let a = 0.5 * (dir.z + 1.0);
+        return self.min_sky_color * (1.0 - a) + self.max_sky_color * a;
+    }
+    pub fn clear_pixel_buf_to_sky(&mut self) {
+        let width = self.pixel_buf.width;
+        let height = self.pixel_buf.height;
+        for x in 0..height {
+            for y in 0..width {
+                let mut v = Vec3::new(x as f32, y as f32, 1.0);
+                self.camera.vertex_screen_to_world_space(& mut v);
+                v -= self.camera.pos;
+                v.normalize();
+                let sky_color = self.get_sky_color(&v);
+                self.pixel_buf.set_pixel(x, y, sky_color);
             }
         }
     }
