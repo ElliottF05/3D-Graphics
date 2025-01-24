@@ -3,48 +3,47 @@ use crate::utils::{math::Vec3, utils::color_to_u8};
 pub struct PixelBuf {
     pub width: usize,
     pub height: usize,
-    pub pixels: Vec<u8>,
+    pub pixels: Vec<Vec3>,
 }
 
 impl PixelBuf {
     pub fn new(width: usize, height: usize) -> Self {
-        let mut pixels = vec![0; width * height * 4];
-        for i in (0..pixels.len()).step_by(4) {
-            pixels[i+3] = 255;
-        }
         return PixelBuf {
             width,
             height,
-            pixels,
+            pixels: vec![Vec3::new(0.0, 0.0, 0.0); width * height],
         }
     }
     pub fn set_pixel(&mut self, x: usize, y: usize, color: Vec3) {
-        let i = (y * self.width + x) * 4;
-        let (r,g,b) = color_to_u8(color);
-        self.pixels[i] = r;
-        self.pixels[i+1] = g;
-        self.pixels[i+2] = b;
+        let i = y * self.width + x;
+        self.pixels[i] = color;
     }
     pub fn get_pixel(&self, x: usize, y: usize) -> Vec3 {
-        let i = (y * self.width + x) * 4;
-        return Vec3::new(
-            self.pixels[i] as f32 / 255.0,
-            self.pixels[i+1] as f32 / 255.0,
-            self.pixels[i+2] as f32 / 255.0,
-        );
+        let i = y * self.width + x;
+        return self.pixels[i].clone();
     }
     pub fn clear_to_black(&mut self) {
-        for i in (0..self.pixels.len()).step_by(4) {
-            self.pixels[i] = 0;
-            self.pixels[i+1] = 0;
-            self.pixels[i+2] = 0;
+        for p in self.pixels.iter_mut() {
+            p.x = 0.0;
+            p.y = 0.0;
+            p.z = 0.0;
         }
     }
-    pub fn get_buf(&self) -> &Vec<u8> {
+    pub fn get_buf(&self) -> &Vec<Vec3> {
         return &self.pixels;
     }
-    pub fn get_mut_buf(&mut self) -> &mut Vec<u8> {
+    pub fn get_mut_buf(&mut self) -> &mut Vec<Vec3> {
         return &mut self.pixels;
+    }
+    pub fn get_buf_as_u8(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(self.height * self.width * 4);
+        for p in self.pixels.iter() {
+            buf.push((p.x.clamp(0.0, 1.0) * 255.0) as u8);
+            buf.push((p.y.clamp(0.0, 1.0) * 255.0) as u8);
+            buf.push((p.z.clamp(0.0, 1.0) * 255.0) as u8);
+            buf.push(255);
+        }
+        return buf;
     }
 }
 
