@@ -159,8 +159,9 @@ impl Game {
     }
 
     fn render_frame(&mut self) {
-        // curr time is ~73ms (finished adding lighting)
-        // ~57ms (after precomputing sin/cos)
+        // curr time is ~73ms - finished adding lighting)
+        // ~57ms (20% improvement)- after precomputing sin/cos)
+        // (almost 30% improvement from using powi over powf)
 
         let t1 = get_time();
 
