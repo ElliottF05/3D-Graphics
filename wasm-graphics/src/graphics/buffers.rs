@@ -29,6 +29,13 @@ impl PixelBuf {
             p.z = 0.0;
         }
     }
+    pub fn clear_to_white(&mut self) {
+        for p in self.pixels.iter_mut() {
+            p.x = 1.0;
+            p.y = 1.0;
+            p.z = 1.0;
+        }
+    }
     pub fn get_buf(&self) -> &Vec<Vec3> {
         return &self.pixels;
     }
@@ -38,9 +45,10 @@ impl PixelBuf {
     pub fn get_buf_as_u8(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(self.height * self.width * 4);
         for p in self.pixels.iter() {
-            buf.push((p.x.clamp(0.0, 1.0) * 255.0) as u8);
-            buf.push((p.y.clamp(0.0, 1.0) * 255.0) as u8);
-            buf.push((p.z.clamp(0.0, 1.0) * 255.0) as u8);
+            let (r,g,b) = color_to_u8(p);
+            buf.push(r);
+            buf.push(g);
+            buf.push(b);
             buf.push(255);
         }
         return buf;

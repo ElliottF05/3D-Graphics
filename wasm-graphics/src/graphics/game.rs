@@ -1,7 +1,7 @@
 use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
 
-use crate::{console_log, utils::math::Vec3, wasm::wasm::get_time};
+use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}, wasm::wasm::get_time};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, MaterialProperties, SceneObject, VertexObject}};
 
@@ -55,6 +55,18 @@ impl Game {
             ),
         ));
         game.add_scene_object(build_cube(
+            Vec3::new(13.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(0.0, 1.0, 0.0),
+                0.5,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
             Vec3::new(14.0, 0.0, 0.5),
             1.0,
             MaterialProperties::new(
@@ -79,12 +91,14 @@ impl Game {
             Vec3::new(1.0, 1.0, 1.0),
             8.0,
             ZBuffer::new(2000, 2000),
+            PixelBuf::new(2000, 2000),
         );
         light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
         game.lights.push(light);
 
         for light in game.lights.iter_mut() {
-            light.add_objects_to_shadow_map(game.objects.borrow().as_ref());
+            light.clear_shadow_map();
+            light.add_objects_to_shadow_map(&mut game.objects.borrow_mut());
         }
 
         return game;
@@ -156,13 +170,10 @@ impl Game {
 
 
         let mut objects = self.objects.take();
-        objects.sort_by(|a, b| 
-            (a.get_center() - self.camera.pos).len_squared()
-            .partial_cmp(&(b.get_center() - self.camera.pos).len_squared())
-            .unwrap_or(std::cmp::Ordering::Equal));
+        sort_objects_by_distance_to_camera(&mut objects, &self.camera.pos);
 
         // opaque objects
-        for obj in objects.iter().rev() {
+        for obj in objects.iter() {
             if obj.get_properties().alpha < 1.0 {
                 continue;
             }
@@ -173,7 +184,7 @@ impl Game {
         }
 
         // transparent objects
-        for obj in &objects {
+        for obj in objects.iter().rev() {
             if obj.get_properties().alpha == 1.0 {
                 continue;
             }
@@ -329,6 +340,8 @@ impl Game {
                             let old_color = self.pixel_buf.get_pixel(x, y);
                             let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
                             self.pixel_buf.set_pixel(x, y, new_color);
+
+                            // self.pixel_buf.set_pixel(x, y, color);
                         }
                     }
                 }
@@ -395,6 +408,8 @@ impl Game {
                             let old_color = self.pixel_buf.get_pixel(x, y);
                             let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
                             self.pixel_buf.set_pixel(x, y, new_color);
+
+                            // self.pixel_buf.set_pixel(x, y, color);
                         }
                     }
                 }
