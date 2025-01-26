@@ -1,41 +1,46 @@
-use crate::{console_log, utils::math::Vec3};
+use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}};
 
-use super::{buffers::ZBuffer, camera::Camera, scene::{MaterialProperties, SceneObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, scene::{MaterialProperties, SceneObject}};
 
 pub struct Light {
     pub color: Vec3,
     pub intensity: f32,
     pub zbuf: ZBuffer,
+    pub color_buf: PixelBuf,
     pub camera: Camera,
 }
 
 impl Light {
-    pub fn new(camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer) -> Light {
+    pub fn new(camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer, color_buf: PixelBuf) -> Light {
         return Light {
             color,
             intensity,
             zbuf,
             camera,
+            color_buf,
         }
     }
 
     pub fn clear_shadow_map(&mut self) {
         self.zbuf.clear();
+        self.color_buf.clear_to_white();
     }
 
-    pub fn add_objects_to_shadow_map(&mut self, objects: &Vec<Box<dyn SceneObject>>) {
+    pub fn add_objects_to_shadow_map(&mut self, objects: &mut Vec<Box<dyn SceneObject>>) {
+        sort_objects_by_distance_to_camera(objects, &self.camera.pos);
         for obj in objects {
-            self.add_vertices_to_shadow_map(obj.get_vertices());
+            self.add_object_to_shadow_map(obj);
         }
     }
 
-    pub fn add_vertices_to_shadow_map(&mut self, vertices: &Vec<Vec3>) {
+    fn add_object_to_shadow_map(&mut self, obj: &Box<dyn SceneObject>) {
+        let vertices = obj.get_vertices();
         for i in (0..vertices.len()).step_by(3) {
-            self.add_triangle_to_shadow_map(vertices[i], vertices[i+1], vertices[i+2]);
+            self.add_triangle_to_shadow_map(vertices[i], vertices[i+1], vertices[i+2], obj);
         }
     }
 
-    pub fn add_triangle_to_shadow_map(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3) {
+    fn add_triangle_to_shadow_map(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
 
         // do not render if normal is pointing toward light - FRONT FACE CULLING
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
@@ -64,7 +69,7 @@ impl Light {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3);
+            self.fill_triangle(v1, v2, v3, scene_obj);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -73,8 +78,8 @@ impl Light {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3);
-            self.fill_triangle(v1_new_1, v1_new_2, v3);
+            self.fill_triangle(v1_new_1, v2, v3, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, scene_obj);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -82,14 +87,16 @@ impl Light {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3);
+            self.fill_triangle(v1_new, v2_new, v3, scene_obj);
         } else { // no vertices in view
             return;
         }
     }
 
-    pub fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
+
+        let properties = scene_obj.get_properties();
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -146,7 +153,13 @@ impl Light {
                     let depth = 1.0 / inv_depth;
 
                     if depth < self.zbuf.get_depth(x, y) {
-                        self.zbuf.set_depth(x, y, depth);
+                        if properties.alpha == 1.0 {
+                            self.zbuf.set_depth(x, y, depth);
+                        } else {
+                            let old_color = self.color_buf.get_pixel(x, y);
+                            let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                            self.color_buf.set_pixel(x, y, new_color);
+                        }
                     }
                 }
                 x1 += slope1;
@@ -187,7 +200,13 @@ impl Light {
                     let depth = 1.0 / inv_depth;
 
                     if depth < self.zbuf.get_depth(x, y) {
-                        self.zbuf.set_depth(x, y, depth);
+                        if properties.alpha == 1.0 {
+                            self.zbuf.set_depth(x, y, depth);
+                        } else {
+                            let old_color = self.color_buf.get_pixel(x, y);
+                            let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                            self.color_buf.set_pixel(x, y, new_color);
+                        }
                     }
                 }
                 x1 += slope3;
@@ -204,8 +223,6 @@ impl Light {
         // transform world position to camera space
         let mut v = world_pos.clone();
         self.camera.vertex_world_to_camera_space(&mut v);
-        // console_log!("v is: {:?}", v);
-        // console_log!("camera.theta_y: {}", self.camera.theta_y);
 
         let depth = v.x;
         if depth <= 0.0 { // pixel is behind the camera/light
@@ -213,7 +230,6 @@ impl Light {
         }
 
         let inv_dist = 1.0 / v.len();
-        // console_log!("inv_dist: {}", inv_dist);
 
         // transform world position to screen space
         self.camera.vertex_camera_to_screen_space(&mut v);
@@ -223,10 +239,17 @@ impl Light {
         let filter_radius = 1;
         let bias = 0.01;
 
+        let x = v.x.round() as i32;
+        let y = v.y.round() as i32;
+
+        if x < 0 || x >= self.zbuf.width as i32 || y < 0 || y >= self.zbuf.height as i32 {
+            return Vec3::new(0.0, 0.0, 0.0);
+        }
+
         for dy in -filter_radius..=filter_radius {
             for dx in -filter_radius..=filter_radius {
-                let sample_x = v.x.round() as i32 + dx;
-                let sample_y = v.y.round() as i32 + dy;
+                let sample_x = x + dx;
+                let sample_y = y + dy;
 
                 if sample_x < 0 || sample_x >= self.zbuf.width as i32 || sample_y < 0 || sample_y >= self.zbuf.height as i32 {
                     continue;
@@ -239,7 +262,6 @@ impl Light {
             }
         }
         proportion_in_light /= samples as f32;
-        // console_log!("proportion_in_shadow: {}", proportion_in_shadow);
 
         // compute lighting components
         let angle_multiplier = pixel_to_light.dot(normal);
@@ -247,7 +269,20 @@ impl Light {
             return Vec3::new(0.0, 0.0, 0.0) // light is behind or parallel to the surface
         }
 
-        let diffuse_light = properties.diffuse * angle_multiplier * inv_dist * self.intensity * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
+        let mut light_color = Vec3::pairwise_mul_new(&properties.color, &self.color);
+        if properties.alpha == 1.0 {
+            light_color.pairwise_mul(&self.color_buf.get_pixel(x as usize, y as usize));
+        }
+
+        let diffuse_light = properties.diffuse
+            * angle_multiplier
+            * inv_dist 
+            * self.intensity 
+            * proportion_in_light
+            * light_color;
+            // Vec3::pairwise_mul_new(&properties.color, &self.color);
+            // Vec3::pairwise_mul_new(&Vec3::pairwise_mul_new(&properties.color, &self.color), &self.color_buf.get_pixel(x as usize, y as usize));
+            
         let mut specular_light = Vec3::new(0.0, 0.0, 0.0);
 
         if properties.specular > 0.0 {
@@ -260,7 +295,11 @@ impl Light {
             let NdotH = normal.dot(&H);
             let exp_multiplier = 4;
             if NdotH >= 0.0 {
-                specular_light = properties.specular * NdotH.powi(exp_multiplier * properties.shininess) * self.intensity * inv_dist * proportion_in_light * Vec3::pairwise_mul_new(&properties.color, &self.color);
+                specular_light = properties.specular 
+                * NdotH.powi(exp_multiplier * properties.shininess) 
+                * self.intensity * inv_dist * proportion_in_light 
+                * light_color;
+
             }
         }
         return diffuse_light + specular_light;
