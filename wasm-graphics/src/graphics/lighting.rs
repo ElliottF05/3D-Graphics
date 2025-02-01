@@ -157,7 +157,7 @@ impl Light {
                             self.zbuf.set_depth(x, y, depth);
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
-                            let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::pairwise_mul_new(&old_color, &properties.color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -204,7 +204,8 @@ impl Light {
                             self.zbuf.set_depth(x, y, depth);
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
-                            let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                            // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::pairwise_mul_new(&old_color, &properties.color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -235,9 +236,10 @@ impl Light {
         self.camera.vertex_camera_to_screen_space(&mut v);
 
         let mut proportion_in_light = 0.0;
+        let mut shadow_color = Vec3::new(0.0, 0.0, 0.0);
         let mut samples = 0;
         let filter_radius = 1;
-        let bias = 0.01;
+        let bias = 0.0;
 
         let x = v.x.round() as i32;
         let y = v.y.round() as i32;
@@ -255,23 +257,26 @@ impl Light {
                     continue;
                 }
 
-                if depth + bias < self.zbuf.get_depth(sample_x as usize, sample_y as usize) {
+                shadow_color += self.color_buf.get_pixel(sample_x as usize, sample_y as usize);
+                if depth - bias < self.zbuf.get_depth(sample_x as usize, sample_y as usize) {
                     proportion_in_light += 1.0;
                 }
                 samples += 1;
             }
         }
-        proportion_in_light /= samples as f32;
 
         // compute lighting components
         let angle_multiplier = pixel_to_light.dot(normal);
         if angle_multiplier <= 0.0 || proportion_in_light == 0.0 || samples == 0 {
-            return Vec3::new(0.0, 0.0, 0.0) // light is behind or parallel to the surface
+            return Vec3::new(0.0, 0.0, 0.0) // light is behind the surface or fully occluded
         }
+
+        proportion_in_light /= samples as f32;
+        shadow_color /= samples as f32;
 
         let mut light_color = Vec3::pairwise_mul_new(&properties.color, &self.color);
         if properties.alpha == 1.0 {
-            light_color.pairwise_mul(&self.color_buf.get_pixel(x as usize, y as usize));
+            light_color.pairwise_mul(&shadow_color);
         }
 
         let diffuse_light = properties.diffuse
