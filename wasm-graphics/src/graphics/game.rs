@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
 
 use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}, wasm::wasm::get_time};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, MaterialProperties, SceneObject, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_checkerboard_with_color, build_cube, MaterialProperties, SceneObject, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -38,7 +38,7 @@ impl Game {
         };
 
         game.add_scene_object(build_cube(
-            Vec3::new(10.0, 0.0, 0.0),
+            Vec3::new(10.0, 0.0, 0.5),
             1.0,
             MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
         ));
@@ -47,7 +47,7 @@ impl Game {
             1.0,
             MaterialProperties::new(
                 Vec3::new(1.0, 0.0, 0.0),
-                0.5,
+                0.05,
                 0.8,
                 1.0,
                 1.0,
@@ -59,7 +59,7 @@ impl Game {
             1.0,
             MaterialProperties::new(
                 Vec3::new(0.0, 1.0, 0.0),
-                0.5,
+                0.2,
                 0.8,
                 1.0,
                 1.0,
@@ -78,22 +78,59 @@ impl Game {
                 32,
             ),
         ));
-        game.add_scene_objects(build_checkerboard(
-                &Vec3::new(10.0, 0.0, 0.0), 
+        game.add_scene_object(build_cube(
+            Vec3::new(15.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(1.0, 0.0, 0.0),
+                0.8,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(16.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(0.0, 1.0, 0.0),
+                0.95,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(17.0, 0.0, 0.5),
+            1.0,
+            MaterialProperties::new(
+                Vec3::new(0.0, 0.0, 1.0),
+                1.0,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+
+        game.add_scene_objects(build_checkerboard_with_color(
+                Vec3::new(10.0, 0.0, 0.0), 
                 20, 
-                &Vec3::new(0.8, 0.8, 0.8), 
-                &Vec3::new(0.6, 0.6, 0.6)
+                Vec3::new(1.0, 1.0, 1.0), 
+                Vec3::new(0.9, 0.9, 0.9)
             )
         );
 
         let mut light = Light::new(
-            Camera::new(Vec3::new(0.0, 10.0, 20.0), 0.0, 0.0, PI/8.0, 2000, 2000),
+            Camera::new(Vec3::new(0.0, 10.0, 30.0), 0.0, 0.0, PI/10.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            8.0,
+            25.0,
             ZBuffer::new(2000, 2000),
             PixelBuf::new(2000, 2000),
         );
-        light.camera.look_at(&Vec3::new(10.0, 0.0, 0.0));
+        light.camera.look_at(&Vec3::new(13.0, 0.0, 0.0));
         game.lights.push(light);
 
         for light in game.lights.iter_mut() {
@@ -161,7 +198,10 @@ impl Game {
     fn render_frame(&mut self) {
         // curr time is ~73ms - finished adding lighting)
         // ~57ms (20% improvement)- after precomputing sin/cos)
-        // (almost 30% improvement from using powi over powf)
+        // almost 30% improvement from using powi over powf
+        // negligible decrease in perf for most cases from adding transparency + transparent shadows
+        //      WARNING - transparent objects can cause significant (3x-5x) performance drops 
+        //      since multiple layers must be rendered each time
 
         let t1 = get_time();
 
@@ -208,7 +248,7 @@ impl Game {
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
         let cam_to_triangle = v1 - self.camera.pos;
 
-        if normal.dot(&cam_to_triangle) > 0.0 {
+        if scene_obj.get_properties().alpha == 1.0 && normal.dot(&cam_to_triangle) > 0.0 {
             return;
         }
 
@@ -314,8 +354,9 @@ impl Game {
                     let q3 = (x as f32 - x1) / (x2 - x1);
                     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
                     let depth = 1.0 / inv_depth;
+                    let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
-                    if depth < self.zbuf.get_depth(x, y) {
+                    if depth - bias < self.zbuf.get_depth(x, y) {
 
                         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
                         self.camera.vertex_screen_to_camera_space(&mut world_pos);
@@ -382,8 +423,9 @@ impl Game {
                     let q3 = (x as f32 - x1) / (x2 - x1);
                     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
                     let depth = 1.0 / inv_depth;
+                    let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
-                    if depth < self.zbuf.get_depth(x, y) {
+                    if depth - bias < self.zbuf.get_depth(x, y) {
 
                         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
                         self.camera.vertex_screen_to_camera_space(&mut world_pos);

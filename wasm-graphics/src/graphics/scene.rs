@@ -24,7 +24,7 @@ impl MaterialProperties {
         }
     }
     pub fn default_from_color(color: Vec3) -> MaterialProperties {
-        MaterialProperties::new(color, 1.0, 0.8, 1.0, 1.0, 32)
+        MaterialProperties::new(color, 1.0, 0.8, 1.0, 0.5, 32)
     }
 }
 
@@ -104,7 +104,7 @@ pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -
     VertexObject::new(vertices, properties)
 }
 
-pub fn build_checkerboard(center: &Vec3, radius: i32, color1: &Vec3, color2: &Vec3) -> Vec<VertexObject> {
+pub fn build_checkerboard(center: Vec3, radius: i32, properties1: MaterialProperties, properties2: MaterialProperties) -> Vec<VertexObject> {
     let mut vertices1 = Vec::new();
     let mut vertices2 = Vec::new();
 
@@ -121,8 +121,11 @@ pub fn build_checkerboard(center: &Vec3, radius: i32, color1: &Vec3, color2: &Ve
     }
 
     return vec![
-        VertexObject::new(vertices1, MaterialProperties::default_from_color(color1.clone())),
-        VertexObject::new(vertices2, MaterialProperties::default_from_color(color2.clone())),
+        VertexObject::new(vertices1, properties1),
+        VertexObject::new(vertices2, properties2),
     ];
+}
 
+pub fn build_checkerboard_with_color(center: Vec3, radius: i32, color1: Vec3, color2: Vec3) -> Vec<VertexObject> {
+    return build_checkerboard(center, radius, MaterialProperties::default_from_color(color1), MaterialProperties::default_from_color(color2));
 }
