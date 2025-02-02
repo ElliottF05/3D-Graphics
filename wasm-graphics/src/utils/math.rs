@@ -71,6 +71,13 @@ impl Vec3 {
     pub fn pairwise_mul_new(a: &Vec3, b: &Vec3) -> Vec3 {
         return Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z);
     }
+
+    pub fn midpoint_with(&self, other: &Vec3) -> Vec3 {
+        return 0.5 * (*self + *other);
+    }
+    pub fn midpoint_of(a: &Vec3, b: &Vec3) -> Vec3 {
+        return a.midpoint_with(b);
+    }
 }
 
 impl Add for Vec3 {
