@@ -73,6 +73,78 @@ impl VertexObject {
     }
 }
 
+pub struct Sphere {
+    pub vertices: Vec<Vec3>,
+    pub properties: MaterialProperties,
+    pub id: usize,
+    pub center: Vec3,
+    pub radius: f32,
+}
+
+impl SceneObject for Sphere {
+    fn get_vertices(&self) -> &Vec<Vec3> {
+        &self.vertices
+    }
+    fn get_properties(&self) -> &MaterialProperties {
+        &self.properties
+    }
+    fn get_id(&self) -> usize {
+        return self.id;
+    }
+    fn get_center(&self) -> Vec3 {
+        return self.center;
+    }
+}
+
+impl Sphere {
+    pub fn new(vertices: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties) -> Sphere {
+        Sphere {
+            vertices,
+            properties,
+            id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
+            center,
+            radius,
+        }
+    }
+
+    // building an icosphere
+    pub fn build_sphere(center: Vec3, radius: f32, iterations: u32, properties: MaterialProperties) -> Sphere {
+        let mut vertices = get_icosahedron_vertices(1.0);
+        for _ in 0..iterations {
+            let mut next_vertices = Vec::with_capacity(vertices.len() * (4 as usize).pow(iterations));
+            for i in (0..vertices.len()).step_by(3) {
+                let (p1, p2, p3) = (vertices[i], vertices[i+1], vertices[i+2]);
+                let (m1, m2, m3) = (p1.midpoint_with(&p2), p2.midpoint_with(&p3), p3.midpoint_with(&p1));
+
+                next_vertices.push(p1);
+                next_vertices.push(m1);
+                next_vertices.push(m3);
+
+                next_vertices.push(m1);
+                next_vertices.push(p2);
+                next_vertices.push(m2);
+
+                next_vertices.push(m3);
+                next_vertices.push(m2);
+                next_vertices.push(p3);
+
+                next_vertices.push(m1);
+                next_vertices.push(m2);
+                next_vertices.push(m3);
+            }
+            vertices = next_vertices;
+        }
+
+        for v in vertices.iter_mut() {
+            v.normalize();
+            *v *= radius;
+            *v += center;
+        }
+
+        return Sphere::new(vertices, center, radius, properties);
+    }
+}
+
 pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -> VertexObject {
     let half = side_length / 2.0;
 
@@ -128,4 +200,63 @@ pub fn build_checkerboard(center: Vec3, radius: i32, properties1: MaterialProper
 
 pub fn build_checkerboard_with_color(center: Vec3, radius: i32, color1: Vec3, color2: Vec3) -> Vec<VertexObject> {
     return build_checkerboard(center, radius, MaterialProperties::default_from_color(color1), MaterialProperties::default_from_color(color2));
+}
+
+pub fn get_icosahedron_vertices(t: f32) -> Vec<Vec3> {
+    let base_vertices = vec![
+        Vec3::new(-1.0, t, 0.0),
+        Vec3::new(1.0, t, 0.0),
+        Vec3::new(-1.0, -t, 0.0),
+        Vec3::new(1.0, -t, 0.0),
+
+        Vec3::new(0.0, -1.0, t),
+        Vec3::new(0.0, 1.0, t),
+        Vec3::new(0.0, -1.0, -t),
+        Vec3::new(0.0, 1.0, -t),
+
+        Vec3::new(t, 0.0, -1.0),
+        Vec3::new(t, 0.0, 1.0),
+        Vec3::new(-t, 0.0, -1.0),
+        Vec3::new(-t, 0.0, 1.0),
+    ];
+
+    let vertices = vec![
+        base_vertices[11], base_vertices[0], base_vertices[5],
+        base_vertices[5], base_vertices[0], base_vertices[1],
+        base_vertices[1], base_vertices[0], base_vertices[7],
+        base_vertices[7], base_vertices[0], base_vertices[10],
+        base_vertices[10], base_vertices[0], base_vertices[11],
+
+        base_vertices[5], base_vertices[1], base_vertices[9],
+        base_vertices[11], base_vertices[5], base_vertices[4],
+        base_vertices[10], base_vertices[11], base_vertices[2],
+        base_vertices[7], base_vertices[10], base_vertices[6],
+        base_vertices[1], base_vertices[7], base_vertices[8],
+
+        base_vertices[9], base_vertices[3], base_vertices[4],
+        base_vertices[4], base_vertices[3], base_vertices[2],
+        base_vertices[2], base_vertices[3], base_vertices[6],
+        base_vertices[6], base_vertices[3], base_vertices[8],
+        base_vertices[8], base_vertices[3], base_vertices[9],
+
+        base_vertices[9], base_vertices[4], base_vertices[5],
+        base_vertices[4], base_vertices[2], base_vertices[11],
+        base_vertices[2], base_vertices[6], base_vertices[10],
+        base_vertices[6], base_vertices[8], base_vertices[7],
+        base_vertices[8], base_vertices[9], base_vertices[1],
+    ];
+
+    return vertices;
+}
+
+pub fn build_icosahedron(center: Vec3, t: f32, properties: MaterialProperties) -> VertexObject {
+    let mut vertices = get_icosahedron_vertices(t);
+    for v in vertices.iter_mut() {
+        *v += center;
+    }
+    return VertexObject::new(vertices, properties);
+}
+
+pub fn build_sphere(center: Vec3, radius: f32, iterations: u32, properties: MaterialProperties) -> Sphere {
+    return Sphere::build_sphere(center, radius, iterations, properties);
 }

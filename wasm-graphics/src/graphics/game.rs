@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
 
 use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}, wasm::wasm::get_time};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_checkerboard_with_color, build_cube, MaterialProperties, SceneObject, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_checkerboard_with_color, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -37,10 +37,11 @@ impl Game {
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
         };
 
-        game.add_scene_object(build_cube(
-            Vec3::new(10.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 0.0, 0.5), 
+            0.5, 
+            4, 
+            MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0))
         ));
         game.add_scene_object(build_cube(
             Vec3::new(12.0, 0.0, 0.5),
@@ -124,13 +125,13 @@ impl Game {
         );
 
         let mut light = Light::new(
-            Camera::new(Vec3::new(0.0, 10.0, 30.0), 0.0, 0.0, PI/10.0, 2000, 2000),
+            Camera::new(Vec3::new(10.0, 100.0, 50.0), 0.0, 0.0, PI/15.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            25.0,
+            100.0,
             ZBuffer::new(2000, 2000),
             PixelBuf::new(2000, 2000),
         );
-        light.camera.look_at(&Vec3::new(13.0, 0.0, 0.0));
+        light.camera.look_at(&Vec3::new(15.0, 0.0, 1.0));
         game.lights.push(light);
 
         for light in game.lights.iter_mut() {
