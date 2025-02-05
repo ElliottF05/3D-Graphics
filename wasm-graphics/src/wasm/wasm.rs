@@ -1,10 +1,12 @@
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::io::BufReader;
+use std::io::Cursor;
+use std::io::Read;
 use std::rc::Rc;
 
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::js_sys;
 use web_sys::Event;
 use web_sys::EventTarget;
 use web_sys::ImageData;
@@ -41,6 +43,22 @@ pub fn init_panic_hook() {
 pub fn init_and_begin_game_loop() {
 
     init_panic_hook();
+
+    // testing stuff here
+    // let stl_bytes = include_bytes!("3DBenchy.stl");
+    // let mut reader = Cursor::new(stl_bytes);
+
+    // let triangle_iter = stl_io::create_stl_reader(&mut reader).unwrap();
+    // for (i, x) in triangle_iter.enumerate() {
+    //     if i < 100 {
+    //         let triangle = x.unwrap();
+    //         for v in triangle.vertices {
+    //             console_log!("{:?}", v[0]);
+    //             console_log!("{:?}", v[1]);
+    //             console_log!("{:?}", v[2]);
+    //         }
+    //     }
+    // }
 
     let game = Rc::new(RefCell::new(Game::new()));
 
@@ -118,7 +136,7 @@ pub fn init_and_begin_game_loop() {
 
 }
 
-/// A helper function to run a game loop, calling `update_fn` each frame.
+// A helper function to run a game loop, calling `update_fn` each frame.
 fn start_game_loop<F>(window: &Window, mut update_fn: F)
 where
     F: 'static + FnMut(),

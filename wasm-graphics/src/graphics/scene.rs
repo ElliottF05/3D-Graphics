@@ -1,5 +1,5 @@
 use crate::{console_log, utils::math::Vec3};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{io::Cursor, sync::atomic::{AtomicUsize, Ordering}};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -30,9 +30,35 @@ impl MaterialProperties {
 
 pub trait SceneObject {
     fn get_vertices(&self) -> &Vec<Vec3>;
+    fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
     fn get_properties(&self) -> &MaterialProperties;
     fn get_id(&self) -> usize;
     fn get_center(&self) -> Vec3;
+    fn set_center(&mut self, center: Vec3);
+
+    fn translate(&mut self, translation: Vec3) {
+        self.set_center(self.get_center() + translation);
+    }
+    fn scale_by(&mut self, scale: f32) {
+        let center = self.get_center();
+        for v in self.get_vertices_mut().iter_mut() {
+            *v -= center;
+            *v *= scale;
+            *v += center;
+        }
+    }
+    fn scale_to_radius(&mut self, radius: f32) {
+        let center = self.get_center();
+        let max_dist = self
+            .get_vertices()
+            .iter()
+            .map(|v| (*v - center).len_squared())
+            .max_by(|a,b| a.total_cmp(b))
+            .unwrap()
+            .sqrt();
+        let scale = radius / max_dist;
+        self.scale_by(scale);
+    }
 }
 
 pub struct VertexObject {
@@ -46,6 +72,9 @@ impl SceneObject for VertexObject {
     fn get_vertices(&self) -> &Vec<Vec3> {
         &self.vertices
     }
+    fn get_vertices_mut(&mut self) -> &mut Vec<Vec3> {
+        &mut self.vertices
+    }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
     }
@@ -54,6 +83,13 @@ impl SceneObject for VertexObject {
     }
     fn get_center(&self) -> Vec3 {
         return self.center;
+    }
+    fn set_center(&mut self, center: Vec3) {
+        let delta = center - self.center;
+        for v in self.get_vertices_mut().iter_mut() {
+            *v += delta;
+        }
+        self.center = center;
     }
 }
 
@@ -71,6 +107,21 @@ impl VertexObject {
             center,
         }
     }
+
+    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, properties: MaterialProperties) -> VertexObject {
+        let mut reader = Cursor::new(stl_bytes);
+        let triangle_iter = stl_io::create_stl_reader(&mut reader).expect("Failed to create TriangleIterator from stl bytes");
+        let mut vertices = Vec::with_capacity(triangle_iter.size_hint().0 * 3);
+        for t in triangle_iter {
+            let mut triangle = t.expect("Failed to unwrap a triangle in TriangleIterator");
+            (triangle.vertices[1], triangle.vertices[2]) = (triangle.vertices[2], triangle.vertices[1]);
+            for v in triangle.vertices {
+                vertices.push(Vec3::new(v[0], v[1], v[2]));
+            }
+        }
+        console_log!("stl_object num triangles: {}", vertices.len() / 3);
+        return VertexObject::new(vertices, properties);
+    }
 }
 
 pub struct Sphere {
@@ -85,6 +136,9 @@ impl SceneObject for Sphere {
     fn get_vertices(&self) -> &Vec<Vec3> {
         &self.vertices
     }
+    fn get_vertices_mut(&mut self) -> &mut Vec<Vec3> {
+        &mut self.vertices
+    }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
     }
@@ -93,6 +147,13 @@ impl SceneObject for Sphere {
     }
     fn get_center(&self) -> Vec3 {
         return self.center;
+    }
+    fn set_center(&mut self, center: Vec3) {
+        let delta = center - self.center;
+        for v in self.get_vertices_mut().iter_mut() {
+            *v += delta;
+        }
+        self.center = center;
     }
 }
 
