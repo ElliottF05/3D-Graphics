@@ -124,6 +124,20 @@ impl Game {
             )
         );
 
+        let mut stl_obj = VertexObject::new_from_stl_bytes(
+            &include_bytes!("../articulated_rose.stl").to_vec(), 
+            MaterialProperties::new(
+                Vec3::new(1.0, 0.0, 0.5),
+                1.0,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ));
+        stl_obj.scale_to_radius(2.0);
+        stl_obj.set_center(Vec3::new(7.0, 0.0, 1.0));
+        game.add_scene_object(stl_obj);
+
         let mut light = Light::new(
             Camera::new(Vec3::new(10.0, 100.0, 50.0), 0.0, 0.0, PI/15.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
@@ -240,7 +254,7 @@ impl Game {
         self.objects.replace(objects);
 
         let t2 = get_time();
-        console_log!("Frame time: {}", t2 - t1);
+        // console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
