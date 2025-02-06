@@ -1,5 +1,5 @@
 use core::panic;
-use std::{cell::RefCell, collections::HashSet, f32::consts::PI, vec};
+use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
 
 use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}, wasm::wasm::get_time};
 
@@ -125,9 +125,9 @@ impl Game {
         );
 
         let mut stl_obj = VertexObject::new_from_stl_bytes(
-            &include_bytes!("../articulated_rose.stl").to_vec(), 
+            &include_bytes!("../3DBenchy.stl").to_vec(), 
             MaterialProperties::new(
-                Vec3::new(1.0, 0.0, 0.5),
+                Vec3::new(1.0, 0.2, 0.5),
                 1.0,
                 0.8,
                 1.0,
@@ -139,7 +139,7 @@ impl Game {
         game.add_scene_object(stl_obj);
 
         let mut light = Light::new(
-            Camera::new(Vec3::new(10.0, 100.0, 50.0), 0.0, 0.0, PI/15.0, 2000, 2000),
+            Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
             100.0,
             ZBuffer::new(2000, 2000),
@@ -254,7 +254,7 @@ impl Game {
         self.objects.replace(objects);
 
         let t2 = get_time();
-        // console_log!("Frame time: {}", t2 - t1);
+        console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
@@ -346,7 +346,7 @@ impl Game {
         let bottom = v2.y.floor().min(height - 1.0);
 
         // fill top half
-        if v1.y != v2.y {
+        if v1.y != v2.y && v2.y >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;
@@ -415,7 +415,7 @@ impl Game {
         let bottom = v3.y.floor().min(height - 1.0);
 
         // fill bottom half
-        if v2.y != v3.y {
+        if v2.y != v3.y && v3.y >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;
