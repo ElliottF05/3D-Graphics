@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::f32::consts::PI;
 use std::rc::Rc;
 
 use wasm_bindgen::prelude::*;
@@ -47,10 +48,18 @@ pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
         Ok((gltf, buffers)) => {
             match parse_gltf_objects(gltf, &buffers) {
                 Ok(mut vertex_objects) => {
-                    // Access the game instance from thread local storage
+
+                    // TODO: remove later, this is for testing
                     for obj in vertex_objects.iter_mut() {
-                        obj.translate(Vec3::new(10.0, 0.0, 0.0));
+                        for vertex in obj.vertices.iter_mut() {
+                            vertex.rotate_z(PI / 2.0);
+                            vertex.rotate_y(-PI / 2.0);
+                        }
                     }
+                    for obj in vertex_objects.iter_mut() {
+                        obj.translate(Vec3::new(10.0, 0.0, 5.0));
+                    }
+
                     GAME_INSTANCE.with(|game_instance| {
                         game_instance.borrow_mut().add_scene_objects(vertex_objects);
                     });

@@ -33,7 +33,7 @@ impl Light {
         }
     }
 
-    fn add_object_to_shadow_map(&mut self, obj: &Box<dyn SceneObject>) {
+    pub fn add_object_to_shadow_map(&mut self, obj: &Box<dyn SceneObject>) {
         let vertices = obj.get_vertices();
         for i in (0..vertices.len()).step_by(3) {
             self.add_triangle_to_shadow_map(vertices[i], vertices[i+1], vertices[i+2], obj);
