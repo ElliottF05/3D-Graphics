@@ -1,8 +1,4 @@
 use std::cell::RefCell;
-use std::collections::HashSet;
-use std::io::BufReader;
-use std::io::Cursor;
-use std::io::Read;
 use std::rc::Rc;
 
 use wasm_bindgen::prelude::*;
@@ -15,6 +11,7 @@ use web_sys::MouseEvent;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 
 use crate::graphics::game::Game;
+use crate::graphics::gltf_parser::decode_gltf_bytes;
 use crate::utils::math::Vec3;
 
 
@@ -26,12 +23,8 @@ macro_rules! console_log {
     ($($t:tt)*) => (web_sys::console::log_1(&format_args!($($t)*).to_string().into()))
 }
 
-pub fn get_time() -> f64 {
-    return web_sys::window()
-        .expect("No global window exists")
-        .performance()
-        .expect("Window doesn't have Performance")
-        .now();
+thread_local! {
+    static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
 }
 
 #[wasm_bindgen]
@@ -40,27 +33,27 @@ pub fn init_panic_hook() {
 }
 
 #[wasm_bindgen]
+pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
+    match decode_gltf_bytes(gltf_bytes, bin_bytes) {
+        Ok(vertex_objects) => {
+            true
+        },
+        Err(e) => {
+            // Log the error to console for debugging
+            web_sys::console::error_1(&JsValue::from_str(&format!("GLTF parse error: {}", e)));
+            false
+        }
+    }
+}
+
+#[wasm_bindgen]
 pub fn init_and_begin_game_loop() {
 
     init_panic_hook();
 
-    // testing stuff here
-    // let stl_bytes = include_bytes!("3DBenchy.stl");
-    // let mut reader = Cursor::new(stl_bytes);
+    // testing stuff here...
 
-    // let triangle_iter = stl_io::create_stl_reader(&mut reader).unwrap();
-    // for (i, x) in triangle_iter.enumerate() {
-    //     if i < 100 {
-    //         let triangle = x.unwrap();
-    //         for v in triangle.vertices {
-    //             console_log!("{:?}", v[0]);
-    //             console_log!("{:?}", v[1]);
-    //             console_log!("{:?}", v[2]);
-    //         }
-    //     }
-    // }
-
-    let game = Rc::new(RefCell::new(Game::new()));
+    // let game = Rc::new(RefCell::new(Game::new()));
 
     // Access the window, document, and peformance objects
     let window = web_sys::window().expect("No global window exists");
@@ -88,18 +81,29 @@ pub fn init_and_begin_game_loop() {
 
 
     // Add event listeners
-    let game_clone = game.clone();
+    // GAME_INSTANCE.with(|game_instance| {
+    //     let game_clone = game_instance.borrow_mut();
+    //     add_event_listener(&window, "keydown", move |event: Event| {
+    //         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keydown event to KeyboardEvent");
+    //         // console_log!("Key pressed: {}", event.key());
+    //         game_clone.keys_currently_pressed.insert(event.key());
+    //         game_clone.keys_pressed_last_frame.insert(event.key());
+    //     });
+    // });
+
     add_event_listener(&window, "keydown", move |event: Event| {
         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keydown event to KeyboardEvent");
-        // console_log!("Key pressed: {}", event.key());
-        game_clone.borrow_mut().keys_currently_pressed.insert(event.key());
-        game_clone.borrow_mut().keys_pressed_last_frame.insert(event.key());
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().keys_currently_pressed.insert(event.key());
+            game_instance.borrow_mut().keys_pressed_last_frame.insert(event.key());
+        });
     });
 
-    let game_clone = game.clone();
     add_event_listener(&window, "keyup", move |event: Event| {
         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keyup event to KeyboardEvent");
-        game_clone.borrow_mut().keys_currently_pressed.remove(&event.key());
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().keys_currently_pressed.remove(&event.key());
+        });
     });
 
     let canvas_clone = canvas.clone();
@@ -110,24 +114,34 @@ pub fn init_and_begin_game_loop() {
         }
     });
 
-    let game_clone = game.clone();
     add_event_listener(&canvas, "mousemove",  move |event: Event| {
         let event = event.dyn_ref::<MouseEvent>().expect("Failed to cast mousemove to MouseEvent");
         if document.pointer_lock_element().is_some() {
-            game_clone.borrow_mut().mouse_move.x = event.movement_x() as f32;
-            game_clone.borrow_mut().mouse_move.y = event.movement_y() as f32;
+            GAME_INSTANCE.with(|game_instance| {
+                game_instance.borrow_mut().mouse_move.x = event.movement_x() as f32;
+                game_instance.borrow_mut().mouse_move.y = event.movement_y() as f32;
+            });
         } else {
-            game_clone.borrow_mut().mouse_move = Vec3::new(0.0, 0.0, 0.0);
+            GAME_INSTANCE.with(|game_instance| {
+                game_instance.borrow_mut().mouse_move = Vec3::new(0.0, 0.0, 0.0);
+            });
         }
     });
 
     // Start the main game loop
     start_game_loop(&window, move || {
 
-        game.borrow_mut().game_loop();
+        // game.borrow_mut().game_loop();
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().game_loop();
+        });
 
         // Draw the pixel buffer onto the canvas
-        let image_data = ImageData::new_with_u8_clamped_array(wasm_bindgen::Clamped(&game.borrow().pixel_buf.get_buf_as_u8()), width)
+        let pixel_buf = GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow().pixel_buf.get_buf_as_u8()
+        });
+        let clamped_buf = wasm_bindgen::Clamped(pixel_buf.as_slice());
+        let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)
             .expect("Failed to create ImageData");
         ctx.put_image_data(&image_data, 0.0, 0.0)
             .expect("Failed to put image data on canvas");

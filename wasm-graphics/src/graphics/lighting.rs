@@ -128,7 +128,7 @@ impl Light {
         let bottom = v2.y.floor().min(height - 1.0);
 
         // fill top half
-        if v1.y != v2.y {
+        if v1.y != v2.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;
@@ -175,7 +175,7 @@ impl Light {
         let bottom = v3.y.floor().min(height - 1.0);
 
         // fill bottom half
-        if v2.y != v3.y {
+        if v2.y != v3.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;

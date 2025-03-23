@@ -107,6 +107,14 @@ impl VertexObject {
             center,
         }
     }
+    pub fn new_from_indexed(vertices: &Vec<Vec3>, indices: &Vec<u32>, properties: MaterialProperties) -> VertexObject {
+        let mut new_vertices = Vec::with_capacity(indices.len() as usize);
+        for i in indices {
+            new_vertices.push(vertices[*i as usize]);
+        }
+
+        return VertexObject::new(new_vertices, properties);
+    }
 
     pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, properties: MaterialProperties) -> VertexObject {
         let mut reader = Cursor::new(stl_bytes);
