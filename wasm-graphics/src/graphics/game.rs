@@ -1,7 +1,7 @@
 use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
 
-use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}, wasm::wasm::get_time};
+use crate::{console_log, utils::{math::Vec3, utils::{sort_objects_by_distance_to_camera, get_time}}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_checkerboard_with_color, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
@@ -37,84 +37,91 @@ impl Game {
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
         };
 
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 0.0, 0.5), 
-            0.5, 
-            4, 
-            MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0))
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(12.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(1.0, 0.0, 0.0),
-                0.05,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(13.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(0.0, 1.0, 0.0),
-                0.2,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(14.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(0.0, 0.0, 1.0),
-                0.5,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(15.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(1.0, 0.0, 0.0),
-                0.8,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(16.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(0.0, 1.0, 0.0),
-                0.95,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(17.0, 0.0, 0.5),
-            1.0,
-            MaterialProperties::new(
-                Vec3::new(0.0, 0.0, 1.0),
-                1.0,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(11.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
+        // ));
+
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, 0.0, 0.5), 
+        //     0.5, 
+        //     4, 
+        //     MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0))
+        // ));
+        
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(12.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(1.0, 0.0, 0.0),
+        //         0.05,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(13.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(0.0, 1.0, 0.0),
+        //         0.2,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(14.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(0.0, 0.0, 1.0),
+        //         0.5,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(15.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(1.0, 0.0, 0.0),
+        //         0.8,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(16.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(0.0, 1.0, 0.0),
+        //         0.95,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(17.0, 0.0, 0.5),
+        //     1.0,
+        //     MaterialProperties::new(
+        //         Vec3::new(0.0, 0.0, 1.0),
+        //         1.0,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
 
         game.add_scene_objects(build_checkerboard_with_color(
                 Vec3::new(10.0, 0.0, 0.0), 
@@ -124,19 +131,19 @@ impl Game {
             )
         );
 
-        let mut stl_obj = VertexObject::new_from_stl_bytes(
-            &include_bytes!("../3DBenchy.stl").to_vec(), 
-            MaterialProperties::new(
-                Vec3::new(1.0, 0.2, 0.5),
-                1.0,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ));
-        stl_obj.scale_to_radius(2.0);
-        stl_obj.set_center(Vec3::new(7.0, 0.0, 1.0));
-        game.add_scene_object(stl_obj);
+        // let mut stl_obj = VertexObject::new_from_stl_bytes(
+        //     &include_bytes!("../3DBenchy.stl").to_vec(), 
+        //     MaterialProperties::new(
+        //         Vec3::new(1.0, 0.2, 0.5),
+        //         1.0,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ));
+        // stl_obj.scale_to_radius(2.0);
+        // stl_obj.set_center(Vec3::new(7.0, 0.0, 1.0));
+        // game.add_scene_object(stl_obj);
 
         let mut light = Light::new(
             Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
@@ -346,7 +353,7 @@ impl Game {
         let bottom = v2.y.floor().min(height - 1.0);
 
         // fill top half
-        if v1.y != v2.y && v2.y >= 0.0 {
+        if v1.y != v2.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;
@@ -415,7 +422,7 @@ impl Game {
         let bottom = v3.y.floor().min(height - 1.0);
 
         // fill bottom half
-        if v2.y != v3.y && v3.y >= 0.0 {
+        if v2.y != v3.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
                 let left;
                 let right;

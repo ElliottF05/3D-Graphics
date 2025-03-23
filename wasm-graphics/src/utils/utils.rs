@@ -2,8 +2,18 @@ use crate::graphics::scene::SceneObject;
 
 use super::math::Vec3;
 
+// WEB-SYS / JS BASED UTILITIES
+pub fn get_time() -> f64 {
+    return web_sys::window()
+        .expect("No global window exists")
+        .performance()
+        .expect("Window doesn't have Performance")
+        .now()
+}
+
+// OTHER UTILITIES
 pub fn color_to_u8(color: &Vec3) -> (u8, u8, u8) {
-    return (
+    (
         (color.x.clamp(0.0, 1.0) * 255.0) as u8,
         (color.y.clamp(0.0, 1.0) * 255.0) as u8,
         (color.z.clamp(0.0, 1.0) * 255.0) as u8,
