@@ -12,6 +12,8 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 
 use crate::graphics::game::Game;
 use crate::graphics::gltf_parser::decode_gltf_bytes;
+use crate::graphics::gltf_parser::parse_gltf_objects;
+use crate::graphics::scene::SceneObject;
 use crate::utils::math::Vec3;
 
 
@@ -22,7 +24,14 @@ macro_rules! console_log {
     // `bare_bones`
     ($($t:tt)*) => (web_sys::console::log_1(&format_args!($($t)*).to_string().into()))
 }
+#[macro_export]
+macro_rules! console_error {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (web_sys::console::error_1(&format_args!($($t)*).to_string().into()))
+}
 
+// MAIN GAME INSTANCE
 thread_local! {
     static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
 }
@@ -35,12 +44,26 @@ pub fn init_panic_hook() {
 #[wasm_bindgen]
 pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
     match decode_gltf_bytes(gltf_bytes, bin_bytes) {
-        Ok(vertex_objects) => {
-            true
+        Ok((gltf, buffers)) => {
+            match parse_gltf_objects(gltf, &buffers) {
+                Ok(mut vertex_objects) => {
+                    // Access the game instance from thread local storage
+                    for obj in vertex_objects.iter_mut() {
+                        obj.translate(Vec3::new(10.0, 0.0, 0.0));
+                    }
+                    GAME_INSTANCE.with(|game_instance| {
+                        game_instance.borrow_mut().add_scene_objects(vertex_objects);
+                    });
+                    true
+                },
+                Err(e) => {
+                    console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
+                    false
+                }
+            }
         },
         Err(e) => {
-            // Log the error to console for debugging
-            web_sys::console::error_1(&JsValue::from_str(&format!("GLTF parse error: {}", e)));
+            console_error!("GLTF parse error on decode_gltf_bytes(): {}", e);
             false
         }
     }
@@ -81,16 +104,6 @@ pub fn init_and_begin_game_loop() {
 
 
     // Add event listeners
-    // GAME_INSTANCE.with(|game_instance| {
-    //     let game_clone = game_instance.borrow_mut();
-    //     add_event_listener(&window, "keydown", move |event: Event| {
-    //         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keydown event to KeyboardEvent");
-    //         // console_log!("Key pressed: {}", event.key());
-    //         game_clone.keys_currently_pressed.insert(event.key());
-    //         game_clone.keys_pressed_last_frame.insert(event.key());
-    //     });
-    // });
-
     add_event_listener(&window, "keydown", move |event: Event| {
         let event = event.dyn_ref::<KeyboardEvent>().expect("Failed to cast keydown event to KeyboardEvent");
         GAME_INSTANCE.with(|game_instance| {

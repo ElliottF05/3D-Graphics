@@ -261,7 +261,7 @@ impl Game {
         self.objects.replace(objects);
 
         let t2 = get_time();
-        console_log!("Frame time: {}", t2 - t1);
+        // console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {

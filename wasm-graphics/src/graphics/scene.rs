@@ -107,10 +107,16 @@ impl VertexObject {
             center,
         }
     }
-    pub fn new_from_indexed(vertices: &Vec<Vec3>, indices: &Vec<u32>, properties: MaterialProperties) -> VertexObject {
+    pub fn new_from_indexed(vertices: &Vec<Vec3>, indices: &Vec<u32>, reverse_winding_order: bool, properties: MaterialProperties) -> VertexObject {
         let mut new_vertices = Vec::with_capacity(indices.len() as usize);
-        for i in indices {
-            new_vertices.push(vertices[*i as usize]);
+        if reverse_winding_order {
+            for i in indices.iter().rev() {
+                new_vertices.push(vertices[*i as usize]);
+            }
+        } else {
+            for i in indices {
+                new_vertices.push(vertices[*i as usize]);
+            }
         }
 
         return VertexObject::new(new_vertices, properties);

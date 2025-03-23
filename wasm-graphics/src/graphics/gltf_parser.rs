@@ -44,7 +44,7 @@ fn parse_gltf_mesh(mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<VertexObjec
     
         // Get positions and indices data
         let vertices = match reader.read_positions() {
-            Some(positions) => positions.map(|p| Vec3::new(p[0], p[1], p[2])).collect::<Vec<_>>(),
+            Some(positions) => positions.map(|p| Vec3::new(-p[2], -p[0], p[1])).collect::<Vec<_>>(),
             None => return Err("Mesh has no position data".to_string()),
         };
         
@@ -55,7 +55,7 @@ fn parse_gltf_mesh(mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<VertexObjec
 
         // TODO: add colors and textures
 
-        let vertex_object = VertexObject::new_from_indexed(&vertices, &indices, MaterialProperties::default_from_color(Vec3::new(0.5, 0.5, 0.5)));
+        let vertex_object = VertexObject::new_from_indexed(&vertices, &indices, true, MaterialProperties::default_from_color(Vec3::new(0.5, 0.5, 0.5)));
         
         vertex_objects.push(vertex_object);
     }
