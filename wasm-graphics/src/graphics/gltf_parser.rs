@@ -1,4 +1,4 @@
-use gltf::{Gltf, buffer::{Data, Source}};
+use gltf::{buffer::{Data, Source}, json::extensions::material, Gltf};
 
 use crate::utils::math::Vec3;
 
@@ -54,8 +54,20 @@ fn parse_gltf_mesh(mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<VertexObjec
         };
 
         // TODO: add colors and textures
+        let base_color = primitive.material().pbr_metallic_roughness().base_color_factor();
 
-        let vertex_object = VertexObject::new_from_indexed(&vertices, &indices, true, MaterialProperties::default_from_color(Vec3::new(0.5, 0.5, 0.5)));
+        let color = Vec3::new(base_color[0], base_color[1], base_color[2]);
+        let mut alpha = base_color[3];
+        alpha = 1.0; // Force alpha to 1.0 for now
+
+        let material_properties = MaterialProperties {
+            color: color,
+            alpha,
+            ..MaterialProperties::default()
+        };
+
+
+        let vertex_object = VertexObject::new_from_indexed(&vertices, &indices, true, material_properties);
         
         vertex_objects.push(vertex_object);
     }

@@ -28,6 +28,12 @@ impl MaterialProperties {
     }
 }
 
+impl Default for MaterialProperties {
+    fn default() -> Self {
+        MaterialProperties::new(Vec3::new(1.0, 1.0, 1.0), 1.0, 0.8, 1.0, 0.5, 32)
+    }
+}
+
 pub trait SceneObject {
     fn get_vertices(&self) -> &Vec<Vec3>;
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
@@ -38,6 +44,24 @@ pub trait SceneObject {
 
     fn translate(&mut self, translation: Vec3) {
         self.set_center(self.get_center() + translation);
+    }
+    fn rotate_z(&mut self, theta_z: f32) {
+        let center = self.get_center();
+        let (sin_z, cos_z) = theta_z.sin_cos();
+        for v in self.get_vertices_mut().iter_mut() {
+            *v -= center;
+            v.rotate_z_fast(sin_z, cos_z);
+            *v += center;
+        }
+    }
+    fn rotate_y(&mut self, theta_y: f32) {
+        let center = self.get_center();
+        let (sin_y, cos_y) = theta_y.sin_cos();
+        for v in self.get_vertices_mut().iter_mut() {
+            *v -= center;
+            v.rotate_y_fast(sin_y, cos_y);
+            *v += center;
+        }
     }
     fn scale_by(&mut self, scale: f32) {
         let center = self.get_center();

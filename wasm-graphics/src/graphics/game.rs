@@ -28,8 +28,8 @@ impl Game {
             camera: Camera::new(Vec3::new(0.001, 0.001, 1.001), 0.001, 0.001, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
-            max_sky_color: Vec3::new(0.15, 0.15, 0.2),
-            min_sky_color: Vec3::new(0.15, 0.15, 0.17),
+            max_sky_color: Vec3::new(0.7, 0.7, 0.7),
+            min_sky_color: Vec3::new(0.6, 0.6, 0.6),
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
             keys_currently_pressed: HashSet::new(),
@@ -148,7 +148,7 @@ impl Game {
         let mut light = Light::new(
             Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
             Vec3::new(1.0, 1.0, 1.0),
-            100.0,
+            50.0,
             ZBuffer::new(2000, 2000),
             PixelBuf::new(2000, 2000),
         );
@@ -505,10 +505,15 @@ impl Game {
 
     pub fn add_scene_object<T: SceneObject + 'static>(&mut self, object: T) {
         self.objects.borrow_mut().push(Box::new(object));
+        for light in self.lights.iter_mut() {
+            // light.clear_shadow_map();
+            // light.add_objects_to_shadow_map(&mut self.objects.borrow_mut());
+            light.add_object_to_shadow_map(self.objects.borrow().last().unwrap());
+        }
     }
     pub fn add_scene_objects<T: SceneObject + 'static>(&mut self, objects: Vec<T>) {
         for obj in objects {
-            self.objects.borrow_mut().push(Box::new(obj));
+            self.add_scene_object(obj);
         }
     }
 }
