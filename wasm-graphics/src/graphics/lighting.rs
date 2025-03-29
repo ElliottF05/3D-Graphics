@@ -57,7 +57,7 @@ impl Light {
         }
 
         // translate vertices to camera space
-        self.camera.vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
+        self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
 
         // sort vertices by depth (v1 has lowest depth, v3 has highest)
         if v1.x > v2.x {

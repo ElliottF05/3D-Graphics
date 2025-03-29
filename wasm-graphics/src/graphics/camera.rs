@@ -7,6 +7,7 @@ pub struct Camera {
     pub pos: Vec3,
     theta_y: f32,
     theta_z: f32,
+    looking_dir: Vec3,
     fov: f32,
 
     pub sin_theta_y: f32,
@@ -24,12 +25,18 @@ impl Camera {
     pub fn new(pos: Vec3, theta_y: f32, theta_z: f32, fov: f32, width: usize, height: usize) -> Camera {
         let (sin_theta_y, cos_theta_y) = theta_y.sin_cos();
         let (sin_theta_z, cos_theta_z) = theta_z.sin_cos();
+        let looking_dir = Vec3::new(
+            cos_theta_y * cos_theta_z,
+            cos_theta_y * sin_theta_z,
+            sin_theta_y,
+        );
         let max_plane_coord = f32::tan(0.5 * fov);
 
         return Camera {
             pos,
             theta_y,
             theta_z,
+            looking_dir,
             fov,
             sin_theta_y,
             cos_theta_y,
@@ -51,10 +58,25 @@ impl Camera {
         self.theta_y = theta_y;
         self.theta_y = self.theta_y.clamp(-0.5 * PI, 0.5 * PI);
         (self.sin_theta_y, self.cos_theta_y) = self.theta_y.sin_cos();
+
+        self.looking_dir = Vec3::new(
+            self.cos_theta_y * self.cos_theta_z,
+            self.cos_theta_y * self.sin_theta_z,
+            self.sin_theta_y,
+        );
     }
     pub fn set_theta_z(&mut self, theta_z: f32) {
         self.theta_z = theta_z;
         (self.sin_theta_z, self.cos_theta_z) = theta_z.sin_cos();
+
+        self.looking_dir = Vec3::new(
+            self.cos_theta_y * self.cos_theta_z,
+            self.cos_theta_y * self.sin_theta_z,
+            self.sin_theta_y,
+        );
+    }
+    pub fn get_looking_dir(&self) -> &Vec3 {
+        return &self.looking_dir;
     }
 
     pub fn look_in_direction(&mut self, dir: &Vec3) {
@@ -73,10 +95,17 @@ impl Camera {
         v.rotate_z_fast(-self.sin_theta_z, self.cos_theta_z);
         v.rotate_y_fast(-self.sin_theta_y, self.cos_theta_y);
     }
-    pub fn vertices_world_to_camera_space(&self, v1: &mut Vec3, v2: &mut Vec3, v3: &mut Vec3) {
+    pub fn three_vertices_world_to_camera_space(&self, v1: &mut Vec3, v2: &mut Vec3, v3: &mut Vec3) {
         self.vertex_world_to_camera_space(v1);
         self.vertex_world_to_camera_space(v2);
         self.vertex_world_to_camera_space(v3);
+    }
+    pub fn vertices_world_to_camera_space(&self, vertices: &Vec<Vec3>) -> Vec<Vec3> {
+        let mut transformed_vertices = vertices.clone();
+        for v in transformed_vertices.iter_mut() {
+            self.vertex_world_to_camera_space(v);
+        }
+        return transformed_vertices;
     }
     pub fn vertex_camera_to_screen_space(&self, v: &mut Vec3) {
         let depth = v.x;
