@@ -94,8 +94,8 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
             Some(positions) => positions.map(|p| Vec3::new(-p[2], -p[0], p[1])).collect::<Vec<_>>(),
             None => return Err("Mesh has no position data".to_string()),
         };
-        let indices: Vec<u32> = match reader.read_indices() {
-            Some(indices_reader) => indices_reader.into_u32().collect(),
+        let indices: Vec<usize> = match reader.read_indices() {
+            Some(indices_reader) => indices_reader.into_u32().map(|x| x as usize).collect(),
             None => return Err("Mesh has no index data".to_string()),
         };
         console_log!("indices.len() {}", indices.len());
@@ -109,7 +109,8 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
             }
         };
 
-        let vertex_object = VertexObject::new_from_indexed(&vertices, &indices, true, material_props);
+        let colors = vec![Vec3::new(1.0, 1.0, 1.0) ; indices.len() / 3];        
+        let vertex_object = VertexObject::new(vertices, indices, colors, material_props);
         
         vertex_objects.push(vertex_object);
     }
@@ -121,75 +122,73 @@ fn get_material_properties_for_gltf(gltf: &Gltf, primitive: &Primitive, buffers:
     let mut material_props = MaterialProperties::default();
     let pbr = primitive.material().pbr_metallic_roughness();
 
-    if let Some(base_color_texture) = pbr.base_color_texture() {
-        let texture_index = base_color_texture.texture().index();
-        let image_index = base_color_texture.texture().source().index();
+    // if let Some(base_color_texture) = pbr.base_color_texture() {
+    //     let texture_index = base_color_texture.texture().index();
+    //     let image_index = base_color_texture.texture().source().index();
 
-        // Get the reader for this primitive
-        let reader = primitive.reader(|buf| Some(&buffers[buf.index()]));
-        if let Some(tex_coords) = reader.read_tex_coords(0) {
-            // Collect UV coordinates to find the region this primitive uses
-            let tex_coords: Vec<[f32; 2]> = tex_coords.into_f32().collect();
+    //     // Get the reader for this primitive
+    //     let reader = primitive.reader(|buf| Some(&buffers[buf.index()]));
+    //     if let Some(tex_coords) = reader.read_tex_coords(0) {
+    //         // Collect UV coordinates to find the region this primitive uses
+    //         let tex_coords: Vec<[f32; 2]> = tex_coords.into_f32().collect();
             
-            // Find the min and max UV coordinates to determine the region
-            let mut min_u = 1.0 as f32;
-            let mut min_v = 1.0 as f32;
-            let mut max_u = 0.0 as f32;
-            let mut max_v = 0.0 as f32;
+    //         // Find the min and max UV coordinates to determine the region
+    //         let mut min_u = 1.0 as f32;
+    //         let mut min_v = 1.0 as f32;
+    //         let mut max_u = 0.0 as f32;
+    //         let mut max_v = 0.0 as f32;
             
-            for uv in &tex_coords {
-                min_u = min_u.min(uv[0]);
-                min_v = min_v.min(uv[1]);
-                max_u = max_u.max(uv[0]);
-                max_v = max_v.max(uv[1]);
-            }
+    //         for uv in &tex_coords {
+    //             min_u = min_u.min(uv[0]);
+    //             min_v = min_v.min(uv[1]);
+    //             max_u = max_u.max(uv[0]);
+    //             max_v = max_v.max(uv[1]);
+    //         }
 
-            // console_log!("UV bounds: ({:.2}, {:.2}) - ({:.2}, {:.2})", min_u, min_v, max_u, max_v);
+    //         // console_log!("UV bounds: ({:.2}, {:.2}) - ({:.2}, {:.2})", min_u, min_v, max_u, max_v);
 
-            // Get the image data
-            if let Some(image) = gltf.images().nth(image_index) {
-                if let gltf::image::Source::View { view, mime_type } = image.source() {
-                    // Get buffer data for the image
-                    let buffer = &buffers[view.buffer().index()];
-                    let start = view.offset();
-                    let end = start + view.length();
-                    let image_data = &buffer[start..end];
+    //         // Get the image data
+    //         if let Some(image) = gltf.images().nth(image_index) {
+    //             if let gltf::image::Source::View { view, mime_type } = image.source() {
+    //                 // Get buffer data for the image
+    //                 let buffer = &buffers[view.buffer().index()];
+    //                 let start = view.offset();
+    //                 let end = start + view.length();
+    //                 let image_data = &buffer[start..end];
                     
-                    // Calculate average color for the specific UV region
-                    match compute_average_color_for_uv_region(
-                        image_data, mime_type, min_u, min_v, max_u, max_v
-                    ) {
-                        Ok(avg_color) => {
-                            material_props.color = avg_color;
-                            console_log!("UV region color: {:?}", avg_color);
-                        },
-                        Err(e) => {
-                            console_log!("Failed to compute average color for UV region: {}", e);
-                            return Err(format!("Failed to compute average color for UV region: {}", e));
-                        }
-                    }
-                }
-            } else {
-                console_log!("Image not found for texture index: {}", texture_index);
-                return Err("Image not found for texture index".to_string());
-            }
-        } else {
-            console_log!("No texture coordinates found for primitive");
-            return Err("No texture coordinates found for primitive".to_string());
-        }
+    //                 // Calculate average color for the specific UV region
+    //                 match compute_average_color_for_uv_region(
+    //                     image_data, mime_type, min_u, min_v, max_u, max_v
+    //                 ) {
+    //                     Ok(avg_color) => {
+    //                         material_props.color = avg_color;
+    //                         console_log!("UV region color: {:?}", avg_color);
+    //                     },
+    //                     Err(e) => {
+    //                         console_log!("Failed to compute average color for UV region: {}", e);
+    //                         return Err(format!("Failed to compute average color for UV region: {}", e));
+    //                     }
+    //                 }
+    //             }
+    //         } else {
+    //             console_log!("Image not found for texture index: {}", texture_index);
+    //             return Err("Image not found for texture index".to_string());
+    //         }
+    //     } else {
+    //         console_log!("No texture coordinates found for primitive");
+    //         return Err("No texture coordinates found for primitive".to_string());
+    //     }
 
-    } else { // use base_color_factor if no texture
+    // } else { // use base_color_factor if no texture
         console_log!("No base color texture found, using base color factor instead.");
         let base_color = pbr.base_color_factor();
         let color = Vec3::new(base_color[0], base_color[1], base_color[2]);
         // let alpha = base_color[3];
         let alpha = 1.0; // Force alpha to 1.0 for now
         material_props = MaterialProperties {
-            color: color,
             alpha,
             ..MaterialProperties::default()
         };
-    }
     return Ok(material_props);
 }
 

@@ -89,4 +89,4 @@ async function loadGlbModel(url) {
 
 // loadGltfModelFromBaseUrl("../static/goose_low_poly_gltf/scene");
 // loadGltfModelFromBaseUrl("../static/medieval_fantasy_book/scene");
-loadGlbModel("../static/medieval_fantasy_book.glb");
+// loadGlbModel("../static/medieval_fantasy_book.glb");

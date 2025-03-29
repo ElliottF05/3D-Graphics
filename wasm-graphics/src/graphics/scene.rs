@@ -1,10 +1,9 @@
 use crate::{console_log, utils::math::Vec3};
-use std::{io::Cursor, sync::atomic::{AtomicUsize, Ordering}};
+use std::{collections::{HashMap, HashSet}, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
 pub struct MaterialProperties {
-    pub color: Vec3,
     pub alpha: f32,
     pub ambient: f32,
     pub diffuse: f32,
@@ -13,30 +12,28 @@ pub struct MaterialProperties {
 }
 
 impl MaterialProperties {
-    pub fn new(color: Vec3, alpha: f32, ambient: f32, diffuse: f32, specular: f32, shininess: i32) -> MaterialProperties {
+    pub fn new(alpha: f32, ambient: f32, diffuse: f32, specular: f32, shininess: i32) -> MaterialProperties {
         MaterialProperties {
             alpha,
-            color,
             ambient,
             diffuse,
             specular,
             shininess,
         }
     }
-    pub fn default_from_color(color: Vec3) -> MaterialProperties {
-        MaterialProperties::new(color, 1.0, 0.8, 1.0, 0.5, 32)
-    }
 }
 
 impl Default for MaterialProperties {
     fn default() -> Self {
-        MaterialProperties::new(Vec3::new(1.0, 1.0, 1.0), 1.0, 0.8, 1.0, 0.5, 32)
+        MaterialProperties::new(1.0, 1.0, 0.8, 1.0, 32)
     }
 }
 
 pub trait SceneObject {
     fn get_vertices(&self) -> &Vec<Vec3>;
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
+    fn get_indices(&self) -> &Vec<usize>;
+    fn get_colors(&self) -> &Vec<Vec3>;
     fn get_properties(&self) -> &MaterialProperties;
     fn get_id(&self) -> usize;
     fn get_center(&self) -> Vec3;
@@ -87,6 +84,8 @@ pub trait SceneObject {
 
 pub struct VertexObject {
     pub vertices: Vec<Vec3>,
+    pub indices: Vec<usize>,
+    pub colors: Vec<Vec3>,
     pub properties: MaterialProperties,
     pub id: usize,
     pub center: Vec3,
@@ -98,6 +97,12 @@ impl SceneObject for VertexObject {
     }
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3> {
         &mut self.vertices
+    }
+    fn get_indices(&self) -> &Vec<usize> {
+        return &self.indices;
+    }
+    fn get_colors(&self) -> &Vec<Vec3> {
+        return &self.colors;
     }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
@@ -118,35 +123,35 @@ impl SceneObject for VertexObject {
 }
 
 impl VertexObject {
-    pub fn new(vertices: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
+    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
         let mut center = Vec3::new(0.0, 0.0, 0.0);
-        for v in & vertices {
+        for v in &vertices {
             center += *v;
         }
         center /= vertices.len() as f32;
         VertexObject {
             vertices,
+            indices,
+            colors,
             properties,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
         }
     }
-    pub fn new_from_indexed(vertices: &Vec<Vec3>, indices: &Vec<u32>, reverse_winding_order: bool, properties: MaterialProperties) -> VertexObject {
-        let mut new_vertices = Vec::with_capacity(indices.len() as usize);
-        if reverse_winding_order {
-            for i in indices.iter().rev() {
-                new_vertices.push(vertices[*i as usize]);
-            }
-        } else {
-            for i in indices {
-                new_vertices.push(vertices[*i as usize]);
-            }
-        }
-
-        return VertexObject::new(new_vertices, properties);
+    pub fn new_with_color(vertices: Vec<Vec3>, indices: Vec<usize>, color: Vec3, properties: MaterialProperties) -> VertexObject {
+        let colors = vec![color; indices.len() / 3];
+        return VertexObject::new(vertices, indices, colors, properties);
+    }
+    pub fn new_from_non_indexed(vertices: Vec<Vec3>, colors: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
+        let indices = (0..vertices.len() as usize).collect();
+        return VertexObject::new(vertices, indices, colors, properties);
+    }
+    pub fn new_from_non_indexed_with_color(vertices: Vec<Vec3>, color: Vec3, properties: MaterialProperties) -> VertexObject {
+        let colors = vec![color; vertices.len() / 3];
+        return VertexObject::new_from_non_indexed(vertices, colors, properties);
     }
 
-    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, properties: MaterialProperties) -> VertexObject {
+    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, color: Vec3, properties: MaterialProperties) -> VertexObject {
         let mut reader = Cursor::new(stl_bytes);
         let triangle_iter = stl_io::create_stl_reader(&mut reader).expect("Failed to create TriangleIterator from stl bytes");
         let mut vertices = Vec::with_capacity(triangle_iter.size_hint().0 * 3);
@@ -158,12 +163,14 @@ impl VertexObject {
             }
         }
         console_log!("stl_object num triangles: {}", vertices.len() / 3);
-        return VertexObject::new(vertices, properties);
+        return VertexObject::new_from_non_indexed_with_color(vertices, color, properties);
     }
 }
 
 pub struct Sphere {
     pub vertices: Vec<Vec3>,
+    pub indices: Vec<usize>,
+    pub colors: Vec<Vec3>,
     pub properties: MaterialProperties,
     pub id: usize,
     pub center: Vec3,
@@ -176,6 +183,12 @@ impl SceneObject for Sphere {
     }
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3> {
         &mut self.vertices
+    }
+    fn get_indices(&self) -> &Vec<usize> {
+        return &self.indices;
+    }
+    fn get_colors(&self) -> &Vec<Vec3> {
+        return &self.colors;
     }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
@@ -196,9 +209,11 @@ impl SceneObject for Sphere {
 }
 
 impl Sphere {
-    pub fn new(vertices: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties) -> Sphere {
+    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties) -> Sphere {
         Sphere {
             vertices,
+            indices,
+            colors,
             properties,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
@@ -207,31 +222,33 @@ impl Sphere {
     }
 
     // building an icosphere
-    pub fn build_sphere(center: Vec3, radius: f32, iterations: u32, properties: MaterialProperties) -> Sphere {
-        let mut vertices = get_icosahedron_vertices(1.0);
-        for _ in 0..iterations {
-            let mut next_vertices = Vec::with_capacity(vertices.len() * (4 as usize).pow(iterations));
-            for i in (0..vertices.len()).step_by(3) {
-                let (p1, p2, p3) = (vertices[i], vertices[i+1], vertices[i+2]);
-                let (m1, m2, m3) = (p1.midpoint_with(&p2), p2.midpoint_with(&p3), p3.midpoint_with(&p1));
+    pub fn build_sphere(center: Vec3, radius: f32, subdivisions: u32, color: Vec3, properties: MaterialProperties) -> Sphere {
+        let (mut vertices, mut indices) = get_icosahedron_vertices_and_indices(1.0);
 
-                next_vertices.push(p1);
-                next_vertices.push(m1);
-                next_vertices.push(m3);
+        for _ in 0..subdivisions {
 
-                next_vertices.push(m1);
-                next_vertices.push(p2);
-                next_vertices.push(m2);
+            let mut new_indices = Vec::new();
+            let mut midpoint_cache = HashMap::new();
 
-                next_vertices.push(m3);
-                next_vertices.push(m2);
-                next_vertices.push(p3);
+            for i in (0..indices.len()).step_by(3) {
 
-                next_vertices.push(m1);
-                next_vertices.push(m2);
-                next_vertices.push(m3);
+                let i1 = indices[i];
+                let i2 = indices[i + 1];
+                let i3 = indices[i + 2];
+
+                // Get or create middle point indices
+                let j1 = get_or_create_midpoint(&mut vertices, &mut midpoint_cache, i1, i2);
+                let j2 = get_or_create_midpoint(&mut vertices, &mut midpoint_cache, i2, i3);
+                let j3 = get_or_create_midpoint(&mut vertices, &mut midpoint_cache, i3, i1);
+
+                new_indices.extend_from_slice(&[
+                    i1, j1, j3,
+                    i2, j2, j1,
+                    i3, j3, j2,
+                    j1, j2, j3,
+                ]); 
             }
-            vertices = next_vertices;
+            indices = new_indices;
         }
 
         for v in vertices.iter_mut() {
@@ -240,11 +257,26 @@ impl Sphere {
             *v += center;
         }
 
-        return Sphere::new(vertices, center, radius, properties);
+        let colors = vec![color; indices.len() / 3];
+        return Sphere::new(vertices, indices, colors, center, radius, properties);
     }
 }
+fn get_or_create_midpoint(vertices: &mut Vec<Vec3>, midpoint_cache: &mut HashMap<(usize, usize), usize>, i1: usize, i2: usize) -> usize {
+    let key = if i1 < i2 { (i1, i2) } else { (i2, i1) };
+    if let Some(&index) = midpoint_cache.get(&key) {
+        return index;
+    }
 
-pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -> VertexObject {
+    let v1 = vertices[i1];
+    let v2 = vertices[i2];
+    let midpoint = v1.midpoint_with(&v2);
+    let index = vertices.len();
+    vertices.push(midpoint);
+    midpoint_cache.insert(key, index);
+    return index;
+}
+
+pub fn build_cube(pos: Vec3, side_length: f32, color: Vec3, properties: MaterialProperties) -> VertexObject {
     let half = side_length / 2.0;
 
     let a = pos - Vec3::new(half, half, half);
@@ -257,7 +289,7 @@ pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -
     let g = c + Vec3::new(0.0, 0.0, side_length);
     let h = d + Vec3::new(0.0, 0.0, side_length);
 
-    let mut vertices = Vec::with_capacity(36);
+    let mut vertices = vec![a,b,c,d,e,f,g,h];
 
     let faces = [
         [a, d, c, c, b, a], // Front
@@ -268,41 +300,49 @@ pub fn build_cube(pos: Vec3, side_length: f32, properties: MaterialProperties) -
         [e, f, g, g, h, e], // Back
     ];
 
-    for face in faces.iter() {
-        vertices.extend_from_slice(face);
-    }
+    let indices = vec![
+        0,3,2,2,1,0,
+        0,1,5,5,4,0,
+        1,2,6,6,5,1,
+        3,7,6,6,2,3,
+        0,4,7,7,3,0,
+        4,5,6,6,7,4,
+    ];
 
-    VertexObject::new(vertices, properties)
+    let colors = vec![color; indices.len() / 3];
+    VertexObject::new(vertices, indices, colors, properties)
 }
 
-pub fn build_checkerboard(center: Vec3, radius: i32, properties1: MaterialProperties, properties2: MaterialProperties) -> Vec<VertexObject> {
-    let mut vertices1 = Vec::new();
-    let mut vertices2 = Vec::new();
+pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: MaterialProperties) -> VertexObject {
+    let mut vertices = Vec::new();
+    for x in -radius..=radius {
+        for y in -radius..=radius {
+            vertices.push(Vec3::new(x as f32, y as f32, 0.0) + center);
+        }
+    }
+    let mut indices = Vec::new();
+    let mut colors = Vec::new();
+    for x in 0..(radius as usize * 2) {
+        for y in 0..(radius as usize * 2) {
+            let i = (x * (radius as usize * 2 + 1) + y) as usize;
+            indices.push(i);
+            indices.push(i + radius as usize * 2 + 2);
+            indices.push(i + radius as usize * 2 + 1);
+            indices.push(i);
+            indices.push(i + 1);
+            indices.push(i + radius as usize * 2 + 2);
 
-    for x in -radius..radius {
-        for y in -radius..radius {
-            let target_vertices = if (x + y) % 2 == 0 { &mut vertices1 } else { &mut vertices2 };
-            let a = Vec3::new(center.x + x as f32, center.y + y as f32, center.z);
-            let b = a + Vec3::new(1.0, 0.0, 0.0);
-            let c = a + Vec3::new(1.0, 1.0, 0.0);
-            let d = a + Vec3::new(0.0, 1.0, 0.0);
-
-            target_vertices.extend_from_slice(&[a, c, b, a, d, c]);
+            let color = if (x + y) % 2 == 0 { color1 } else { color2 };
+            colors.push(color);
+            colors.push(color);
         }
     }
 
-    return vec![
-        VertexObject::new(vertices1, properties1),
-        VertexObject::new(vertices2, properties2),
-    ];
+    return VertexObject::new(vertices, indices, colors, properties);
 }
 
-pub fn build_checkerboard_with_color(center: Vec3, radius: i32, color1: Vec3, color2: Vec3) -> Vec<VertexObject> {
-    return build_checkerboard(center, radius, MaterialProperties::default_from_color(color1), MaterialProperties::default_from_color(color2));
-}
-
-pub fn get_icosahedron_vertices(t: f32) -> Vec<Vec3> {
-    let base_vertices = vec![
+pub fn get_icosahedron_vertices_and_indices(t: f32) -> (Vec<Vec3>, Vec<usize>) {
+    let vertices = vec![
         Vec3::new(-1.0, t, 0.0),
         Vec3::new(1.0, t, 0.0),
         Vec3::new(-1.0, -t, 0.0),
@@ -319,43 +359,40 @@ pub fn get_icosahedron_vertices(t: f32) -> Vec<Vec3> {
         Vec3::new(-t, 0.0, 1.0),
     ];
 
-    let vertices = vec![
-        base_vertices[11], base_vertices[0], base_vertices[5],
-        base_vertices[5], base_vertices[0], base_vertices[1],
-        base_vertices[1], base_vertices[0], base_vertices[7],
-        base_vertices[7], base_vertices[0], base_vertices[10],
-        base_vertices[10], base_vertices[0], base_vertices[11],
+    let indices = vec![
+        11,0,5,
+        5,0,1,
+        1,0,7,
+        7,0,10,
+        10,0,11,
 
-        base_vertices[5], base_vertices[1], base_vertices[9],
-        base_vertices[11], base_vertices[5], base_vertices[4],
-        base_vertices[10], base_vertices[11], base_vertices[2],
-        base_vertices[7], base_vertices[10], base_vertices[6],
-        base_vertices[1], base_vertices[7], base_vertices[8],
+        5,1,9,
+        11,5,4,
+        10,11,2,
+        7,10,6,
+        1,7,8,
 
-        base_vertices[9], base_vertices[3], base_vertices[4],
-        base_vertices[4], base_vertices[3], base_vertices[2],
-        base_vertices[2], base_vertices[3], base_vertices[6],
-        base_vertices[6], base_vertices[3], base_vertices[8],
-        base_vertices[8], base_vertices[3], base_vertices[9],
+        9,3,4,
+        4,3,2,
+        2,3,6,
+        6,3,8,
+        8,3,9,
 
-        base_vertices[9], base_vertices[4], base_vertices[5],
-        base_vertices[4], base_vertices[2], base_vertices[11],
-        base_vertices[2], base_vertices[6], base_vertices[10],
-        base_vertices[6], base_vertices[8], base_vertices[7],
-        base_vertices[8], base_vertices[9], base_vertices[1],
+        9,4,5,
+        4,2,11,
+        2,6,10,
+        6,8,7,
+        8,9,1,
     ];
 
-    return vertices;
+    return (vertices, indices);
 }
 
-pub fn build_icosahedron(center: Vec3, t: f32, properties: MaterialProperties) -> VertexObject {
-    let mut vertices = get_icosahedron_vertices(t);
+pub fn build_icosahedron(center: Vec3, t: f32, color: Vec3, properties: MaterialProperties) -> VertexObject {
+    let (mut vertices, indices) = get_icosahedron_vertices_and_indices(t);
     for v in vertices.iter_mut() {
         *v += center;
     }
-    return VertexObject::new(vertices, properties);
-}
-
-pub fn build_sphere(center: Vec3, radius: f32, iterations: u32, properties: MaterialProperties) -> Sphere {
-    return Sphere::build_sphere(center, radius, iterations, properties);
+    let colors = vec![color; indices.len() / 3];
+    return VertexObject::new(vertices, indices, colors, properties);
 }
