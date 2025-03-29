@@ -17,6 +17,13 @@ await wasm.default();
 wasm.init_and_begin_game_loop();
 
 // Helper functions to interface with the WebAssembly module
+
+/**
+ * Loads a GLTF model from the specified URLs.
+ * @param gltfUrl The URL of the GLTF file.
+ * @param binUrl The URL of the BIN file.
+ * @returns A promise that resolves when the model is loaded.
+ */
 async function loadGltfModel(gltfUrl: string, binUrl: string) {
     console.log("Loading GLTF model from JS side");
     try {
@@ -52,4 +59,34 @@ async function loadGltfModel(gltfUrl: string, binUrl: string) {
     }
 }
 
-loadGltfModel("../static/goose_low_poly_gltf/scene.gltf", "../static/goose_low_poly_gltf/scene.bin");
+/**
+ * Loads a GLTF model from a base URL.
+ * @param baseUrl The base URL for the GLTF and BIN files, without the file extension.
+ * GLTF url will be `${baseUrl}.gltf`. BIN url will be `${baseUrl}.bin`
+ * @returns A promise that resolves when the model is loaded.
+ */
+async function loadGltfModelFromBaseUrl(baseUrl: string) {
+    console.log("Loading GLTF model from base URL");
+    const gltfUrl = `${baseUrl}.gltf`;
+    const binUrl = `${baseUrl}.bin`;
+    return loadGltfModel(gltfUrl, binUrl);
+}
+
+async function loadGlbModel(url) {
+    try {
+        const response = await fetch(url);
+        const glbBuffer = await response.arrayBuffer();
+        const glbBytes = new Uint8Array(glbBuffer);
+        
+        // Call the Wasm function with the single GLB file
+        const success = wasm.load_glb_model(glbBytes);
+        return success;
+    } catch (error) {
+        console.error("Error loading GLB model:", error);
+        return false;
+    }
+}
+
+// loadGltfModelFromBaseUrl("../static/goose_low_poly_gltf/scene");
+// loadGltfModelFromBaseUrl("../static/medieval_fantasy_book/scene");
+loadGlbModel("../static/medieval_fantasy_book.glb");
