@@ -168,3 +168,10 @@ where
 
     closure.forget(); // Prevents the closure from being dropped
 }
+
+#[wasm_bindgen]
+pub fn render_ray_tracing() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().render_ray_tracing();
+    });
+}

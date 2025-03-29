@@ -105,8 +105,8 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         let mut material_props = MaterialProperties::default();
         let pbr = primitive.material().pbr_metallic_roughness();
         let pbr_base_color = pbr.base_color_factor();
-        // material_props.alpha = pbr_base_color[3];
-        material_props.alpha = 1.0;
+        material_props.alpha = pbr_base_color[3];
+        // material_props.alpha = 1.0;
         // TODO: user proper alpha and add metalic etc. properties
 
         let base_color = Vec3::new(pbr_base_color[0], pbr_base_color[1], pbr_base_color[2]);
@@ -165,13 +165,19 @@ fn get_colors_from_texture(
         // Get the image data
         let image_data = match get_image_data(gltf, &image, buffers) {
             Ok(data) => data,
-            Err(e) => return Err(format!("Failed to get image data: {}", e)),
+            Err(e) => {
+                console_log!("Failed to get image data for texture: {}", e);
+                return Err(format!("Failed to get image data for texture: {}", e));
+            },
         };
 
         // Cache the decoded image to avoid repeatedly decoding it
         let decoded_image = match load_from_memory(&image_data) {
             Ok(img) => img,
-            Err(e) => return Err(format!("Failed to decode image: {}", e)),
+            Err(e) => {
+                console_log!("Failed to decode the received texture image: {}", e);
+                return Err(format!("Failed to decode the received texture image: {}", e));
+            },
         };
         let (width, height) = decoded_image.dimensions();
         
@@ -233,6 +239,7 @@ fn get_image_data(gltf: &Gltf, image: &gltf::Image, buffers: &[Data]) -> Result<
                 }
             } else {
                 // External URIs would require network requests
+                console_log!("GLB tried to reference external image URIs, not supported yet");
                 Err("External image URIs not supported yet".to_string())
             }
         }
@@ -358,7 +365,7 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
             }
         },
         Err(e) => {
-            console_error!("GLB parse error: {}", e);
+            console_error!("GLB error on decode_glb_bytes(): {}", e);
             false
         }
     }
@@ -368,7 +375,10 @@ pub fn decode_glb_bytes(glb_bytes: &[u8]) -> Result<(Gltf, Vec<Data>), String> {
     // Parse the GLB data - this works with both GLB and GLTF formats
     let gltf = match Gltf::from_slice(glb_bytes) {
         Ok(gltf) => gltf,
-        Err(e) => return Err(format!("Failed to parse GLB: {}", e)),
+        Err(e) => {
+            console_error!("Failed to parse GLB from slice: {}", e);
+            return Err(format!("Failed to parse GLB from slice: {}", e));
+        },
     };
 
     // console_log!("buffers().len(): {:?}", gltf.buffers().len());
@@ -382,7 +392,8 @@ pub fn decode_glb_bytes(glb_bytes: &[u8]) -> Result<(Gltf, Vec<Data>), String> {
     let mut buffers = Vec::new();
     if let Some(blob) = gltf.blob.as_ref() {
         buffers.push(Data::from_source_and_blob(Source::Bin, None, &mut Some(blob.clone())).unwrap());
-    } else {
+    } else { 
+        console_error!("GLB file missing binary chunk");
         return Err("GLB file missing binary chunk".to_string());
     }
 

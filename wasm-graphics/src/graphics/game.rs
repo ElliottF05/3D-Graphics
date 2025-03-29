@@ -1,7 +1,7 @@
 use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
 
-use crate::{console_log, utils::{math::Vec3, utils::{sort_objects_by_distance_to_camera, get_time}}};
+use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_objects_by_distance_to_camera}}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
@@ -19,6 +19,8 @@ pub struct Game {
     pub keys_currently_pressed: HashSet<String>,
     pub keys_pressed_last_frame: HashSet<String>,
     pub mouse_move: Vec3,
+
+    pub running: bool,
 }
 
 impl Game {
@@ -35,6 +37,7 @@ impl Game {
             keys_currently_pressed: HashSet::new(),
             keys_pressed_last_frame: HashSet::new(),
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
+            running: true,
         };
 
         // game.add_scene_object(build_cube(
@@ -44,13 +47,13 @@ impl Game {
         //     MaterialProperties::default())
         // );
 
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, 0.0, 0.5), 
-        //     0.5, 
-        //     4, 
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     MaterialProperties::default())
-        // );
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 0.0, 0.5), 
+            0.5, 
+            4, 
+            Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::default())
+        );
         
         // game.add_scene_object(build_cube(
         //     Vec3::new(12.0, 0.0, 0.5),
@@ -168,7 +171,10 @@ impl Game {
 
     pub fn game_loop(&mut self) {
         self.process_input();
-        self.render_frame();
+        if self.running {
+            self.render_frame();
+        }
+        self.apply_post_processing_effects()
     }
 
     fn process_input(&mut self) {
@@ -218,6 +224,29 @@ impl Game {
 
         self.camera.set_theta_y(self.camera.get_theta_y() + d_theta_y);
         self.camera.set_theta_z(self.camera.get_theta_z() + d_theta_z);
+
+
+        if self.keys_pressed_last_frame.contains("p") {
+            console_log!("Pausing or unpausing");
+            self.running = !self.running;
+        }
+        if self.keys_pressed_last_frame.contains("r") {
+            // TODO: make this input robust, including cancelling raytracing
+            self.render_ray_tracing();
+        }
+
+        self.keys_pressed_last_frame.clear();
+
+    }
+
+    fn apply_post_processing_effects(&mut self) {
+        for y in 0..self.camera.height {
+            for x in 0..self.camera.width {
+                let color = self.pixel_buf.get_pixel(x, y);
+                let gamma_color = gamma_correct_color(&color);
+                self.pixel_buf.set_pixel(x, y, gamma_color);
+            }
+        }
     }
 
     fn render_frame(&mut self) {
