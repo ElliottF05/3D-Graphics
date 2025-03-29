@@ -34,6 +34,7 @@ pub trait SceneObject {
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
     fn get_indices(&self) -> &Vec<usize>;
     fn get_colors(&self) -> &Vec<Vec3>;
+    fn get_normals(&self) -> &Vec<Vec3>;
     fn get_properties(&self) -> &MaterialProperties;
     fn get_id(&self) -> usize;
     fn get_center(&self) -> Vec3;
@@ -86,6 +87,7 @@ pub struct VertexObject {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
     pub colors: Vec<Vec3>,
+    pub normals: Vec<Vec3>,
     pub properties: MaterialProperties,
     pub id: usize,
     pub center: Vec3,
@@ -103,6 +105,9 @@ impl SceneObject for VertexObject {
     }
     fn get_colors(&self) -> &Vec<Vec3> {
         return &self.colors;
+    }
+    fn get_normals(&self) -> &Vec<Vec3> {
+        return &self.normals;
     }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
@@ -129,10 +134,21 @@ impl VertexObject {
             center += *v;
         }
         center /= vertices.len() as f32;
+
+        let mut normals = Vec::with_capacity(colors.len());
+        for i in (0..indices.len()).step_by(3) {
+            let v1 = vertices[indices[i]];
+            let v2 = vertices[indices[i + 1]];
+            let v3 = vertices[indices[i + 2]];
+            let normal = (v3 - v1).cross(&(v2 - v1)).normalized();
+            normals.push(normal);
+        }
+
         VertexObject {
             vertices,
             indices,
             colors,
+            normals,
             properties,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
@@ -171,6 +187,7 @@ pub struct Sphere {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
     pub colors: Vec<Vec3>,
+    pub normals: Vec<Vec3>,
     pub properties: MaterialProperties,
     pub id: usize,
     pub center: Vec3,
@@ -189,6 +206,9 @@ impl SceneObject for Sphere {
     }
     fn get_colors(&self) -> &Vec<Vec3> {
         return &self.colors;
+    }
+    fn get_normals(&self) -> &Vec<Vec3> {
+        return &self.normals;
     }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
@@ -210,10 +230,21 @@ impl SceneObject for Sphere {
 
 impl Sphere {
     pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties) -> Sphere {
+
+        let mut normals = Vec::with_capacity(colors.len());
+        for i in (0..indices.len()).step_by(3) {
+            let v1 = vertices[indices[i]];
+            let v2 = vertices[indices[i + 1]];
+            let v3 = vertices[indices[i + 2]];
+            let normal = (v3 - v1).cross(&(v2 - v1)).normalized();
+            normals.push(normal);
+        }
+
         Sphere {
             vertices,
             indices,
             colors,
+            normals,
             properties,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,

@@ -248,14 +248,17 @@ impl Game {
                 continue;
             }
             let vertices = obj.get_vertices();
+            let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
             let indices = obj.get_indices();
             let colors = obj.get_colors();
+            let normals = obj.get_normals();
             for i in 0..colors.len() {
-                let v1 = vertices[indices[i*3]];
-                let v2 = vertices[indices[i*3+1]];
-                let v3 = vertices[indices[i*3+2]];
+                let v1 = transformed_vertices[indices[i*3]];
+                let v2 = transformed_vertices[indices[i*3+1]];
+                let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
-                self.render_triangle(v1, v2, v3, color, &obj);
+                let normal = normals[i];
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &obj);
             }
         }
 
@@ -265,14 +268,17 @@ impl Game {
                 continue;
             }
             let vertices = obj.get_vertices();
+            let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
             let indices = obj.get_indices();
             let colors = obj.get_colors();
+            let normals = obj.get_normals();
             for i in 0..colors.len() {
-                let v1 = vertices[indices[i*3]];
-                let v2 = vertices[indices[i*3+1]];
-                let v3 = vertices[indices[i*3+2]];
+                let v1 = transformed_vertices[indices[i*3]];
+                let v2 = transformed_vertices[indices[i*3+1]];
+                let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
-                self.render_triangle(v1, v2, v3, color, &obj);
+                let normal = normals[i];
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &obj);
             }
         }
 
@@ -284,66 +290,22 @@ impl Game {
     }
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
-
-        // do not render if normal is pointing away from cam - BACK FACE CULLING
+        // render triangle from transformed vertices
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
-        let cam_to_triangle = v1 - self.camera.pos;
-
-        if scene_obj.get_properties().alpha == 1.0 && normal.dot(&cam_to_triangle) > 0.0 {
-            return;
-        }
-
-        // translate vertices to camera space
-        self.camera.vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
-
-        // sort vertices by depth (v1 has lowest depth, v3 has highest)
-        if v1.x > v2.x {
-            std::mem::swap(&mut v1, &mut v2);
-        }
-        if v2.x > v3.x {
-            std::mem::swap(&mut v2, &mut v3);
-        }
-        if v1.x > v2.x {
-            std::mem::swap(&mut v1, &mut v2);
-        }
-
-        // CLIPPING VERTICES
-        // Some basic clipping info (why is there so little info online): https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
-        const NEAR_PLANE: f32 = 0.001;
-        if v1.x > 0.0 { // all vertices in view
-            self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
-        } else if v2.x > 0.0 { // 2 vertices in view
-            let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
-            let mut v1_new_1 = v2 + (v1 - v2) * q;
-            let q = (NEAR_PLANE - v3.x) / (v1.x - v3.x);
-            let mut v1_new_2 = v3 + (v1 - v3) * q;
-
-            self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
-            self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
-        } else if v3.x > 0.0 { // 1 vertex in view
-            let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
-            let mut v2_new = v2 + (v3 - v2) * q;
-            let q = (NEAR_PLANE - v1.x) / (v3.x - v1.x);
-            let mut v1_new = v1 + (v3 - v1) * q;
-
-            self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
-        } else { // no vertices in view
-            return;
-        }
+        self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
+        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj);
     }
 
-
-
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
-        let cam_to_triangle = v1 - self.camera.pos;
-        if scene_obj.get_properties().alpha == 1.0 && normal.dot(&cam_to_triangle) > 0.0 {
-            return;
+        // only applies to opaque objects
+        if scene_obj.get_properties().alpha == 1.0 {
+            let cam_normal = (&(v3 - v1)).cross(&(v2 - v1));
+            let cam_to_tri = v1;
+            if cam_to_tri.dot(&cam_normal) > 0.0 {
+                return;
+            }
         }
 
         // sort vertices by depth (v1 has lowest depth, v3 has highest)
