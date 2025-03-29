@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::f32::consts::PI;
 use std::rc::Rc;
 
 use wasm_bindgen::prelude::*;
@@ -12,9 +11,6 @@ use web_sys::MouseEvent;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 
 use crate::graphics::game::Game;
-use crate::graphics::gltf_parser::decode_gltf_bytes;
-use crate::graphics::gltf_parser::parse_gltf_objects;
-use crate::graphics::scene::SceneObject;
 use crate::utils::math::Vec3;
 
 
@@ -34,7 +30,7 @@ macro_rules! console_error {
 
 // MAIN GAME INSTANCE
 thread_local! {
-    static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
+    pub static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
 }
 
 #[wasm_bindgen]
@@ -43,49 +39,11 @@ pub fn init_panic_hook() {
 }
 
 #[wasm_bindgen]
-pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
-    match decode_gltf_bytes(gltf_bytes, bin_bytes) {
-        Ok((gltf, buffers)) => {
-            match parse_gltf_objects(gltf, &buffers) {
-                Ok(mut vertex_objects) => {
-
-                    // TODO: remove later, this is for testing
-                    for obj in vertex_objects.iter_mut() {
-                        for vertex in obj.vertices.iter_mut() {
-                            vertex.rotate_z(PI / 2.0);
-                            vertex.rotate_y(-PI / 2.0);
-                        }
-                    }
-                    for obj in vertex_objects.iter_mut() {
-                        obj.translate(Vec3::new(10.0, 0.0, 5.0));
-                    }
-
-                    GAME_INSTANCE.with(|game_instance| {
-                        game_instance.borrow_mut().add_scene_objects(vertex_objects);
-                    });
-                    true
-                },
-                Err(e) => {
-                    console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
-                    false
-                }
-            }
-        },
-        Err(e) => {
-            console_error!("GLTF parse error on decode_gltf_bytes(): {}", e);
-            false
-        }
-    }
-}
-
-#[wasm_bindgen]
 pub fn init_and_begin_game_loop() {
 
     init_panic_hook();
 
     // testing stuff here...
-
-    // let game = Rc::new(RefCell::new(Game::new()));
 
     // Access the window, document, and peformance objects
     let window = web_sys::window().expect("No global window exists");

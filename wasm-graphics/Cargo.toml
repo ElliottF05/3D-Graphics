@@ -33,6 +33,7 @@ gltf = { version = "1.4.1", features = [
     "utils",
     "import",
 ]}
+image = "0.25.5"
 
 [package.metadata.wasm-pack.profile.dev]
 wasm-opt = ['-O4']
