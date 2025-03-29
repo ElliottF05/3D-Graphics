@@ -37,93 +37,93 @@ impl Game {
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
         };
 
-        game.add_scene_object(build_cube(
-            Vec3::new(11.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::default())
-        );
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(11.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     MaterialProperties::default())
+        // );
 
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 0.0, 0.5), 
-            0.5, 
-            4, 
-            Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::default())
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, 0.0, 0.5), 
+        //     0.5, 
+        //     4, 
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     MaterialProperties::default())
+        // );
         
-        game.add_scene_object(build_cube(
-            Vec3::new(12.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::new(
-                0.05,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(13.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(0.0, 1.0, 0.0),
-            MaterialProperties::new(
-                0.2,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(14.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(0.0, 0.0, 1.0),
-            MaterialProperties::new(
-                0.5,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(15.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::new(
-                0.8,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(16.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(0.0, 1.0, 0.0),
-            MaterialProperties::new(
-                0.95,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
-        game.add_scene_object(build_cube(
-            Vec3::new(17.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(0.0, 0.0, 1.0),
-            MaterialProperties::new(
-                1.0,
-                0.8,
-                1.0,
-                1.0,
-                32,
-            ),
-        ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(12.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     MaterialProperties::new(
+        //         0.05,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(13.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(0.0, 1.0, 0.0),
+        //     MaterialProperties::new(
+        //         0.2,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(14.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(0.0, 0.0, 1.0),
+        //     MaterialProperties::new(
+        //         0.5,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(15.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     MaterialProperties::new(
+        //         0.8,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(16.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(0.0, 1.0, 0.0),
+        //     MaterialProperties::new(
+        //         0.95,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
+        // game.add_scene_object(build_cube(
+        //     Vec3::new(17.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(0.0, 0.0, 1.0),
+        //     MaterialProperties::new(
+        //         1.0,
+        //         0.8,
+        //         1.0,
+        //         1.0,
+        //         32,
+        //     ),
+        // ));
 
         game.add_scene_object(build_checkerboard(
                 Vec3::new(10.0, 0.0, 0.0), 
@@ -135,9 +135,9 @@ impl Game {
         );
 
         // let mut stl_obj = VertexObject::new_from_stl_bytes(
-        //     &include_bytes!("../3DBenchy.stl").to_vec(), 
+        //     &include_bytes!("../3DBenchy.stl").to_vec(),
+        //     Vec3::new(1.0, 0.2, 0.5), 
         //     MaterialProperties::new(
-        //         Vec3::new(1.0, 0.2, 0.5),
         //         1.0,
         //         0.8,
         //         1.0,
@@ -228,6 +228,10 @@ impl Game {
         //      WARNING - transparent objects can cause significant (3x-5x) performance drops 
         //      since multiple layers must be rendered each time
 
+        // Now testing on fantasy book gltf, with indexed triangles:
+        // 65ms (from performance tab)
+        // 
+
         let t1 = get_time();
 
         // clear buffers
@@ -291,6 +295,56 @@ impl Game {
 
         // translate vertices to camera space
         self.camera.vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
+
+        // sort vertices by depth (v1 has lowest depth, v3 has highest)
+        if v1.x > v2.x {
+            std::mem::swap(&mut v1, &mut v2);
+        }
+        if v2.x > v3.x {
+            std::mem::swap(&mut v2, &mut v3);
+        }
+        if v1.x > v2.x {
+            std::mem::swap(&mut v1, &mut v2);
+        }
+
+        // CLIPPING VERTICES
+        // Some basic clipping info (why is there so little info online): https://www.khronos.org/opengl/wiki/Vertex_Post-Processing
+        const NEAR_PLANE: f32 = 0.001;
+        if v1.x > 0.0 { // all vertices in view
+            self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
+            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
+        } else if v2.x > 0.0 { // 2 vertices in view
+            let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
+            let mut v1_new_1 = v2 + (v1 - v2) * q;
+            let q = (NEAR_PLANE - v3.x) / (v1.x - v3.x);
+            let mut v1_new_2 = v3 + (v1 - v3) * q;
+
+            self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
+            self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
+        } else if v3.x > 0.0 { // 1 vertex in view
+            let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
+            let mut v2_new = v2 + (v3 - v2) * q;
+            let q = (NEAR_PLANE - v1.x) / (v3.x - v1.x);
+            let mut v1_new = v1 + (v3 - v1) * q;
+
+            self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
+        } else { // no vertices in view
+            return;
+        }
+    }
+
+
+
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+
+        // do not render if normal is pointing away from cam - BACK FACE CULLING
+        let cam_to_triangle = v1 - self.camera.pos;
+        if scene_obj.get_properties().alpha == 1.0 && normal.dot(&cam_to_triangle) > 0.0 {
+            return;
+        }
 
         // sort vertices by depth (v1 has lowest depth, v3 has highest)
         if v1.x > v2.x {
