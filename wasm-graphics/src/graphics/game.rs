@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{sort_objects_by_distance_to_camera, get_time}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_checkerboard_with_color, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -37,97 +37,100 @@ impl Game {
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
         };
 
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(11.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0)),
-        // ));
+        game.add_scene_object(build_cube(
+            Vec3::new(11.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::default())
+        );
 
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, 0.0, 0.5), 
-        //     0.5, 
-        //     4, 
-        //     MaterialProperties::default_from_color(Vec3::new(1.0, 0.0, 0.0))
-        // ));
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 0.0, 0.5), 
+            0.5, 
+            4, 
+            Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::default())
+        );
         
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(12.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(1.0, 0.0, 0.0),
-        //         0.05,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(13.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(0.0, 1.0, 0.0),
-        //         0.2,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(14.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(0.0, 0.0, 1.0),
-        //         0.5,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(15.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(1.0, 0.0, 0.0),
-        //         0.8,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(16.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(0.0, 1.0, 0.0),
-        //         0.95,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(17.0, 0.0, 0.5),
-        //     1.0,
-        //     MaterialProperties::new(
-        //         Vec3::new(0.0, 0.0, 1.0),
-        //         1.0,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
+        game.add_scene_object(build_cube(
+            Vec3::new(12.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::new(
+                0.05,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(13.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(0.0, 1.0, 0.0),
+            MaterialProperties::new(
+                0.2,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(14.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(0.0, 0.0, 1.0),
+            MaterialProperties::new(
+                0.5,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(15.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::new(
+                0.8,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(16.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(0.0, 1.0, 0.0),
+            MaterialProperties::new(
+                0.95,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
+        game.add_scene_object(build_cube(
+            Vec3::new(17.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(0.0, 0.0, 1.0),
+            MaterialProperties::new(
+                1.0,
+                0.8,
+                1.0,
+                1.0,
+                32,
+            ),
+        ));
 
-        game.add_scene_objects(build_checkerboard_with_color(
+        game.add_scene_object(build_checkerboard(
                 Vec3::new(10.0, 0.0, 0.0), 
                 20, 
                 Vec3::new(1.0, 1.0, 1.0), 
-                Vec3::new(0.9, 0.9, 0.9)
+                Vec3::new(0.9, 0.9, 0.9),
+                MaterialProperties::default(),
             )
         );
 
@@ -241,8 +244,14 @@ impl Game {
                 continue;
             }
             let vertices = obj.get_vertices();
-            for i in (0..vertices.len()).step_by(3) {
-                self.render_triangle(vertices[i], vertices[i+1], vertices[i+2], &obj);
+            let indices = obj.get_indices();
+            let colors = obj.get_colors();
+            for i in 0..colors.len() {
+                let v1 = vertices[indices[i*3]];
+                let v2 = vertices[indices[i*3+1]];
+                let v3 = vertices[indices[i*3+2]];
+                let color = colors[i];
+                self.render_triangle(v1, v2, v3, color, &obj);
             }
         }
 
@@ -252,8 +261,14 @@ impl Game {
                 continue;
             }
             let vertices = obj.get_vertices();
-            for i in (0..vertices.len()).step_by(3) {
-                self.render_triangle(vertices[i], vertices[i+1], vertices[i+2], &obj);
+            let indices = obj.get_indices();
+            let colors = obj.get_colors();
+            for i in 0..colors.len() {
+                let v1 = vertices[indices[i*3]];
+                let v2 = vertices[indices[i*3+1]];
+                let v3 = vertices[indices[i*3+2]];
+                let color = colors[i];
+                self.render_triangle(v1, v2, v3, color, &obj);
             }
         }
 
@@ -264,7 +279,7 @@ impl Game {
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
@@ -293,7 +308,7 @@ impl Game {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, scene_obj);
+            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -302,8 +317,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, scene_obj);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -311,14 +326,14 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, scene_obj);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
         let properties = scene_obj.get_properties();
@@ -387,23 +402,23 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
+                        let mut blended_color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &color);
 
                         for light in &self.lights {
-                            color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, properties);
+                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
                         }
-                        color.x = color.x.min(1.0);
-                        color.y = color.y.min(1.0);
-                        color.z = color.z.min(1.0);
+                        blended_color.x = blended_color.x.min(1.0);
+                        blended_color.y = blended_color.y.min(1.0);
+                        blended_color.z = blended_color.z.min(1.0);
 
                         if properties.alpha == 1.0 {
                             self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, color);
+                            self.pixel_buf.set_pixel(x, y, blended_color);
                         } else {
                             // alpha blending, don't set depth
                             let old_color = self.pixel_buf.get_pixel(x, y);
-                            let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
-                            self.pixel_buf.set_pixel(x, y, new_color);
+                            blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                            self.pixel_buf.set_pixel(x, y, blended_color);
 
                             // self.pixel_buf.set_pixel(x, y, color);
                         }
@@ -456,23 +471,23 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &properties.color);
+                        let mut blended_color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &color);
 
                         for light in &self.lights {
-                            color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, properties);
+                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
                         }
-                        color.x = color.x.min(1.0);
-                        color.y = color.y.min(1.0);
-                        color.z = color.z.min(1.0);
+                        blended_color.x = blended_color.x.min(1.0);
+                        blended_color.y = blended_color.y.min(1.0);
+                        blended_color.z = blended_color.z.min(1.0);
 
                         if properties.alpha == 1.0 {
                             self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, color);
+                            self.pixel_buf.set_pixel(x, y, blended_color);
                         } else {
                             // alpha blending, don't set depth
                             let old_color = self.pixel_buf.get_pixel(x, y);
-                            let new_color = color * properties.alpha + old_color * (1.0 - properties.alpha);
-                            self.pixel_buf.set_pixel(x, y, new_color);
+                            blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                            self.pixel_buf.set_pixel(x, y, blended_color);
 
                             // self.pixel_buf.set_pixel(x, y, color);
                         }
