@@ -27,3 +27,9 @@ pub fn sort_objects_by_distance_to_camera(objects: &mut Vec<Box<dyn SceneObject>
             .unwrap_or(std::cmp::Ordering::Equal)
     );
 }
+
+pub fn flip_indices_winding(indices: &mut Vec<usize>) {
+    for i in (0..indices.len()).step_by(3) {
+        (indices[i], indices[i + 2]) = (indices[i + 2], indices[i]);
+    }
+}

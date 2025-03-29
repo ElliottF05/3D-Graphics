@@ -1,8 +1,9 @@
-use gltf::{buffer::{Data, Source}, image, json::extensions::material, mesh::util::tex_coords, Gltf, Primitive};
+use gltf::{buffer::{Data, Source}, image, json::extensions::material, mesh::{util::{tex_coords, ReadColors}, Reader}, Gltf, Primitive};
 use ::image::{load_from_memory, GenericImageView};
 use wasm_bindgen::prelude::*;
 use std::f32::consts::PI;
-use crate::{console_error, console_log, wasm::wasm::GAME_INSTANCE};
+use data_url;
+use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm::wasm::GAME_INSTANCE};
 
 use crate::utils::math::Vec3;
 
@@ -94,22 +95,48 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
             Some(positions) => positions.map(|p| Vec3::new(-p[2], -p[0], p[1])).collect::<Vec<_>>(),
             None => return Err("Mesh has no position data".to_string()),
         };
-        let indices: Vec<usize> = match reader.read_indices() {
+        let mut indices: Vec<usize> = match reader.read_indices() {
             Some(indices_reader) => indices_reader.into_u32().map(|x| x as usize).collect(),
             None => return Err("Mesh has no index data".to_string()),
         };
-        console_log!("indices.len() {}", indices.len());
+        flip_indices_winding(&mut indices);
 
         // Get material properties
-        let material_props = match get_material_properties_for_gltf(gltf, &primitive, buffers) {
-            Ok(props) => props,
-            Err(e) => {
-                console_error!("Failed to get material properties: {}", e);
-                return Err("Failed to get material properties".to_string());
+        let mut material_props = MaterialProperties::default();
+        let pbr = primitive.material().pbr_metallic_roughness();
+        let pbr_base_color = pbr.base_color_factor();
+        // material_props.alpha = pbr_base_color[3];
+        material_props.alpha = 1.0;
+        // TODO: user proper alpha and add metalic etc. properties
+
+        let base_color = Vec3::new(pbr_base_color[0], pbr_base_color[1], pbr_base_color[2]);
+        let read_colors = reader.read_colors(0);
+
+        let colors = if let Ok(vertex_colors) = get_colors_from_vertex_colors(read_colors) {
+            vertex_colors
+        } else {
+            // Try to get colors from texture
+            let tex_coords_vec = match reader.read_tex_coords(0) {
+                Some(tc) => tc.into_f32().collect(),
+                None => vec![] // Empty if no texture coords
+            };
+
+            let indices_for_texture = match reader.read_indices() {
+                Some(idx) => idx.into_u32().collect(),
+                None => vec![] // Empty if no indices
+            };
+
+            if !tex_coords_vec.is_empty() && !indices_for_texture.is_empty() {
+                match get_colors_from_texture(gltf, &primitive, tex_coords_vec, indices_for_texture, buffers) {
+                    Ok(texture_colors) => texture_colors,
+                    Err(_) => vec![base_color; indices.len() / 3]
+                }
+            } else {
+                vec![base_color; indices.len() / 3]
             }
         };
+        // console_log!("colors: {:?}", colors);
 
-        let colors = vec![Vec3::new(1.0, 1.0, 1.0) ; indices.len() / 3];        
         let vertex_object = VertexObject::new(vertices, indices, colors, material_props);
         
         vertex_objects.push(vertex_object);
@@ -118,163 +145,179 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
     Ok(vertex_objects)
 }
 
-fn get_material_properties_for_gltf(gltf: &Gltf, primitive: &Primitive, buffers: &[Data]) -> Result<MaterialProperties, String> {
-    let mut material_props = MaterialProperties::default();
-    let pbr = primitive.material().pbr_metallic_roughness();
+fn get_colors_from_texture(
+    gltf: &Gltf,
+    primitive: &gltf::Primitive,
+    tex_coords_vec: Vec<[f32; 2]>,
+    indices: Vec<u32>,
+    buffers: &[Data]
+) -> Result<Vec<Vec3>, String> {
 
-    // if let Some(base_color_texture) = pbr.base_color_texture() {
-    //     let texture_index = base_color_texture.texture().index();
-    //     let image_index = base_color_texture.texture().source().index();
-
-    //     // Get the reader for this primitive
-    //     let reader = primitive.reader(|buf| Some(&buffers[buf.index()]));
-    //     if let Some(tex_coords) = reader.read_tex_coords(0) {
-    //         // Collect UV coordinates to find the region this primitive uses
-    //         let tex_coords: Vec<[f32; 2]> = tex_coords.into_f32().collect();
-            
-    //         // Find the min and max UV coordinates to determine the region
-    //         let mut min_u = 1.0 as f32;
-    //         let mut min_v = 1.0 as f32;
-    //         let mut max_u = 0.0 as f32;
-    //         let mut max_v = 0.0 as f32;
-            
-    //         for uv in &tex_coords {
-    //             min_u = min_u.min(uv[0]);
-    //             min_v = min_v.min(uv[1]);
-    //             max_u = max_u.max(uv[0]);
-    //             max_v = max_v.max(uv[1]);
-    //         }
-
-    //         // console_log!("UV bounds: ({:.2}, {:.2}) - ({:.2}, {:.2})", min_u, min_v, max_u, max_v);
-
-    //         // Get the image data
-    //         if let Some(image) = gltf.images().nth(image_index) {
-    //             if let gltf::image::Source::View { view, mime_type } = image.source() {
-    //                 // Get buffer data for the image
-    //                 let buffer = &buffers[view.buffer().index()];
-    //                 let start = view.offset();
-    //                 let end = start + view.length();
-    //                 let image_data = &buffer[start..end];
-                    
-    //                 // Calculate average color for the specific UV region
-    //                 match compute_average_color_for_uv_region(
-    //                     image_data, mime_type, min_u, min_v, max_u, max_v
-    //                 ) {
-    //                     Ok(avg_color) => {
-    //                         material_props.color = avg_color;
-    //                         console_log!("UV region color: {:?}", avg_color);
-    //                     },
-    //                     Err(e) => {
-    //                         console_log!("Failed to compute average color for UV region: {}", e);
-    //                         return Err(format!("Failed to compute average color for UV region: {}", e));
-    //                     }
-    //                 }
-    //             }
-    //         } else {
-    //             console_log!("Image not found for texture index: {}", texture_index);
-    //             return Err("Image not found for texture index".to_string());
-    //         }
-    //     } else {
-    //         console_log!("No texture coordinates found for primitive");
-    //         return Err("No texture coordinates found for primitive".to_string());
-    //     }
-
-    // } else { // use base_color_factor if no texture
-        console_log!("No base color texture found, using base color factor instead.");
-        let base_color = pbr.base_color_factor();
-        let color = Vec3::new(base_color[0], base_color[1], base_color[2]);
-        // let alpha = base_color[3];
-        let alpha = 1.0; // Force alpha to 1.0 for now
-        material_props = MaterialProperties {
-            alpha,
-            ..MaterialProperties::default()
+    // Get the material and check if it has a base color texture
+    let material = primitive.material();
+    let pbr = material.pbr_metallic_roughness();
+    
+    if let Some(texture) = pbr.base_color_texture() {
+        // Get the texture and its source image
+        let texture_info = texture.texture();
+        let image = texture_info.source();
+        
+        // Get the image data
+        let image_data = match get_image_data(gltf, &image, buffers) {
+            Ok(data) => data,
+            Err(e) => return Err(format!("Failed to get image data: {}", e)),
         };
-    return Ok(material_props);
-}
 
-fn compute_average_color(image_data: &[u8], mime_type: &str) -> Result<Vec3, String> {
-    // The mime_type parameter isn't needed when using the image crate
-    // as it can automatically detect the format
-    match load_from_memory(image_data) {
-        Ok(img) => {
-            let (width, height) = img.dimensions();
-            let mut r_sum = 0;
-            let mut g_sum = 0;
-            let mut b_sum = 0;
-            let total_pixels = width as usize * height as usize;
-            
-            // For large images, consider sampling instead of processing every pixel
-            let sample_size = if total_pixels > 10000 { 10 } else { 1 };
-            let mut sample_count = 0;
-            
-            for (x, y, pixel) in img.pixels() {
-                // Only process every Nth pixel for large images
-                if x % sample_size == 0 && y % sample_size == 0 {
-                    r_sum += pixel[0] as u32;
-                    g_sum += pixel[1] as u32;
-                    b_sum += pixel[2] as u32;
-                    sample_count += 1;
+        // Cache the decoded image to avoid repeatedly decoding it
+        let decoded_image = match load_from_memory(&image_data) {
+            Ok(img) => img,
+            Err(e) => return Err(format!("Failed to decode image: {}", e)),
+        };
+        let (width, height) = decoded_image.dimensions();
+        
+        // For each triangle, sample the texture at the first vertex
+        let mut colors = Vec::new();
+        
+        for chunk in indices.chunks(3) {
+            if chunk.len() == 3 {
+                // Get the UV coordinates of the first vertex of the triangle
+                let vertex_idx = chunk[0] as usize;
+                if vertex_idx < tex_coords_vec.len() {
+                    let uv = tex_coords_vec[vertex_idx];
+
+                    // Calculate pixel coordinates from UV (handle wrapping)
+                    let mut x = (uv[0] * width as f32) as u32;
+                    let mut y = (uv[1] * height as f32) as u32;
+                    
+                    x = x % width;
+                    y = y % height;
+
+                    // Get the pixel color
+                    let pixel = decoded_image.get_pixel(x, y);
+                    colors.push(Vec3::new(
+                        pixel[0] as f32 / 255.0,
+                        pixel[1] as f32 / 255.0,
+                        pixel[2] as f32 / 255.0
+                    ));
+                } else {
+                    colors.push(Vec3::new(1.0, 0.0, 1.0)); // Fallback to magenta
                 }
             }
-            
-            if sample_count > 0 {
-                Ok(Vec3::new(
-                    r_sum as f32 / (255.0 * sample_count as f32),
-                    g_sum as f32 / (255.0 * sample_count as f32),
-                    b_sum as f32 / (255.0 * sample_count as f32)
-                ))
-            } else {
-                Err("No pixels sampled to compute average color".to_string())
-            }
+        }
+        
+        Ok(colors)
+    } else {
+        // No base color texture, return an error
+        Err("No base color texture found".to_string())
+    }
+}
+
+// Helper function to get image data from a GLTF image
+fn get_image_data(gltf: &Gltf, image: &gltf::Image, buffers: &[Data]) -> Result<Vec<u8>, String> {
+    match image.source() {
+        gltf::image::Source::View { view, mime_type: _ } => {
+            let buffer = &buffers[view.buffer().index()];
+            let begin = view.offset();
+            let end = begin + view.length();
+            Ok(buffer[begin..end].to_vec())
         },
-        Err(e) => {
-            console_error!("Failed to decode image: {}", e);
-            Err("Failed to decode image".to_string())
+        gltf::image::Source::Uri { uri, mime_type: _ } => {
+            // For embedded base64 data URIs
+            if uri.starts_with("data:") {
+                match data_url::DataUrl::process(uri) {
+                    Ok(data_url) => {
+                        let (body, _) = data_url.decode_to_vec().unwrap();
+                        Ok(body)
+                    },
+                    Err(_) => Err("Failed to parse data URL".to_string()),
+                }
+            } else {
+                // External URIs would require network requests
+                Err("External image URIs not supported yet".to_string())
+            }
         }
     }
 }
 
-fn compute_average_color_for_uv_region(
+fn get_colors_from_vertex_colors(read_colors: Option<ReadColors>) -> Result<Vec<Vec3>, String> {
+    if read_colors.is_none() {
+        console_log!("No vertex colors found");
+        return Err("No vertex colors found".to_string());
+    }
+    match read_colors.unwrap() {
+        ReadColors::RgbU8(iter) => {
+            let colors = iter.map(|rgb| Vec3::new(
+                rgb[0] as f32 / 255.0,
+                rgb[1] as f32 / 255.0,
+                rgb[2] as f32 / 255.0,
+            )).collect();
+            Ok(colors)
+        },
+        ReadColors::RgbU16(iter) => {
+            let colors = iter.map(|rgb| Vec3::new(
+                rgb[0] as f32 / 65535.0,
+                rgb[1] as f32 / 65535.0,
+                rgb[2] as f32 / 65535.0,
+            )).collect();
+            Ok(colors)
+        },
+        ReadColors::RgbF32(iter) => {
+            let colors = iter.map(|rgb| Vec3::new(
+                rgb[0], rgb[1], rgb[2]
+            )).collect();
+            Ok(colors)
+        },
+        ReadColors::RgbaU8(iter) => {
+            let colors = iter.map(|rgba| Vec3::new(
+                rgba[0] as f32 / 255.0,
+                rgba[1] as f32 / 255.0,
+                rgba[2] as f32 / 255.0,
+            )).collect();
+            Ok(colors)
+        },
+        ReadColors::RgbaU16(iter) => {
+            let colors = iter.map(|rgba| Vec3::new(
+                rgba[0] as f32 / 65535.0,
+                rgba[1] as f32 / 65535.0,
+                rgba[2] as f32 / 65535.0,
+            )).collect();
+            Ok(colors)
+        },
+        ReadColors::RgbaF32(iter) => {
+            let colors = iter.map(|rgba| Vec3::new(
+                rgba[0], rgba[1], rgba[2]
+            )).collect();
+            Ok(colors)
+        },
+    }
+}
+
+fn sample_texture_at_uv(
     image_data: &[u8], 
-    mime_type: &str, 
-    min_u: f32, 
-    min_v: f32, 
-    max_u: f32, 
-    max_v: f32
+    u: f32, 
+    v: f32
 ) -> Result<Vec3, String> {
     match load_from_memory(image_data) {
         Ok(img) => {
             let (width, height) = img.dimensions();
-            let mut r_sum = 0;
-            let mut g_sum = 0;
-            let mut b_sum = 0;
-            let mut pixel_count = 0;
-
-            for y in 0..height {
-                for x in 0..width {
-                    let u = x as f32 / width as f32;
-                    let v = y as f32 / height as f32;
-
-                    if u >= min_u && u <= max_u && v >= min_v && v <= max_v {
-                        let pixel = img.get_pixel(x, y);
-                        r_sum += pixel[0] as u32;
-                        g_sum += pixel[1] as u32;
-                        b_sum += pixel[2] as u32;
-                        pixel_count += 1;
-                    }
-                }
-            }
-
-            if pixel_count > 0 {
-                Ok(Vec3::new(
-                    r_sum as f32 / (255.0 * pixel_count as f32),
-                    g_sum as f32 / (255.0 * pixel_count as f32),
-                    b_sum as f32 / (255.0 * pixel_count as f32)
-                ))
-            } else {
-                Ok(Vec3::new(0.0, 0.0, 0.0)) // Return black if no pixels found
-                // Err("No pixels found in the specified UV region".to_string())
-            }
+            
+            // Calculate pixel coordinates from UV (handle wrapping)
+            let mut x = (u * width as f32) as u32;
+            let mut y = (v * height as f32) as u32;
+            
+            // Ensure coordinates are within bounds (wrap around for texture repeating)
+            x = x % width;
+            y = y % height;
+            
+            // Get the pixel at the calculated position
+            let pixel = img.get_pixel(x, y);
+            
+            // Return the color as Vec3 (normalized to 0.0-1.0)
+            Ok(Vec3::new(
+                pixel[0] as f32 / 255.0,
+                pixel[1] as f32 / 255.0,
+                pixel[2] as f32 / 255.0
+            ))
         },
         Err(e) => {
             console_log!("Failed to decode image: {}", e);
@@ -282,7 +325,6 @@ fn compute_average_color_for_uv_region(
         }
     }
 }
-
 
 
 #[wasm_bindgen]
@@ -297,8 +339,8 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                         for vertex in obj.vertices.iter_mut() {
                             // vertex.rotate_z(PI / 2.0);
                             vertex.rotate_y(-PI / 2.0);
-                            *vertex *= 0.2;
-                            vertex.x += 10.0;
+                            *vertex *= 0.4;
+                            vertex.x += 20.0;
                             vertex.z += 5.0;
                         }
                     }
