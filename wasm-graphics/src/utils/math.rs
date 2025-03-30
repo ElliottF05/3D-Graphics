@@ -1,5 +1,15 @@
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::{f32::consts::PI, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign}};
 
+use super::utils::random_float;
+
+pub fn degrees_to_radians(degrees: f32) -> f32 {
+    return degrees * PI / 180.0;
+}
+pub fn radians_to_degrees(radians: f32) -> f32 {
+    return radians * 180.0 / PI;
+}
+
+// Vec3 struct, basid 3d vector geometry
 #[derive(Copy, Clone, Debug, Default, PartialEq, PartialOrd)]
 pub struct Vec3 {
     pub x: f32,
@@ -9,6 +19,36 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         return Vec3{x,y,z};
+    }
+    pub fn zero() -> Self {
+        return Vec3::new(0.0, 0.0, 0.0);
+    }
+    /// Returns a vector with each component in range [0, 1.0]
+    pub fn random() -> Self {
+        return Vec3::new(
+            random_float(),
+            random_float(),
+            random_float()
+        );
+    }
+    pub fn random_range(min: f32, max: f32) -> Self {
+        return Vec3::random() * (max - min) + Vec3::new(min, min, min);
+    }
+    pub fn random_on_unit_sphere() -> Self {
+        loop {
+            let v = Vec3::random_range(-1.0, 1.0);
+            let len_squared = v.len_squared();
+            if 1e-30 < len_squared && len_squared < 1.0 {
+                return v / len_squared.sqrt();
+            }
+        }
+    }
+    pub fn random_on_hemisphere(normal: &Vec3) -> Self {
+        let mut v = Vec3::random_on_unit_sphere();
+        if v.dot(normal) < 0.0 {
+            v = -v;
+        }
+        return v;
     }
     pub fn dot_product(a: &Self, b: &Self) -> f32 {
         return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -63,12 +103,12 @@ impl Vec3 {
     }
 
 
-    pub fn pairwise_mul(&mut self, other: &Self) {
+    pub fn element_mul(&mut self, other: &Self) {
         self.x *= other.x;
         self.y *= other.y;
         self.z *= other.z;
     }
-    pub fn pairwise_mul_new(a: &Vec3, b: &Vec3) -> Vec3 {
+    pub fn element_mul_new(a: &Vec3, b: &Vec3) -> Vec3 {
         return Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z);
     }
 
@@ -77,6 +117,11 @@ impl Vec3 {
     }
     pub fn midpoint_of(a: &Vec3, b: &Vec3) -> Vec3 {
         return a.midpoint_with(b);
+    }
+    pub fn clamp(&mut self, min: f32, max: f32) {
+        self.x = self.x.clamp(min, max);
+        self.y = self.y.clamp(min, max);
+        self.z = self.z.clamp(min, max);
     }
 }
 
@@ -92,12 +137,21 @@ impl Add for Vec3 {
 }
 impl Sub for Vec3 {
     type Output = Vec3;
-
     fn sub(self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
+        }
+    }
+}
+impl Neg for Vec3 {
+    type Output = Vec3;
+    fn neg(self) -> Vec3 {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
         }
     }
 }

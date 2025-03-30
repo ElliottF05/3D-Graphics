@@ -1,3 +1,5 @@
+use rand::{distr::uniform::SampleRange, rngs::ThreadRng, Rng};
+
 use crate::graphics::scene::SceneObject;
 
 use super::math::Vec3;
@@ -9,6 +11,23 @@ pub fn get_time() -> f64 {
         .performance()
         .expect("Window doesn't have Performance")
         .now()
+}
+
+// RAND UTILITIES
+pub fn random_float() -> f32 {
+    // let mut rng = rand::rng();
+    // return rng.random();
+    return rand::random::<f32>();
+}
+pub fn random_range(min: f32, max: f32) -> f32 {
+    return random_float() * (max - min) + min;
+}
+/// Samples points in a square in the range [-0.5, 0.5].
+/// Returns Vec3([-0.5, 0.5], [-0.5, 0.5], 0)
+pub fn sample_square() -> Vec3 {
+    let x = random_float();
+    let y = random_float();
+    return Vec3::new(x - 0.5, y - 0.5, 0.0);
 }
 
 // OTHER UTILITIES
