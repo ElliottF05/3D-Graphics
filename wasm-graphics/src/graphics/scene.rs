@@ -1,5 +1,7 @@
-use crate::{console_log, utils::math::Vec3};
-use std::{collections::{HashMap, HashSet}, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
+use crate::{console_log, utils::math::Vec3, graphics::rt::Ray};
+use std::{collections::HashMap, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
+
+use super::rt::HitRecord;
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -81,6 +83,9 @@ pub trait SceneObject {
         let scale = radius / max_dist;
         self.scale_by(scale);
     }
+
+    // ray-tracing
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hitRecord: &mut HitRecord) -> bool;
 }
 
 pub struct VertexObject {
@@ -124,6 +129,9 @@ impl SceneObject for VertexObject {
             *v += delta;
         }
         self.center = center;
+    }
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hitRecord: &mut HitRecord) -> bool {
+        return false;
     }
 }
 
@@ -225,6 +233,39 @@ impl SceneObject for Sphere {
             *v += delta;
         }
         self.center = center;
+    }
+
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord) -> bool {
+        let oc = self.center - ray.origin; // line from ray origin to sphere center
+        let a = ray.direction.len_squared();
+        let h = oc.dot(&ray.direction);
+        let c = oc.len_squared() - self.radius * self.radius;
+
+        let discriminant = h * h - a * c;
+
+        if discriminant < 0.0 {
+            return false;
+        } else {
+            let sqrtd = discriminant.sqrt();
+            let mut t = (h - sqrtd) / a; // want smaller (closer) value of t first
+
+            if t < t_min || t > t_max { // Check if t is in range [t_min, t_max]
+                t = (h + sqrtd) / a; // use larger value of t
+                
+                if t < t_min || t > t_max {
+                    return false; // none of the t values are in range
+                }
+            }
+
+            hit_record.t = t;
+            hit_record.pos = ray.at(t);
+            // normal points from center of sphere to intersection point on surface
+            let outward_normal = (hit_record.pos - self.center).normalized();
+            hit_record.set_face_normal(ray, outward_normal);
+
+            return true;
+        }
+
     }
 }
 

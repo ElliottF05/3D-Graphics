@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Step 1: Build Rust WASM with Debug Symbols (-g)
-RUSTFLAGS="-C debuginfo=2" cargo build --release --target wasm32-unknown-unknown
+RUSTFLAGS='-C debuginfo=2 --cfg getrandom_backend="wasm_js"' cargo build --release --target wasm32-unknown-unknown
+
+# RUSTFLAGS='--cfg getrandom_backend="wasm_js"'
 
 # Step 2: Generate JavaScript & TypeScript Bindings (first, without optimization)
 wasm-bindgen target/wasm32-unknown-unknown/release/wasm_graphics.wasm \

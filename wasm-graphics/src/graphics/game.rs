@@ -30,8 +30,8 @@ impl Game {
             camera: Camera::new(Vec3::new(0.001, 0.001, 1.001), 0.001, 0.001, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
-            max_sky_color: Vec3::new(0.7, 0.7, 0.7),
-            min_sky_color: Vec3::new(0.6, 0.6, 0.6),
+            max_sky_color: Vec3::new(0.5, 0.7, 1.0),
+            min_sky_color: Vec3::new(1.0, 1.0, 1.0),
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
             keys_currently_pressed: HashSet::new(),
@@ -52,6 +52,14 @@ impl Game {
             0.5, 
             4, 
             Vec3::new(1.0, 0.0, 0.0),
+            MaterialProperties::default())
+        );
+
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 0.0, -30.0), 
+            30.0, 
+            4, 
+            Vec3::new(1.0, 1.0, 1.0),
             MaterialProperties::default())
         );
         
@@ -128,14 +136,14 @@ impl Game {
         //     ),
         // ));
 
-        game.add_scene_object(build_checkerboard(
-                Vec3::new(10.0, 0.0, 0.0), 
-                20, 
-                Vec3::new(1.0, 1.0, 1.0), 
-                Vec3::new(0.9, 0.9, 0.9),
-                MaterialProperties::default(),
-            )
-        );
+        // game.add_scene_object(build_checkerboard(
+        //         Vec3::new(10.0, 0.0, 0.0), 
+        //         20, 
+        //         Vec3::new(1.0, 1.0, 1.0), 
+        //         Vec3::new(0.9, 0.9, 0.9),
+        //         MaterialProperties::default(),
+        //     )
+        // );
 
         // let mut stl_obj = VertexObject::new_from_stl_bytes(
         //     &include_bytes!("../3DBenchy.stl").to_vec(),
@@ -173,8 +181,8 @@ impl Game {
         self.process_input();
         if self.running {
             self.render_frame();
+            self.apply_post_processing_effects();
         }
-        self.apply_post_processing_effects()
     }
 
     fn process_input(&mut self) {
@@ -239,7 +247,7 @@ impl Game {
 
     }
 
-    fn apply_post_processing_effects(&mut self) {
+    pub fn apply_post_processing_effects(&mut self) {
         for y in 0..self.camera.height {
             for x in 0..self.camera.width {
                 let color = self.pixel_buf.get_pixel(x, y);
@@ -447,7 +455,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::element_mul_new(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
@@ -516,7 +524,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::pairwise_mul_new(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::element_mul_new(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
