@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_objects_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -27,7 +27,7 @@ impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
-            camera: Camera::new(Vec3::new(0.001, 0.001, 1.001), 0.001, 0.001, PI/2.0, 500, 500),
+            camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/2.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
@@ -63,9 +63,9 @@ impl Game {
             Vec3::new(10.0, 1.0, 0.5), 
             0.5, 
             4, 
-            Vec3::new(0.8, 0.8, 0.8),
+            Vec3::new(1.0, 1.0, 1.0),
             MaterialProperties::default(),
-            Box::new(Metal::new(0.3))
+            Box::new(Dielectric::new(1.0 / 1.33))
         )
         );
 
@@ -85,7 +85,7 @@ impl Game {
             Vec3::new(10.0, 0.0, -100.0), 
             100.0, 
             4, 
-            Vec3::new(1.0, 1.0, 1.0),
+            Vec3::new(0.5, 1.0, 0.5),
             MaterialProperties::default(),
             Box::new(Lambertian::default())
         )

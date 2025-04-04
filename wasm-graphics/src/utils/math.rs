@@ -79,9 +79,6 @@ impl Vec3 {
     pub fn normalized(&self) -> Self {
         return self.clone() / self.len();
     }
-    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
-        return *self - 2.0 * self.dot(normal) * *normal;
-    }
 
     pub fn rotate_z(&mut self, theta_z: f32) {
         let (sin, cos) = theta_z.sin_cos();
@@ -134,6 +131,21 @@ impl Vec3 {
         const EPSILON: f32 = 1e-8;
         return self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON;
     }
+
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        return *self - 2.0 * self.dot(normal) * *normal;
+    }
+    pub fn refract(&self, normal: &Vec3, n1_over_n2: f32) -> Vec3 {
+        let incoming_dir = self;
+        let mut cos_theta = -incoming_dir.dot(normal);
+        cos_theta = cos_theta.min(1.0);
+
+        let outgoing_perp = n1_over_n2 * (*incoming_dir + cos_theta * *normal);
+        let outgoing_parallel = -(1.0 - outgoing_perp.len_squared()).abs().sqrt() * *normal;
+
+        return outgoing_perp + outgoing_parallel;
+    }
+
 }
 
 impl Add for Vec3 {
