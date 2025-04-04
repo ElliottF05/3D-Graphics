@@ -212,10 +212,20 @@ impl Dielectric {
 
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
-        let attenuation = hit_record.surface_color;
 
-        // default to index of refraction of air (1.0) if exiting a dielectric
-        let n2 = if hit_record.front_face { self.index_of_refrac } else { 1.0 };
+        let attenuation;
+        let n2;
+
+        if hit_record.front_face {
+            n2 = self.index_of_refrac;
+            attenuation = hit_record.surface_color;
+        } else {
+            // default to index of refraction of air (1.0) if exiting a dielectric
+            // also default to no attenuation (check this)
+            n2 = 1.0;
+            attenuation = Vec3::new(1.0, 1.0, 1.0);
+        }
+
         let n1 = ray.index_of_refrac;
         let n1_over_n2 = n1 / n2;
         
