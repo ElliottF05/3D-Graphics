@@ -1,10 +1,13 @@
-use crate::{console_log, utils::math::Vec3, graphics::rt::Ray};
-use std::{collections::HashMap, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
+use gltf::json::extensions::material;
 
-use super::rt::HitRecord;
+use crate::{console_log, utils::math::Vec3, graphics::rt::Ray};
+use std::{collections::HashMap, fmt::Debug, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
+
+use super::rt::{HitRecord, Material};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
+#[derive(Debug, Clone)]
 pub struct MaterialProperties {
     pub alpha: f32,
     pub ambient: f32,
@@ -31,13 +34,14 @@ impl Default for MaterialProperties {
     }
 }
 
-pub trait SceneObject {
+pub trait SceneObject: Debug {
     fn get_vertices(&self) -> &Vec<Vec3>;
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
     fn get_indices(&self) -> &Vec<usize>;
     fn get_colors(&self) -> &Vec<Vec3>;
     fn get_normals(&self) -> &Vec<Vec3>;
     fn get_properties(&self) -> &MaterialProperties;
+    fn get_material(&self) -> &Box<dyn Material>;
     fn get_id(&self) -> usize;
     fn get_center(&self) -> Vec3;
     fn set_center(&mut self, center: Vec3);
@@ -88,13 +92,18 @@ pub trait SceneObject {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hitRecord: &mut HitRecord) -> bool;
 }
 
+#[derive(Debug)]
 pub struct VertexObject {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
     pub colors: Vec<Vec3>,
     pub normals: Vec<Vec3>,
+
     pub properties: MaterialProperties,
+    pub material: Box<dyn Material>,
+
     pub id: usize,
+
     pub center: Vec3,
 }
 
@@ -117,6 +126,9 @@ impl SceneObject for VertexObject {
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
     }
+    fn get_material(&self) -> &Box<dyn Material> {
+        return &self.material;
+    }
     fn get_id(&self) -> usize {
         return self.id;
     }
@@ -136,7 +148,7 @@ impl SceneObject for VertexObject {
 }
 
 impl VertexObject {
-    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
+    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
         let mut center = Vec3::new(0.0, 0.0, 0.0);
         for v in &vertices {
             center += *v;
@@ -158,24 +170,25 @@ impl VertexObject {
             colors,
             normals,
             properties,
+            material,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
         }
     }
-    pub fn new_with_color(vertices: Vec<Vec3>, indices: Vec<usize>, color: Vec3, properties: MaterialProperties) -> VertexObject {
+    pub fn new_with_color(vertices: Vec<Vec3>, indices: Vec<usize>, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
         let colors = vec![color; indices.len() / 3];
-        return VertexObject::new(vertices, indices, colors, properties);
+        return VertexObject::new(vertices, indices, colors, properties, material);
     }
-    pub fn new_from_non_indexed(vertices: Vec<Vec3>, colors: Vec<Vec3>, properties: MaterialProperties) -> VertexObject {
+    pub fn new_from_non_indexed(vertices: Vec<Vec3>, colors: Vec<Vec3>, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
         let indices = (0..vertices.len() as usize).collect();
-        return VertexObject::new(vertices, indices, colors, properties);
+        return VertexObject::new(vertices, indices, colors, properties, material);
     }
-    pub fn new_from_non_indexed_with_color(vertices: Vec<Vec3>, color: Vec3, properties: MaterialProperties) -> VertexObject {
+    pub fn new_from_non_indexed_with_color(vertices: Vec<Vec3>, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
         let colors = vec![color; vertices.len() / 3];
-        return VertexObject::new_from_non_indexed(vertices, colors, properties);
+        return VertexObject::new_from_non_indexed(vertices, colors, properties, material);
     }
 
-    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, color: Vec3, properties: MaterialProperties) -> VertexObject {
+    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
         let mut reader = Cursor::new(stl_bytes);
         let triangle_iter = stl_io::create_stl_reader(&mut reader).expect("Failed to create TriangleIterator from stl bytes");
         let mut vertices = Vec::with_capacity(triangle_iter.size_hint().0 * 3);
@@ -187,17 +200,22 @@ impl VertexObject {
             }
         }
         console_log!("stl_object num triangles: {}", vertices.len() / 3);
-        return VertexObject::new_from_non_indexed_with_color(vertices, color, properties);
+        return VertexObject::new_from_non_indexed_with_color(vertices, color, properties, material);
     }
 }
 
+#[derive(Debug)]
 pub struct Sphere {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
     pub colors: Vec<Vec3>,
     pub normals: Vec<Vec3>,
+
     pub properties: MaterialProperties,
+    pub material: Box<dyn Material>,
+
     pub id: usize,
+
     pub center: Vec3,
     pub radius: f32,
 }
@@ -220,6 +238,9 @@ impl SceneObject for Sphere {
     }
     fn get_properties(&self) -> &MaterialProperties {
         &self.properties
+    }
+    fn get_material(&self) -> &Box<dyn Material> {
+        return &self.material;
     }
     fn get_id(&self) -> usize {
         return self.id;
@@ -251,7 +272,7 @@ impl SceneObject for Sphere {
 
             if t < t_min || t > t_max { // Check if t is in range [t_min, t_max]
                 t = (h + sqrtd) / a; // use larger value of t
-                
+
                 if t < t_min || t > t_max {
                     return false; // none of the t values are in range
                 }
@@ -262,6 +283,7 @@ impl SceneObject for Sphere {
             // normal points from center of sphere to intersection point on surface
             let outward_normal = (hit_record.pos - self.center).normalized();
             hit_record.set_face_normal(ray, outward_normal);
+            hit_record.material = Some(self.material.clone());
 
             return true;
         }
@@ -270,7 +292,7 @@ impl SceneObject for Sphere {
 }
 
 impl Sphere {
-    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties) -> Sphere {
+    pub fn new(vertices: Vec<Vec3>, indices: Vec<usize>, colors: Vec<Vec3>, center: Vec3, radius: f32, properties: MaterialProperties, material: Box<dyn Material>) -> Sphere {
 
         let mut normals = Vec::with_capacity(colors.len());
         for i in (0..indices.len()).step_by(3) {
@@ -287,6 +309,7 @@ impl Sphere {
             colors,
             normals,
             properties,
+            material,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
             radius,
@@ -294,7 +317,7 @@ impl Sphere {
     }
 
     // building an icosphere
-    pub fn build_sphere(center: Vec3, radius: f32, subdivisions: u32, color: Vec3, properties: MaterialProperties) -> Sphere {
+    pub fn build_sphere(center: Vec3, radius: f32, subdivisions: u32, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> Sphere {
         let (mut vertices, mut indices) = get_icosahedron_vertices_and_indices(1.0);
 
         for _ in 0..subdivisions {
@@ -330,7 +353,7 @@ impl Sphere {
         }
 
         let colors = vec![color; indices.len() / 3];
-        return Sphere::new(vertices, indices, colors, center, radius, properties);
+        return Sphere::new(vertices, indices, colors, center, radius, properties, material);
     }
 }
 fn get_or_create_midpoint(vertices: &mut Vec<Vec3>, midpoint_cache: &mut HashMap<(usize, usize), usize>, i1: usize, i2: usize) -> usize {
@@ -348,7 +371,7 @@ fn get_or_create_midpoint(vertices: &mut Vec<Vec3>, midpoint_cache: &mut HashMap
     return index;
 }
 
-pub fn build_cube(pos: Vec3, side_length: f32, color: Vec3, properties: MaterialProperties) -> VertexObject {
+pub fn build_cube(pos: Vec3, side_length: f32, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
     let half = side_length / 2.0;
 
     let a = pos - Vec3::new(half, half, half);
@@ -382,10 +405,10 @@ pub fn build_cube(pos: Vec3, side_length: f32, color: Vec3, properties: Material
     ];
 
     let colors = vec![color; indices.len() / 3];
-    VertexObject::new(vertices, indices, colors, properties)
+    VertexObject::new(vertices, indices, colors, properties, material)
 }
 
-pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: MaterialProperties) -> VertexObject {
+pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
     let mut vertices = Vec::new();
     for x in -radius..=radius {
         for y in -radius..=radius {
@@ -410,7 +433,7 @@ pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3,
         }
     }
 
-    return VertexObject::new(vertices, indices, colors, properties);
+    return VertexObject::new(vertices, indices, colors, properties, material);
 }
 
 pub fn get_icosahedron_vertices_and_indices(t: f32) -> (Vec<Vec3>, Vec<usize>) {
@@ -460,11 +483,11 @@ pub fn get_icosahedron_vertices_and_indices(t: f32) -> (Vec<Vec3>, Vec<usize>) {
     return (vertices, indices);
 }
 
-pub fn build_icosahedron(center: Vec3, t: f32, color: Vec3, properties: MaterialProperties) -> VertexObject {
+pub fn build_icosahedron(center: Vec3, t: f32, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
     let (mut vertices, indices) = get_icosahedron_vertices_and_indices(t);
     for v in vertices.iter_mut() {
         *v += center;
     }
     let colors = vec![color; indices.len() / 3];
-    return VertexObject::new(vertices, indices, colors, properties);
+    return VertexObject::new(vertices, indices, colors, properties, material);
 }
