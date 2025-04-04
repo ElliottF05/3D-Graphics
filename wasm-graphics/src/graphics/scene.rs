@@ -284,6 +284,7 @@ impl SceneObject for Sphere {
             let outward_normal = (hit_record.pos - self.center).normalized();
             hit_record.set_face_normal(ray, outward_normal);
             hit_record.material = Some(self.material.clone());
+            hit_record.surface_color = self.colors[0]; // assuming sphere is one color
 
             return true;
         }

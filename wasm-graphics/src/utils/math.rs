@@ -50,6 +50,7 @@ impl Vec3 {
         }
         return v;
     }
+
     pub fn dot_product(a: &Self, b: &Self) -> f32 {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
@@ -78,6 +79,9 @@ impl Vec3 {
     pub fn normalized(&self) -> Self {
         return self.clone() / self.len();
     }
+    pub fn reflect(&self, normal: &Vec3) -> Vec3 {
+        return *self - 2.0 * self.dot(normal) * *normal;
+    }
 
     pub fn rotate_z(&mut self, theta_z: f32) {
         let (sin, cos) = theta_z.sin_cos();
@@ -103,12 +107,14 @@ impl Vec3 {
     }
 
 
-    pub fn element_mul(&mut self, other: &Self) {
-        self.x *= other.x;
-        self.y *= other.y;
-        self.z *= other.z;
+    pub fn element_mul_with(self, other: &Vec3) -> Vec3 {
+        Vec3::new(
+            self.x * other.x,
+            self.y * other.y,
+            self.z * other.z
+        )
     }
-    pub fn element_mul_new(a: &Vec3, b: &Vec3) -> Vec3 {
+    pub fn element_mul(a: &Vec3, b: &Vec3) -> Vec3 {
         return Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z);
     }
 
@@ -118,10 +124,15 @@ impl Vec3 {
     pub fn midpoint_of(a: &Vec3, b: &Vec3) -> Vec3 {
         return a.midpoint_with(b);
     }
+
     pub fn clamp(&mut self, min: f32, max: f32) {
         self.x = self.x.clamp(min, max);
         self.y = self.y.clamp(min, max);
         self.z = self.z.clamp(min, max);
+    }
+    pub fn near_zero(&self) -> bool {
+        const EPSILON: f32 = 1e-8;
+        return self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON;
     }
 }
 

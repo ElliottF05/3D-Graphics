@@ -4,7 +4,7 @@ use crate::{console_log, utils::{math::Vec3, utils::{random_float, random_range,
 
 use super::{game::Game, scene::{SceneObject, Sphere}};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
@@ -25,6 +25,7 @@ pub struct HitRecord {
     pub pos: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
+    pub surface_color: Vec3,
     pub material: Option<Box<dyn Material>>,
 }
 
@@ -79,9 +80,23 @@ impl Game {
         }
 
         if hit_anything { // recursively ray trace
-            let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(&hit_record.normal);
-            let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
-            return 0.5 * self.ray_trace(reflected_ray, depth-1);
+
+            let successful_scatter;
+            let attenuation;
+            let scattered_ray;
+
+            if let Some(material) = &hit_record.material {
+                (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
+                if !successful_scatter {
+                    return Vec3::zero(); // no scatter, return black
+                }
+            } else {
+                return Vec3::zero(); // no material, return black
+            }
+            
+            let next_ray_color = self.ray_trace(scattered_ray, depth-1);
+            return attenuation.element_mul_with(&next_ray_color);
+
         } else {
             // if no hit, return background color
             return self.get_sky_color(&ray.direction);
@@ -112,7 +127,7 @@ impl Game {
 
 pub trait Material: Debug + Send + Sync {
     /// scatters the inbound ray and returns a tuple of the the attenuation color and the new ray.
-    fn scatter(&self, ray: &Ray, hit_record: &HitRecord, surface_color: Vec3) -> (Vec3, Ray);
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray);
 
     /// util for cloning Box<dyn Material> trait objects
     fn clone_box(&self) -> Box<dyn Material>;
@@ -133,11 +148,47 @@ impl Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hit_record: &HitRecord, surface_color: Vec3) -> (Vec3, Ray) {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
         let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(&hit_record.normal);
+
+        if reflected_dir.near_zero() {
+            console_log!("reflected_dir near zero");
+        }
+
         let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
-        let attenuation = surface_color;
-        return (attenuation, reflected_ray)
+        let attenuation = hit_record.surface_color;
+        return (true, attenuation, reflected_ray)
+    }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Metal {
+    fuzz: f32,
+}
+
+impl Metal {
+    pub fn new(fuzz: f32) -> Self {
+        Self { fuzz }
+    }
+}
+
+impl Material for Metal {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
+        let mut reflected_dir = ray.direction.reflect(&hit_record.normal);
+        reflected_dir.normalize();
+        reflected_dir += self.fuzz * Vec3::random_on_unit_sphere();
+
+        if reflected_dir.dot(&hit_record.normal) < 0.0 {
+            return (false, Vec3::zero(), Ray::default());
+        } else  {
+            let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
+            let attenuation = hit_record.surface_color;
+            return (true, attenuation, reflected_ray)
+        }
     }
 
     fn clone_box(&self) -> Box<dyn Material> {
