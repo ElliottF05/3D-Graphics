@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{console_log, utils::{math::Vec3, utils::{random_float, random_range, sample_square}}};
 
 use super::{game::Game, scene::{SceneObject, Sphere}};
@@ -17,18 +19,16 @@ impl Ray {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct HitRecord {
     pub t: f32,
     pub pos: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
+    pub material: Option<Box<dyn Material>>,
 }
 
 impl HitRecord {
-    pub fn new(t: f32, pos: Vec3, normal: Vec3, front_face: bool) -> Self {
-        Self { t, pos, normal, front_face }
-    }
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
         self.front_face = ray.direction.dot(&outward_normal) < 0.0;
         self.normal = if self.front_face { outward_normal } else { -outward_normal };
@@ -106,5 +106,41 @@ impl Game {
         let direction = (v - origin).normalized();
 
         Ray::new(origin, direction)
+    }
+}
+
+
+pub trait Material: Debug + Send + Sync {
+    /// scatters the inbound ray and returns a tuple of the the attenuation color and the new ray.
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord, surface_color: Vec3) -> (Vec3, Ray);
+
+    /// util for cloning Box<dyn Material> trait objects
+    fn clone_box(&self) -> Box<dyn Material>;
+}
+
+// implement the clone trait for Box<dyn Material>
+impl Clone for Box<dyn Material> {
+    fn clone(&self) -> Box<dyn Material> {
+        self.clone_box()
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct Lambertian {
+}
+
+impl Lambertian {
+}
+
+impl Material for Lambertian {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord, surface_color: Vec3) -> (Vec3, Ray) {
+        let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(&hit_record.normal);
+        let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
+        let attenuation = surface_color;
+        return (attenuation, reflected_ray)
+    }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
     }
 }

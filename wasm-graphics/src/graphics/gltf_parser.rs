@@ -7,7 +7,7 @@ use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm
 
 use crate::utils::math::Vec3;
 
-use super::scene::{MaterialProperties, VertexObject};
+use super::{rt::Lambertian, scene::{MaterialProperties, VertexObject}};
 
 #[wasm_bindgen]
 pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
@@ -137,7 +137,10 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         };
         // console_log!("colors: {:?}", colors);
 
-        let vertex_object = VertexObject::new(vertices, indices, colors, material_props);
+        // TODO: replace placeholder material
+        let placeholder_mat = Box::new(Lambertian::default());
+
+        let vertex_object = VertexObject::new(vertices, indices, colors, material_props, placeholder_mat);
         
         vertex_objects.push(vertex_object);
     }

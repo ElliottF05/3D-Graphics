@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_objects_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::Lambertian, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -52,7 +52,9 @@ impl Game {
             0.5, 
             4, 
             Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::default())
+            MaterialProperties::default(),
+            Box::new(Lambertian::default())
+        )
         );
 
         game.add_scene_object(Sphere::build_sphere(
@@ -60,7 +62,9 @@ impl Game {
             30.0, 
             4, 
             Vec3::new(1.0, 1.0, 1.0),
-            MaterialProperties::default())
+            MaterialProperties::default(),
+            Box::new(Lambertian::default())
+        )
         );
         
         // game.add_scene_object(build_cube(

@@ -113,18 +113,21 @@ pub fn init_and_begin_game_loop() {
 
         // game.borrow_mut().game_loop();
         GAME_INSTANCE.with(|game_instance| {
-            game_instance.borrow_mut().game_loop();
-        });
 
-        // Draw the pixel buffer onto the canvas
-        let pixel_buf = GAME_INSTANCE.with(|game_instance| {
-            game_instance.borrow().pixel_buf.get_buf_as_u8()
+            // process game loop
+            let mut borrowed_game_instance = game_instance.borrow_mut();
+            borrowed_game_instance.game_loop();
+
+            // draw the pixel buffer onto the canvas only if the game is running
+            if borrowed_game_instance.running || true {
+                let pixel_bif = borrowed_game_instance.pixel_buf.get_buf_as_u8();
+                let clamped_buf = wasm_bindgen::Clamped(pixel_bif.as_slice());
+                let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)
+                    .expect("Failed to create ImageData");
+                ctx.put_image_data(&image_data, 0.0, 0.0)
+                    .expect("Failed to put image data on canvas");
+            }
         });
-        let clamped_buf = wasm_bindgen::Clamped(pixel_buf.as_slice());
-        let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)
-            .expect("Failed to create ImageData");
-        ctx.put_image_data(&image_data, 0.0, 0.0)
-            .expect("Failed to put image data on canvas");
     });
     
 
