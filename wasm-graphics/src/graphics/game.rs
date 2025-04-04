@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_objects_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::Lambertian, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 pub struct Game {
     pub camera: Camera,
@@ -47,8 +47,9 @@ impl Game {
         //     MaterialProperties::default())
         // );
 
+        // central sphere
         game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 0.0, 0.5), 
+            Vec3::new(10.2, 0.0, 0.5), 
             0.5, 
             4, 
             Vec3::new(1.0, 0.0, 0.0),
@@ -57,9 +58,32 @@ impl Game {
         )
         );
 
+        // left sphere
         game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 0.0, -30.0), 
-            30.0, 
+            Vec3::new(10.0, 1.0, 0.5), 
+            0.5, 
+            4, 
+            Vec3::new(0.8, 0.8, 0.8),
+            MaterialProperties::default(),
+            Box::new(Metal::new(0.3))
+        )
+        );
+
+        // right sphere
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, -1.0, 0.5), 
+            0.5, 
+            4, 
+            Vec3::new(0.8, 0.6, 0.2),
+            MaterialProperties::default(),
+            Box::new(Metal::new(1.0))
+        )
+        );
+
+        // bottom large sphere "ground/floor"
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 0.0, -100.0), 
+            100.0, 
             4, 
             Vec3::new(1.0, 1.0, 1.0),
             MaterialProperties::default(),
@@ -459,7 +483,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::element_mul_new(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::element_mul(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
@@ -528,7 +552,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::element_mul_new(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::element_mul(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
