@@ -1,8 +1,14 @@
 use std::fmt::Debug;
 
-use crate::{console_log, utils::{math::Vec3, utils::{random_float, random_range, sample_square}}};
+use crate::{console_log, utils::{math::{degrees_to_radians, Vec3}, utils::{random_float, random_range, sample_circle, sample_square}}};
 
 use super::{game::Game, scene::{SceneObject, Sphere}};
+
+const SAMPLES: usize = 100;
+const MAX_DEPTH: usize = 50;
+
+const DEFOCUS_ANGLE: f32 = degrees_to_radians(10.0);
+const FOCUS_DIST: f32 = 3.4;
 
 #[derive(Debug, Clone, Default)]
 pub struct Ray {
@@ -42,14 +48,12 @@ impl Game {
         self.running = false;
         console_log!("Rendering ray tracing");
 
-        const SAMPLES: usize = 100;
-        const MAX_DEPTH: usize = 50;
         for x in 0..self.camera.width {
             for y in 0..self.camera.height {
 
                 let mut pixel_color = Vec3::zero();
                 for _ in 0..SAMPLES {
-                    let ray = self.get_rand_ray_at_pixel(x, y);
+                    let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
                     let ray_color = self.ray_trace(ray, MAX_DEPTH);
                     pixel_color += ray_color;
                 }
@@ -115,12 +119,32 @@ impl Game {
 
     fn get_rand_ray_at_pixel(&self, x: usize, y: usize) -> Ray {
         let origin = self.camera.pos;
-        let offset = sample_square();
-        let mut v = Vec3::new(x as f32 + offset.x, y as f32 + offset.y, 1.0);
+        let (offset_x, offset_y) = sample_square(1.0);
+        let mut v = Vec3::new(x as f32 + offset_x, y as f32 + offset_y, 1.0);
         self.camera.vertex_screen_to_world_space(&mut v);
         let direction = (v - origin).normalized();
 
         Ray::new(origin, direction)
+    }
+
+    fn get_rand_ray_at_pixel_with_defocus(&self, x: usize, y: usize) -> Ray {
+        let defocus_disk_radius = (0.5 * DEFOCUS_ANGLE).tan() * FOCUS_DIST;
+        let (disk_x, disk_y) = sample_circle(defocus_disk_radius);
+        let (offset_x, offset_y) = sample_square(1.0);
+
+
+        let mut point_on_focus_plane = Vec3::new(x as f32 + offset_x, y as f32 + offset_y, FOCUS_DIST);
+        self.camera.vertex_screen_to_camera_space(&mut point_on_focus_plane);
+
+        let mut point_on_defocus_disk = Vec3::new(0.0, disk_x, disk_y);
+
+        self.camera.vertex_camera_to_world_space(&mut point_on_focus_plane);
+        self.camera.vertex_camera_to_world_space(&mut point_on_defocus_disk);
+
+        let ray_dir = (point_on_focus_plane - point_on_defocus_disk).normalized();
+
+        return Ray::new(point_on_defocus_disk, ray_dir);
+
     }
 }
 

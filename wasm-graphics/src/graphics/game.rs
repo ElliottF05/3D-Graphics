@@ -27,7 +27,7 @@ impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
-            camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/2.0, 500, 500),
+            camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/8.0, 500, 500),
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
@@ -65,7 +65,18 @@ impl Game {
             4, 
             Vec3::new(1.0, 1.0, 1.0),
             MaterialProperties::default(),
-            Box::new(Dielectric::new(1.0 / 1.33))
+            Box::new(Dielectric::new(1.5))
+        )
+        );
+
+        // inner left bubble
+        game.add_scene_object(Sphere::build_sphere(
+            Vec3::new(10.0, 1.0, 0.5), 
+            0.4, 
+            4, 
+            Vec3::new(1.0, 1.0, 1.0),
+            MaterialProperties::default(),
+            Box::new(Dielectric::new(1.0 / 1.5))
         )
         );
 
