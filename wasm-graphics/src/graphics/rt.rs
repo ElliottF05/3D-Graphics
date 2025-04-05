@@ -2,13 +2,13 @@ use std::fmt::Debug;
 
 use crate::{console_log, utils::{math::{degrees_to_radians, Vec3}, utils::{random_float, random_range, sample_circle, sample_square}}};
 
-use super::{game::Game, scene::{SceneObject, Sphere}};
+use super::{game::Game, scene::{MaterialProperties, SceneObject, Sphere}};
 
-const SAMPLES: usize = 100;
-const MAX_DEPTH: usize = 50;
+const SAMPLES: usize = 10;
+const MAX_DEPTH: usize = 5;
 
-const DEFOCUS_ANGLE: f32 = degrees_to_radians(10.0);
-const FOCUS_DIST: f32 = 3.4;
+const DEFOCUS_ANGLE: f32 = degrees_to_radians(0.6);
+const FOCUS_DIST: f32 = 10.0;
 
 #[derive(Debug, Clone, Default)]
 pub struct Ray {
@@ -145,6 +145,72 @@ impl Game {
 
         return Ray::new(point_on_defocus_disk, ray_dir);
 
+    }
+
+    pub fn create_rt_test_scene(&mut self) {
+
+        let ground_material = Lambertian::default();
+        self.add_scene_object(Sphere::build_sphere(
+            Vec3::new(0.0, 0.0, -1000.0), 
+            1000.0, 4, Vec3::new(0.5, 0.5, 0.5), 
+            MaterialProperties::default(), Box::new(ground_material.clone()))
+        );
+
+        for a in -11..11 {
+            for b in -11..11 {
+                let choose_mat = random_float();
+                let center = Vec3::new(a as f32 + 0.9*random_float(), b as f32 + 0.9*random_float(), 0.2);
+
+                if (center - Vec3::new(4.0, 0.0, 0.2)).len() > 0.9 {
+                    let sphere_material: Box<dyn Material>;
+                    let color;
+
+                    if choose_mat < 0.8 {
+                        // diffuse
+                        color = Vec3::random().element_mul_with(&Vec3::random());
+                        sphere_material = Box::new(Lambertian::default());
+                    } else if choose_mat < 0.95 {
+                        // metal
+                        color = Vec3::random() * 0.5 + Vec3::new(0.5, 0.5, 0.5);
+                        let fuzz = random_range(0.0, 0.5);
+                        sphere_material = Box::new(Metal::new(fuzz));
+                    } else {
+                        // glass
+                        color = Vec3::new(1.0, 1.0, 1.0);
+                        sphere_material = Box::new(Dielectric::new(1.5));
+                    }
+
+                    self.add_scene_object(Sphere::build_sphere(
+                        center, 0.2, 2, color, MaterialProperties::default(), sphere_material)
+                    );
+                }
+            }
+        }
+
+        let material1 = Dielectric::new(1.5);
+        self.add_scene_object(Sphere::build_sphere(
+            Vec3::new(0.0, 0.0, 1.0), 1.0, 4, 
+            Vec3::new(1.0, 1.0, 1.0), MaterialProperties::default(), 
+            Box::new(material1))
+        );
+
+        let material2 = Lambertian::default();
+        self.add_scene_object(Sphere::build_sphere(
+            Vec3::new(-4.0, 0.0, 1.0), 1.0, 4, 
+            Vec3::new(0.4, 0.2, 0.1), MaterialProperties::default(), 
+            Box::new(material2))
+        );
+
+        let material3 = Metal::new(0.0);
+        self.add_scene_object(Sphere::build_sphere(
+            Vec3::new(4.0, 0.0, 1.0), 1.0, 4, 
+            Vec3::new(0.7, 0.6, 0.5), MaterialProperties::default(), 
+            Box::new(material3))
+        );
+
+        self.camera.set_fov(degrees_to_radians(20.0));
+        self.camera.pos = Vec3::new(13.0, 3.0, 2.0);
+        self.camera.look_at(&Vec3::zero());
     }
 }
 

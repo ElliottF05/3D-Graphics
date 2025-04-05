@@ -40,6 +40,8 @@ impl Game {
             running: true,
         };
 
+        game.create_rt_test_scene();
+
         // game.add_scene_object(build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
         //     1.0,
@@ -48,59 +50,59 @@ impl Game {
         // );
 
         // central sphere
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.2, 0.0, 0.5), 
-            0.5, 
-            4, 
-            Vec3::new(1.0, 0.0, 0.0),
-            MaterialProperties::default(),
-            Box::new(Lambertian::default())
-        )
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.2, 0.0, 0.5), 
+        //     0.5, 
+        //     4, 
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     MaterialProperties::default(),
+        //     Box::new(Lambertian::default())
+        // )
+        // );
 
         // left sphere
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 1.0, 0.5), 
-            0.5, 
-            4, 
-            Vec3::new(1.0, 1.0, 1.0),
-            MaterialProperties::default(),
-            Box::new(Dielectric::new(1.5))
-        )
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, 1.0, 0.5), 
+        //     0.5, 
+        //     4, 
+        //     Vec3::new(1.0, 1.0, 1.0),
+        //     MaterialProperties::default(),
+        //     Box::new(Dielectric::new(1.5))
+        // )
+        // );
 
         // inner left bubble
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 1.0, 0.5), 
-            0.4, 
-            4, 
-            Vec3::new(1.0, 1.0, 1.0),
-            MaterialProperties::default(),
-            Box::new(Dielectric::new(1.0 / 1.5))
-        )
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, 1.0, 0.5), 
+        //     0.4, 
+        //     4, 
+        //     Vec3::new(1.0, 1.0, 1.0),
+        //     MaterialProperties::default(),
+        //     Box::new(Dielectric::new(1.0 / 1.5))
+        // )
+        // );
 
         // right sphere
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, -1.0, 0.5), 
-            0.5, 
-            4, 
-            Vec3::new(0.8, 0.6, 0.2),
-            MaterialProperties::default(),
-            Box::new(Metal::new(1.0))
-        )
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, -1.0, 0.5), 
+        //     0.5, 
+        //     4, 
+        //     Vec3::new(0.8, 0.6, 0.2),
+        //     MaterialProperties::default(),
+        //     Box::new(Metal::new(1.0))
+        // )
+        // );
 
         // bottom large sphere "ground/floor"
-        game.add_scene_object(Sphere::build_sphere(
-            Vec3::new(10.0, 0.0, -100.0), 
-            100.0, 
-            4, 
-            Vec3::new(0.5, 1.0, 0.5),
-            MaterialProperties::default(),
-            Box::new(Lambertian::default())
-        )
-        );
+        // game.add_scene_object(Sphere::build_sphere(
+        //     Vec3::new(10.0, 0.0, -100.0), 
+        //     100.0, 
+        //     4, 
+        //     Vec3::new(0.5, 1.0, 0.5),
+        //     MaterialProperties::default(),
+        //     Box::new(Lambertian::default())
+        // )
+        // );
         
         // game.add_scene_object(build_cube(
         //     Vec3::new(12.0, 0.0, 0.5),
