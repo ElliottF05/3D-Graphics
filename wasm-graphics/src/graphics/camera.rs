@@ -78,6 +78,13 @@ impl Camera {
     pub fn get_looking_dir(&self) -> &Vec3 {
         return &self.looking_dir;
     }
+    pub fn get_fov(&self) -> f32 {
+        return self.fov;
+    }
+    pub fn set_fov(&mut self, fov: f32) {
+        self.fov = fov;
+        self.max_plane_coord = f32::tan(0.5 * fov);
+    }
 
     pub fn look_in_direction(&mut self, dir: &Vec3) {
         self.set_theta_y((dir.z / dir.len()).asin());
