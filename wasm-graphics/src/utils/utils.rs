@@ -23,11 +23,21 @@ pub fn random_range(min: f32, max: f32) -> f32 {
     return random_float() * (max - min) + min;
 }
 /// Samples points in a square in the range [-0.5, 0.5].
-/// Returns Vec3([-0.5, 0.5], [-0.5, 0.5], 0)
-pub fn sample_square() -> Vec3 {
+pub fn sample_square(side_length: f32) -> (f32, f32) {
     let x = random_float();
     let y = random_float();
-    return Vec3::new(x - 0.5, y - 0.5, 0.0);
+    return ((x - 0.5) * side_length, (y - 0.5) * side_length);
+}
+
+/// Returns a random x,y coordinate in the unit circle, with even distribution
+pub fn sample_circle(radius: f32) -> (f32 ,f32) {
+    loop {
+        let x = random_range(-1.0, 1.0);
+        let y = random_range(-1.0, 1.0);
+        if x*x + y*y <= 1.0 {
+            return (radius * x, radius * y);
+        }
+    }
 }
 
 // OTHER UTILITIES
