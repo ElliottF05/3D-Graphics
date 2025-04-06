@@ -103,16 +103,18 @@ impl Vec3 {
         self.z = x * sin_y + z * cos_y;
     }
 
-
-    pub fn element_mul_with(self, other: &Vec3) -> Vec3 {
-        Vec3::new(
-            self.x * other.x,
-            self.y * other.y,
-            self.z * other.z
-        )
+    pub fn mul_elementwise(&self, other: &Vec3) -> Vec3 {
+        Vec3::new(self.x * other.x, self.y * other.y, self.z * other.z)
     }
-    pub fn element_mul(a: &Vec3, b: &Vec3) -> Vec3 {
-        return Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z);
+
+    pub fn mul_elementwise_inplace(&mut self, other: &Vec3) {
+        self.x *= other.x;
+        self.y *= other.y;
+        self.z *= other.z;
+    }
+
+    pub fn mul_elementwise_of(a: &Vec3, b: &Vec3) -> Vec3 {
+        Vec3::new(a.x * b.x, a.y * b.y, a.z * b.z)
     }
 
     pub fn midpoint_with(&self, other: &Vec3) -> Vec3 {

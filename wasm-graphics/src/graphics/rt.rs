@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, future::poll_fn};
 
 use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
@@ -46,8 +46,14 @@ impl Game {
 
     pub fn render_ray_tracing(&mut self) {
 
-        // TESTING ON DEFAULT create_rt_test_scene(), dev console closed
+        // BENCHMARKING
         // perf tips here: https://users.rust-lang.org/t/peter-shirleys-ray-tracing-in-one-weekend-implementation-in-rust/26972/11
+
+        // benchmark conditions:
+        // scene: create_rt_test_scene()
+        // samples: 10
+        // max_depth: 10
+        // also: dev console closed in browser
 
         // first version after finishing rt in one weekend, no performance improvements
         // 22.65 second average
@@ -55,7 +61,8 @@ impl Game {
         // after removing new box clone (heap allocation) on object.hit() in favor of lifetimes (ooh)
         // 21.83 seconds avg (barely faster lol)
 
-        // 
+        // after switching recursion to iteration in ray_trace()
+        // 20.49 seconds avg
 
 
         self.status = GameStatus::RayTracing;
@@ -96,47 +103,51 @@ impl Game {
         // self.apply_post_processing_effects();
     }
 
-    fn ray_trace(&self, ray: Ray, depth: usize) -> Vec3 {
+    fn ray_trace(&self, mut ray: Ray, mut depth: usize) -> Vec3 {
 
-        if depth == 0 {
-            return Vec3::zero(); // no more bounces
-        }
+        // start with identity for multiplication = 1
+        let mut pixel_color = Vec3::new(1.0, 1.0, 1.0);
 
-        // TODO: change interval max
-        let mut hit_record = HitRecord::default();
-        let mut hit_anything = false;
-        let mut closest_so_far = 100.0;
-        
         let objects = self.objects.borrow();
-        for obj in objects.iter() {
-            if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
-                closest_so_far = hit_record.t; // update closest hit
-                hit_anything = true;
-            }
-        }
 
-        if hit_anything { // recursively ray trace
+        while depth > 0 {
+            depth -= 1;
+            let mut hit_record = HitRecord::default();
+            let mut hit_anything = false;
+            let mut closest_so_far = 1000.0;
 
-            let successful_scatter;
-            let attenuation;
-            let scattered_ray;
-
-            if let Some(material) = hit_record.material {
-                (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
-                if !successful_scatter {
-                    return Vec3::zero(); // no scatter, return black
+            for obj in objects.iter() {
+                if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+                    closest_so_far = hit_record.t;
+                    hit_anything = true;
                 }
-            } else {
-                return Vec3::zero(); // no material, return black
             }
-            
-            let next_ray_color = self.ray_trace(scattered_ray, depth-1);
-            return attenuation.element_mul_with(&next_ray_color);
 
-        } else {
-            // if no hit, return background color
-            return self.get_sky_color(&ray.direction);
+            if hit_anything {
+                let successful_scatter;
+                let attenuation;
+                let scattered_ray;
+
+                if let Some(material) = hit_record.material {
+                    (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
+                    if successful_scatter {
+                        pixel_color.mul_elementwise_inplace(&attenuation);
+                        ray = scattered_ray;
+                    } else {
+                        return Vec3::zero(); // no scatter, return black
+                    }
+                } else {
+                    return Vec3::zero(); // no material, return black
+                }
+
+            } else { // if hit_anything == false, then ray hit nothing, goes off into sky
+                let sky_color = self.get_sky_color(&ray.direction);
+                pixel_color.mul_elementwise_inplace(&sky_color);
+                return pixel_color;
+            }
         }
+
+        return pixel_color;
     }
 
     fn get_ray_at_pixel(&self, x: usize, y: usize) -> Ray {
@@ -199,7 +210,7 @@ impl Game {
 
                     if choose_mat < 0.8 {
                         // diffuse
-                        color = Vec3::random().element_mul_with(&Vec3::random());
+                        color = Vec3::random().mul_elementwise(&Vec3::random());
                         sphere_material = Box::new(Lambertian::default());
                     } else if choose_mat < 0.95 {
                         // metal

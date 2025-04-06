@@ -240,7 +240,7 @@ impl Game {
     }
 
     pub fn game_loop(&mut self) {
-        self.process_input();
+        self.process_all_input();
         match self.status {
             GameStatus::Rasterizing => {
                 self.render_frame();
@@ -255,7 +255,30 @@ impl Game {
         }
     }
 
-    fn process_input(&mut self) {
+    fn process_all_input(&mut self) {
+
+        if self.status == GameStatus::Rasterizing {
+            self.process_movement_input();
+        }
+
+        if self.keys_pressed_last_frame.contains("p") {
+            console_log!("Pausing or unpausing");
+            if self.status == GameStatus::Paused {
+                self.status = GameStatus::Rasterizing;
+            } else {
+                self.status = GameStatus::Paused;
+            }
+        }
+        if self.keys_pressed_last_frame.contains("r") {
+            // TODO: make this input robust, including cancelling raytracing
+            self.status = GameStatus::RayTracing;
+            self.rt_start_time = get_time();
+        }
+
+        self.keys_pressed_last_frame.clear();
+    }
+
+    fn process_movement_input(&mut self) {
         const MOVE_SPEED: f32 = 0.1;
         const ROTATE_SPEED: f32 = 0.01;
         const KEY_ROTATE_SPEED: f32 = 0.03;
@@ -302,24 +325,6 @@ impl Game {
 
         self.camera.set_theta_y(self.camera.get_theta_y() + d_theta_y);
         self.camera.set_theta_z(self.camera.get_theta_z() + d_theta_z);
-
-
-        if self.keys_pressed_last_frame.contains("p") {
-            console_log!("Pausing or unpausing");
-            if self.status == GameStatus::Paused {
-                self.status = GameStatus::Rasterizing;
-            } else {
-                self.status = GameStatus::Paused;
-            }
-        }
-        if self.keys_pressed_last_frame.contains("r") {
-            // TODO: make this input robust, including cancelling raytracing
-            self.status = GameStatus::RayTracing;
-            self.rt_start_time = get_time();
-        }
-
-        self.keys_pressed_last_frame.clear();
-
     }
 
     pub fn apply_post_processing_effects(&mut self) {
@@ -530,7 +535,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::element_mul(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
@@ -599,7 +604,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::element_mul(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(&sky_color, &color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
