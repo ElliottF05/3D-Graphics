@@ -26,16 +26,16 @@ impl Ray {
 }
 
 #[derive(Debug, Default)]
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub t: f32,
     pub pos: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
     pub surface_color: Vec3,
-    pub material: Option<Box<dyn Material>>,
+    pub material: Option<&'a dyn Material>,
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
         self.front_face = ray.direction.dot(&outward_normal) < 0.0;
         self.normal = if self.front_face { outward_normal } else { -outward_normal };
@@ -51,6 +51,9 @@ impl Game {
 
         // first version after finishing rt in one weekend, no performance improvements
         // 22.65 second average
+
+        // after removing new box clone (heap allocation) on object.hit() in favor of lifetimes (ooh)
+        // 21.83 seconds avg (barely faster lol)
 
         // 
 
@@ -104,7 +107,8 @@ impl Game {
         let mut hit_anything = false;
         let mut closest_so_far = 100.0;
         
-        for obj in self.objects.borrow().iter() {
+        let objects = self.objects.borrow();
+        for obj in objects.iter() {
             if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
                 closest_so_far = hit_record.t; // update closest hit
                 hit_anything = true;
@@ -117,7 +121,7 @@ impl Game {
             let attenuation;
             let scattered_ray;
 
-            if let Some(material) = &hit_record.material {
+            if let Some(material) = hit_record.material {
                 (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
                 if !successful_scatter {
                     return Vec3::zero(); // no scatter, return black

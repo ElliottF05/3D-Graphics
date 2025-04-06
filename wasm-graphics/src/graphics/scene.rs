@@ -89,7 +89,7 @@ pub trait SceneObject: Debug {
     }
 
     // ray-tracing
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hitRecord: &mut HitRecord) -> bool;
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
 }
 
 #[derive(Debug)]
@@ -142,7 +142,7 @@ impl SceneObject for VertexObject {
         }
         self.center = center;
     }
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hitRecord: &mut HitRecord) -> bool {
+    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord) -> bool {
         return false;
     }
 }
@@ -256,7 +256,7 @@ impl SceneObject for Sphere {
         self.center = center;
     }
 
-    fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord) -> bool {
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
         let oc = self.center - ray.origin; // line from ray origin to sphere center
         let a = ray.direction.len_squared();
         let h = oc.dot(&ray.direction);
@@ -283,7 +283,7 @@ impl SceneObject for Sphere {
             // normal points from center of sphere to intersection point on surface
             let outward_normal = (hit_record.pos - self.center).normalized();
             hit_record.set_face_normal(ray, outward_normal);
-            hit_record.material = Some(self.material.clone());
+            hit_record.material = Some(self.material.as_ref());
             hit_record.surface_color = self.colors[0]; // assuming sphere is one color
 
             return true;
