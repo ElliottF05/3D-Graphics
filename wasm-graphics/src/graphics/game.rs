@@ -5,6 +5,13 @@ use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_ti
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum GameStatus {
+    Rasterizing,
+    RayTracing,
+    Paused,
+}
+
 pub struct Game {
     pub camera: Camera,
     pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
@@ -20,24 +27,38 @@ pub struct Game {
     pub keys_pressed_last_frame: HashSet<String>,
     pub mouse_move: Vec3,
 
-    pub running: bool,
+    pub status: GameStatus,
+    pub rt_row: usize,
+
+    // debug stuff
+    pub rt_start_time: f64
 }
 
 impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
+
             camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/8.0, 500, 500),
+
             objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
+
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
             min_sky_color: Vec3::new(1.0, 1.0, 1.0),
+
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
+
             keys_currently_pressed: HashSet::new(),
             keys_pressed_last_frame: HashSet::new(),
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
-            running: true,
+
+            status: GameStatus::Rasterizing,
+            rt_row: 0,
+
+            // debug stuff
+            rt_start_time: 0.0,
         };
 
         game.create_rt_test_scene();
@@ -220,9 +241,17 @@ impl Game {
 
     pub fn game_loop(&mut self) {
         self.process_input();
-        if self.running {
-            self.render_frame();
-            self.apply_post_processing_effects();
+        match self.status {
+            GameStatus::Rasterizing => {
+                self.render_frame();
+                self.apply_post_processing_effects();
+            },
+            GameStatus::RayTracing => {
+                self.render_ray_tracing();
+            },
+            GameStatus::Paused => {
+
+            }
         }
     }
 
@@ -277,11 +306,16 @@ impl Game {
 
         if self.keys_pressed_last_frame.contains("p") {
             console_log!("Pausing or unpausing");
-            self.running = !self.running;
+            if self.status == GameStatus::Paused {
+                self.status = GameStatus::Rasterizing;
+            } else {
+                self.status = GameStatus::Paused;
+            }
         }
         if self.keys_pressed_last_frame.contains("r") {
             // TODO: make this input robust, including cancelling raytracing
-            self.render_ray_tracing();
+            self.status = GameStatus::RayTracing;
+            self.rt_start_time = get_time();
         }
 
         self.keys_pressed_last_frame.clear();

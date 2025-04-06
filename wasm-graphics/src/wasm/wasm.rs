@@ -119,7 +119,7 @@ pub fn init_and_begin_game_loop() {
             borrowed_game_instance.game_loop();
 
             // draw the pixel buffer onto the canvas only if the game is running
-            if borrowed_game_instance.running || true {
+            if true {
                 let pixel_bif = borrowed_game_instance.pixel_buf.get_buf_as_u8();
                 let clamped_buf = wasm_bindgen::Clamped(pixel_bif.as_slice());
                 let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)

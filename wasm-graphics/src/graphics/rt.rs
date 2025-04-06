@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
-use crate::{console_log, utils::{math::{degrees_to_radians, Vec3}, utils::{random_float, random_range, sample_circle, sample_square}}};
+use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
 use super::{game::Game, scene::{MaterialProperties, SceneObject, Sphere}};
 
 const SAMPLES: usize = 10;
-const MAX_DEPTH: usize = 5;
+const MAX_DEPTH: usize = 10;
 
 const DEFOCUS_ANGLE: f32 = degrees_to_radians(0.6);
 const FOCUS_DIST: f32 = 10.0;
@@ -45,11 +45,24 @@ impl HitRecord {
 impl Game {
 
     pub fn render_ray_tracing(&mut self) {
-        self.running = false;
+
+        // TESTING ON DEFAULT create_rt_test_scene(), dev console closed
+        // perf tips here: https://users.rust-lang.org/t/peter-shirleys-ray-tracing-in-one-weekend-implementation-in-rust/26972/11
+
+        // first version after finishing rt in one weekend, no performance improvements
+        // 22.65 second average
+
+        // 
+
+
+        self.status = GameStatus::RayTracing;
         console_log!("Rendering ray tracing");
 
-        for x in 0..self.camera.width {
-            for y in 0..self.camera.height {
+        let start_time = get_time();
+        let start_row = self.rt_row;
+
+        for y in start_row..self.camera.height {
+            for x in 0..self.camera.width {
 
                 let mut pixel_color = Vec3::zero();
                 for _ in 0..SAMPLES {
@@ -60,9 +73,24 @@ impl Game {
                 pixel_color /= SAMPLES as f32;
                 self.pixel_buf.set_pixel(x, y, pixel_color);
             }
+
+            let curr_time = get_time();
+            let elapsed = curr_time - start_time;
+            if elapsed >= 1000.0 {
+                self.rt_row = y + 1;
+                return;
+            }
         }
 
+        self.rt_row = 0;
+        self.status = GameStatus::Paused;
         self.apply_post_processing_effects();
+
+        let curr_time = get_time();
+        let total_time = curr_time - self.rt_start_time;
+        console_log!("Finished ray tracing in {} seconds", 0.001 * total_time);
+
+        // self.apply_post_processing_effects();
     }
 
     fn ray_trace(&self, ray: Ray, depth: usize) -> Vec3 {
