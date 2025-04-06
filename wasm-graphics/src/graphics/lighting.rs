@@ -164,7 +164,7 @@ impl Light {
                             self.zbuf.set_depth(x, y, depth);
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::element_mul(&old_color, &color) + (1.0 - properties.alpha) * old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(&old_color, &color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -212,7 +212,7 @@ impl Light {
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
                             // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::element_mul(&old_color, &color) + (1.0 - properties.alpha) * old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(&old_color, &color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -281,9 +281,9 @@ impl Light {
         proportion_in_light /= samples as f32;
         shadow_color /= samples as f32;
 
-        let mut light_color = Vec3::element_mul(&color, &self.color);
+        let mut light_color = Vec3::mul_elementwise_of(&color, &self.color);
         if properties.alpha == 1.0 {
-            light_color.element_mul_with(&shadow_color);
+            light_color.mul_elementwise_inplace(&shadow_color);
         }
 
         let diffuse_light = properties.diffuse
