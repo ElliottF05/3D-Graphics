@@ -206,58 +206,61 @@ impl VertexObject {
 
 #[derive(Debug)]
 pub struct Sphere {
-    pub vertices: Vec<Vec3>,
-    pub indices: Vec<usize>,
-    pub colors: Vec<Vec3>,
-    pub normals: Vec<Vec3>,
-
-    pub properties: MaterialProperties,
-    pub material: Box<dyn Material>,
-
-    pub id: usize,
-
-    pub center: Vec3,
+    mesh: VertexObject,
     pub radius: f32,
+    // pub vertices: Vec<Vec3>,
+    // pub indices: Vec<usize>,
+    // pub colors: Vec<Vec3>,
+    // pub normals: Vec<Vec3>,
+
+    // pub properties: MaterialProperties,
+    // pub material: Box<dyn Material>,
+
+    // pub id: usize,
+
+    // pub center: Vec3,
+    // pub radius: f32,
 }
 
 impl SceneObject for Sphere {
     fn get_vertices(&self) -> &Vec<Vec3> {
-        &self.vertices
+        &self.mesh.vertices
     }
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3> {
-        &mut self.vertices
+        &mut self.mesh.vertices
     }
     fn get_indices(&self) -> &Vec<usize> {
-        return &self.indices;
+        return &self.mesh.indices;
     }
     fn get_colors(&self) -> &Vec<Vec3> {
-        return &self.colors;
+        return &self.mesh.colors;
     }
     fn get_normals(&self) -> &Vec<Vec3> {
-        return &self.normals;
+        return &self.mesh.normals;
     }
     fn get_properties(&self) -> &MaterialProperties {
-        &self.properties
+        &self.mesh.properties
     }
     fn get_material(&self) -> &Box<dyn Material> {
-        return &self.material;
+        return &self.mesh.material;
     }
     fn get_id(&self) -> usize {
-        return self.id;
+        return self.mesh.id;
     }
     fn get_center(&self) -> Vec3 {
-        return self.center;
+        return self.mesh.center;
     }
     fn set_center(&mut self, center: Vec3) {
-        let delta = center - self.center;
+        let delta = center - self.mesh.center;
         for v in self.get_vertices_mut().iter_mut() {
             *v += delta;
         }
-        self.center = center;
+        self.mesh.center = center;
     }
 
+    #[inline(always)]
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
-        let oc = self.center - ray.origin; // line from ray origin to sphere center
+        let oc = self.mesh.center - ray.origin;
         let a = ray.direction.len_squared();
         let h = oc.dot(&ray.direction);
         let c = oc.len_squared() - self.radius * self.radius;
@@ -281,10 +284,10 @@ impl SceneObject for Sphere {
             hit_record.t = t;
             hit_record.pos = ray.at(t);
             // normal points from center of sphere to intersection point on surface
-            let outward_normal = (hit_record.pos - self.center).normalized();
+            let outward_normal = (hit_record.pos - self.mesh.center).normalized();
             hit_record.set_face_normal(ray, outward_normal);
-            hit_record.material = Some(self.material.as_ref());
-            hit_record.surface_color = self.colors[0]; // assuming sphere is one color
+            hit_record.material = Some(self.mesh.material.as_ref());
+            hit_record.surface_color = self.mesh.colors[0]; // assuming sphere is one color
 
             return true;
         }
@@ -304,7 +307,7 @@ impl Sphere {
             normals.push(normal);
         }
 
-        Sphere {
+        let mesh = VertexObject {
             vertices,
             indices,
             colors,
@@ -313,6 +316,10 @@ impl Sphere {
             material,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
+        };
+
+        Sphere {
+            mesh,
             radius,
         }
     }
@@ -356,7 +363,12 @@ impl Sphere {
         let colors = vec![color; indices.len() / 3];
         return Sphere::new(vertices, indices, colors, center, radius, properties, material);
     }
+
+    pub fn get_mesh(&self) -> &VertexObject {
+        &self.mesh
+    }
 }
+
 fn get_or_create_midpoint(vertices: &mut Vec<Vec3>, midpoint_cache: &mut HashMap<(usize, usize), usize>, i1: usize, i2: usize) -> usize {
     let key = if i1 < i2 { (i1, i2) } else { (i2, i1) };
     if let Some(&index) = midpoint_cache.get(&key) {

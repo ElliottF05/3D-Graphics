@@ -1,4 +1,4 @@
-use crate::{console_log, utils::{math::Vec3, utils::sort_objects_by_distance_to_camera}};
+use crate::{console_log, utils::{math::Vec3}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, scene::{MaterialProperties, SceneObject}};
 
@@ -26,14 +26,14 @@ impl Light {
         self.color_buf.clear_to_white();
     }
 
-    pub fn add_objects_to_shadow_map(&mut self, objects: &mut Vec<Box<dyn SceneObject>>) {
-        sort_objects_by_distance_to_camera(objects, &self.camera.pos);
-        for obj in objects {
-            self.add_object_to_shadow_map(obj);
-        }
-    }
+    // pub fn add_objects_to_shadow_map(&mut self, objects: &mut Vec<Box<dyn SceneObject>>) {
+    //     sort_objects_by_distance_to_camera(objects, &self.camera.pos);
+    //     for obj in objects {
+    //         self.add_object_to_shadow_map(obj);
+    //     }
+    // }
 
-    pub fn add_object_to_shadow_map(&mut self, obj: &Box<dyn SceneObject>) {
+    pub fn add_object_to_shadow_map<T: SceneObject>(&mut self, obj: &T) {
         // TODO: don't recalculate the shared vertices, take advantage of indexed data structure
         let vertices = obj.get_vertices();
         let indices = obj.get_indices();
@@ -43,11 +43,11 @@ impl Light {
             let v2 = vertices[indices[i*3+1]];
             let v3 = vertices[indices[i*3+2]];
             let color = colors[i];
-            self.add_triangle_to_shadow_map(v1, v2, v3, color, &obj);
+            self.add_triangle_to_shadow_map(v1, v2, v3, color, obj);
         }
     }
 
-    fn add_triangle_to_shadow_map(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn add_triangle_to_shadow_map<T: SceneObject>(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &T) {
 
         // do not render if normal is pointing toward light - FRONT FACE CULLING
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
@@ -100,7 +100,7 @@ impl Light {
         }
     }
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn fill_triangle<T: SceneObject>(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &T) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
         let properties = scene_obj.get_properties();

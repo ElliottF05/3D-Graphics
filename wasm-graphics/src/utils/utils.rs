@@ -1,6 +1,6 @@
 use rand::{distr::uniform::SampleRange, rngs::ThreadRng, Rng};
 
-use crate::graphics::scene::SceneObject;
+use crate::graphics::scene::{SceneObject, VertexObject};
 
 use super::math::Vec3;
 
@@ -57,8 +57,8 @@ pub fn gamma_correct_color(color: &Vec3) -> Vec3 {
     )
 }
 
-pub fn sort_objects_by_distance_to_camera(objects: &mut Vec<Box<dyn SceneObject>>, camera_pos: &Vec3) {
-    objects.sort_by(|a, b| 
+pub fn sort_meshes_by_distance_to_camera(meshes: &mut Vec<&VertexObject>, camera_pos: &Vec3) {
+    meshes.sort_by(|a, b| 
         (a.get_center() - *camera_pos).len_squared()
             .partial_cmp(&(b.get_center() - *camera_pos).len_squared())
             .unwrap_or(std::cmp::Ordering::Equal)
