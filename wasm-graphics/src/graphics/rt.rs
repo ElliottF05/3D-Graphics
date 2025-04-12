@@ -64,6 +64,15 @@ impl Game {
         // after switching recursion to iteration in ray_trace()
         // 20.49 seconds avg
 
+        // after removing dynamic dispatch: 
+        // 7.80 seconds avg!!!
+
+        // after adding #[inline(always)] to SceneObject::hit()
+        // 6.10 second avg!
+
+        // TODO: make sure Sphere::hit() is ALWAYS INLINED!!
+        // also maybe do this for ray_trace?, depends on PROFILING RESULTS
+
 
         self.status = GameStatus::RayTracing;
         console_log!("Rendering ray tracing");
@@ -108,7 +117,8 @@ impl Game {
         // start with identity for multiplication = 1
         let mut pixel_color = Vec3::new(1.0, 1.0, 1.0);
 
-        let objects = self.objects.borrow();
+        let spheres = self.spheres.take();
+        let vertex_objects = self.vertex_objects.take();
 
         while depth > 0 {
             depth -= 1;
@@ -116,8 +126,22 @@ impl Game {
             let mut hit_anything = false;
             let mut closest_so_far = 1000.0;
 
-            for obj in objects.iter() {
-                if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+            // for obj in objects.iter() {
+            //     if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+            //         closest_so_far = hit_record.t;
+            //         hit_anything = true;
+            //     }
+            // }
+
+            for sphere in spheres.iter() {
+                if sphere.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+                    closest_so_far = hit_record.t;
+                    hit_anything = true;
+                }
+            }
+
+            for vertex_obj in vertex_objects.iter() {
+                if vertex_obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
                     closest_so_far = hit_record.t;
                     hit_anything = true;
                 }
@@ -134,18 +158,23 @@ impl Game {
                         pixel_color.mul_elementwise_inplace(&attenuation);
                         ray = scattered_ray;
                     } else {
-                        return Vec3::zero(); // no scatter, return black
+                        pixel_color.mul_elementwise_inplace(&Vec3::zero());
+                        break; // no scatter, return black
                     }
                 } else {
-                    return Vec3::zero(); // no material, return black
+                    pixel_color.mul_elementwise_inplace(&Vec3::zero());
+                    break; // no material, return black
                 }
 
             } else { // if hit_anything == false, then ray hit nothing, goes off into sky
                 let sky_color = self.get_sky_color(&ray.direction);
                 pixel_color.mul_elementwise_inplace(&sky_color);
-                return pixel_color;
+                break;
             }
         }
+
+        self.spheres.replace(spheres);
+        self.vertex_objects.replace(vertex_objects);
 
         return pixel_color;
     }
@@ -193,11 +222,12 @@ impl Game {
     pub fn create_rt_test_scene(&mut self) {
 
         let ground_material = Lambertian::default();
-        self.add_scene_object(Sphere::build_sphere(
+        let sphere = Sphere::build_sphere(
             Vec3::new(0.0, 0.0, -1000.0), 
             1000.0, 4, Vec3::new(0.5, 0.5, 0.5), 
-            MaterialProperties::default(), Box::new(ground_material.clone()))
-        );
+            MaterialProperties::default(), Box::new(ground_material.clone()));
+        self.add_scene_object(sphere);
+        // self.spheres.push(sphere);
 
         for a in -11..11 {
             for b in -11..11 {
@@ -222,34 +252,38 @@ impl Game {
                         color = Vec3::new(1.0, 1.0, 1.0);
                         sphere_material = Box::new(Dielectric::new(1.5));
                     }
-
-                    self.add_scene_object(Sphere::build_sphere(
-                        center, 0.2, 2, color, MaterialProperties::default(), sphere_material)
-                    );
+                    
+                    let sphere = Sphere::build_sphere(
+                        center, 0.2, 2, color, MaterialProperties::default(), sphere_material);
+                    self.add_scene_object(sphere);
+                    // self.spheres.push(sphere);
                 }
             }
         }
 
         let material1 = Dielectric::new(1.5);
-        self.add_scene_object(Sphere::build_sphere(
+        let sphere = Sphere::build_sphere(
             Vec3::new(0.0, 0.0, 1.0), 1.0, 4, 
             Vec3::new(1.0, 1.0, 1.0), MaterialProperties::default(), 
-            Box::new(material1))
-        );
+            Box::new(material1));
+        self.add_scene_object(sphere);
+        // self.spheres.push(sphere);
 
         let material2 = Lambertian::default();
-        self.add_scene_object(Sphere::build_sphere(
+        let sphere = Sphere::build_sphere(
             Vec3::new(-4.0, 0.0, 1.0), 1.0, 4, 
             Vec3::new(0.4, 0.2, 0.1), MaterialProperties::default(), 
-            Box::new(material2))
-        );
+            Box::new(material2));
+        self.add_scene_object(sphere);
+        // self.spheres.push(sphere);
 
         let material3 = Metal::new(0.0);
-        self.add_scene_object(Sphere::build_sphere(
+        let sphere = Sphere::build_sphere(
             Vec3::new(4.0, 0.0, 1.0), 1.0, 4, 
             Vec3::new(0.7, 0.6, 0.5), MaterialProperties::default(), 
-            Box::new(material3))
-        );
+            Box::new(material3));
+        self.add_scene_object(sphere);
+        // self.spheres.push(sphere);
 
         self.camera.set_fov(degrees_to_radians(20.0));
         self.camera.pos = Vec3::new(13.0, 3.0, 2.0);

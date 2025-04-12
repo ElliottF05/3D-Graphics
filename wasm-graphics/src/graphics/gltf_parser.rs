@@ -28,7 +28,11 @@ pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
                     }
 
                     GAME_INSTANCE.with(|game_instance| {
-                        game_instance.borrow_mut().add_scene_objects(vertex_objects);
+                        let mut g = game_instance.borrow_mut();
+                        for obj in vertex_objects {
+                            g.add_scene_object(obj);
+                        }
+                        // game_instance.borrow_mut().add_scene_objects(vertex_objects);
                     });
                     true
                 },
@@ -357,7 +361,11 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
 
                     // Add objects to scene
                     GAME_INSTANCE.with(|game_instance| {
-                        game_instance.borrow_mut().add_scene_objects(vertex_objects);
+                        let mut g = game_instance.borrow_mut();
+                        for obj in vertex_objects {
+                            g.add_scene_object(obj);
+                        }
+                        // game_instance.borrow_mut().add_scene_objects(vertex_objects);
                     });
                     true
                 },

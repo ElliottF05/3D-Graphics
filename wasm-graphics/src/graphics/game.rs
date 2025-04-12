@@ -1,7 +1,7 @@
 use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
 
-use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_objects_by_distance_to_camera}}};
+use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
@@ -14,7 +14,7 @@ pub enum GameStatus {
 
 pub struct Game {
     pub camera: Camera,
-    pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
+    // pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
     pub lights: Vec<Light>,
 
     pub max_sky_color: Vec3,
@@ -30,6 +30,10 @@ pub struct Game {
     pub status: GameStatus,
     pub rt_row: usize,
 
+    // testing stuff
+    pub spheres: RefCell<Vec<Sphere>>,
+    pub vertex_objects: RefCell<Vec<VertexObject>>,
+
     // debug stuff
     pub rt_start_time: f64
 }
@@ -41,7 +45,7 @@ impl Game {
 
             camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/8.0, 500, 500),
 
-            objects: RefCell::new(Vec::new()),
+            // objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
 
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
@@ -56,6 +60,10 @@ impl Game {
 
             status: GameStatus::Rasterizing,
             rt_row: 0,
+
+            // testing stuff
+            spheres: RefCell::new(Vec::new()),
+            vertex_objects: RefCell::new(Vec::new()),
 
             // debug stuff
             rt_start_time: 0.0,
@@ -233,7 +241,14 @@ impl Game {
 
         for light in game.lights.iter_mut() {
             light.clear_shadow_map();
-            light.add_objects_to_shadow_map(&mut game.objects.borrow_mut());
+
+            // light.add_objects_to_shadow_map(&mut game.objects.borrow_mut());
+            for sphere in game.spheres.borrow().iter() {
+                light.add_object_to_shadow_map(sphere);
+            }
+            for vertex_obj in game.vertex_objects.borrow().iter() {
+                light.add_object_to_shadow_map(vertex_obj);
+            }
         }
 
         return game;
@@ -355,69 +370,96 @@ impl Game {
         self.clear_pixel_buf_to_sky();
         self.zbuf.clear();
 
+        // let mut objects = self.objects.take();
+        // sort_objects_by_distance_to_camera(&mut objects, &self.camera.pos);
 
-        let mut objects = self.objects.take();
-        sort_objects_by_distance_to_camera(&mut objects, &self.camera.pos);
+        // sort_objects_by_distance_to_camera(&mut self.spheres, &self.camera.pos);
+
+
+        // Notes to myself for implementing this:
+        // The time has come to forego the concrete type (Sphere or VertexObject) and 
+        // instead use the underlying indexed triangle system instead. 
+        // This is because at this level, everything is a VertexObject so treat it that way.
+        // This also makes sorting by distance easy enough.
+
+        // Also, for fixing the alpha blending sorting not applying within an
+        // object's triangles (since only objects are sorted, not invidivual triangles),
+        // could try a hybrid approach of sorting the triangles within only each transparent object,
+        // not within the whole scene.
+
+        let mut meshes = Vec::with_capacity(self.spheres.borrow().len() + self.vertex_objects.borrow().len());
+
+        let spheres = self.spheres.take();
+        let vertex_objects = self.vertex_objects.take();
+
+        for sphere in spheres.iter() {
+            meshes.push(sphere.get_mesh());
+        }
+        for vertex_obj in vertex_objects.iter() {
+            meshes.push(vertex_obj);
+        }
+
+        sort_meshes_by_distance_to_camera(&mut meshes, &self.camera.pos);
 
         // opaque objects
-        for obj in objects.iter() {
-            if obj.get_properties().alpha < 1.0 {
+        for mesh in meshes.iter() {
+            if mesh.get_properties().alpha < 1.0 {
                 continue;
             }
-            let vertices = obj.get_vertices();
+            let vertices = mesh.get_vertices();
             let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = obj.get_indices();
-            let colors = obj.get_colors();
-            let normals = obj.get_normals();
+            let indices = mesh.get_indices();
+            let colors = mesh.get_colors();
+            let normals = mesh.get_normals();
             for i in 0..colors.len() {
                 let v1 = transformed_vertices[indices[i*3]];
                 let v2 = transformed_vertices[indices[i*3+1]];
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &obj);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &mesh);
             }
         }
 
         // transparent objects
-        for obj in objects.iter().rev() {
-            if obj.get_properties().alpha == 1.0 {
+        for mesh in meshes.iter().rev() {
+            if mesh.get_properties().alpha == 1.0 {
                 continue;
             }
-            let vertices = obj.get_vertices();
+            let vertices = mesh.get_vertices();
             let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = obj.get_indices();
-            let colors = obj.get_colors();
-            let normals = obj.get_normals();
+            let indices = mesh.get_indices();
+            let colors = mesh.get_colors();
+            let normals = mesh.get_normals();
             for i in 0..colors.len() {
                 let v1 = transformed_vertices[indices[i*3]];
                 let v2 = transformed_vertices[indices[i*3+1]];
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &obj);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &mesh);
             }
         }
 
-
-        self.objects.replace(objects);
+        self.spheres.replace(spheres);
+        self.vertex_objects.replace(vertex_objects);
 
         let t2 = get_time();
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &VertexObject) {
         // render triangle from transformed vertices
         let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
-        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj);
+        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, mesh);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, mesh: &VertexObject) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
-        if scene_obj.get_properties().alpha == 1.0 {
+        if mesh.get_properties().alpha == 1.0 {
             let cam_normal = (&(v3 - v1)).cross(&(v2 - v1));
             let cam_to_tri = v1;
             if cam_to_tri.dot(&cam_normal) > 0.0 {
@@ -441,7 +483,7 @@ impl Game {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1, v2, v3, &normal, color, mesh);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -450,8 +492,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, color, mesh);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, mesh);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -459,17 +501,17 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, color, mesh);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &Box<dyn SceneObject>) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, mesh: &VertexObject) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
-        let properties = scene_obj.get_properties();
+        let properties = mesh.get_properties();
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -651,17 +693,41 @@ impl Game {
         }
     }
 
-    pub fn add_scene_object<T: SceneObject + 'static>(&mut self, object: T) {
-        self.objects.borrow_mut().push(Box::new(object));
-        for light in self.lights.iter_mut() {
-            // light.clear_shadow_map();
-            // light.add_objects_to_shadow_map(&mut self.objects.borrow_mut());
-            light.add_object_to_shadow_map(self.objects.borrow().last().unwrap());
-        }
+    pub fn add_scene_object<T: SceneObject>(&mut self, obj: T)
+    where 
+        Game: SceneObjectAdder<T>
+    {
+        self.add_scene_object_helper(obj);
     }
-    pub fn add_scene_objects<T: SceneObject + 'static>(&mut self, objects: Vec<T>) {
-        for obj in objects {
-            self.add_scene_object(obj);
-        }
+
+    // pub fn add_scene_object<T: SceneObject + 'static>(&mut self, object: T) {
+    //     self.objects.borrow_mut().push(Box::new(object));
+    //     for light in self.lights.iter_mut() {
+    //         // light.clear_shadow_map();
+    //         // light.add_objects_to_shadow_map(&mut self.objects.borrow_mut());
+    //         light.add_object_to_shadow_map(self.objects.borrow().last().unwrap());
+    //     }
+    // }
+    // pub fn add_scene_objects<T: SceneObject + 'static>(&mut self, objects: Vec<T>) {
+    //     for obj in objects {
+    //         self.add_scene_object(obj);
+    //     }
+    // }
+}
+
+
+// Helper for adding generic SceneObjects to dedicated Vecs in Game
+pub trait SceneObjectAdder<SceneObject> {
+    fn add_scene_object_helper(&mut self, obj: SceneObject);
+}
+
+impl SceneObjectAdder<Sphere> for Game {
+    fn add_scene_object_helper(&mut self, obj: Sphere) {
+        self.spheres.borrow_mut().push(obj);
+    }
+}
+impl SceneObjectAdder<VertexObject> for Game {
+    fn add_scene_object_helper(&mut self, obj: VertexObject) {
+        self.vertex_objects.borrow_mut().push(obj);
     }
 }
