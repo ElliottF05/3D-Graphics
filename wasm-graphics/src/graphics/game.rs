@@ -450,7 +450,7 @@ impl Game {
 
     fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &VertexObject) {
         // render triangle from transformed vertices
-        let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
+        let normal = (v3 - v1).cross(v2 - v1).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
         self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, mesh);
     }
@@ -460,9 +460,9 @@ impl Game {
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
         if mesh.get_properties().alpha == 1.0 {
-            let cam_normal = (&(v3 - v1)).cross(&(v2 - v1));
+            let cam_normal = (v3 - v1).cross(v2 - v1);
             let cam_to_tri = v1;
-            if cam_to_tri.dot(&cam_normal) > 0.0 {
+            if cam_to_tri.dot(cam_normal) > 0.0 {
                 return;
             }
         }
@@ -577,7 +577,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
@@ -646,7 +646,7 @@ impl Game {
                         let sky_color = self.get_sky_color(normal);
 
                         // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(&sky_color, &color);
+                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
                         for light in &self.lights {
                             blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);

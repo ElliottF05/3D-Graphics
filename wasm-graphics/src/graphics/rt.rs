@@ -37,7 +37,7 @@ pub struct HitRecord<'a> {
 
 impl HitRecord<'_> {
     pub fn set_face_normal(&mut self, ray: &Ray, outward_normal: Vec3) {
-        self.front_face = ray.direction.dot(&outward_normal) < 0.0;
+        self.front_face = ray.direction.dot(outward_normal) < 0.0;
         self.normal = if self.front_face { outward_normal } else { -outward_normal };
     }
 }
@@ -70,8 +70,9 @@ impl Game {
         // after adding #[inline(always)] to SceneObject::hit()
         // 6.10 second avg!
 
-        // TODO: make sure Sphere::hit() is ALWAYS INLINED!!
-        // also maybe do this for ray_trace?, depends on PROFILING RESULTS
+        // after removing indirection for Vec3 functions (and inlining them though compiler probably did this anyway)
+        // 5.47 second avg
+
 
 
         self.status = GameStatus::RayTracing;
@@ -155,20 +156,20 @@ impl Game {
                 if let Some(material) = hit_record.material {
                     (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
                     if successful_scatter {
-                        pixel_color.mul_elementwise_inplace(&attenuation);
+                        pixel_color.mul_elementwise_inplace(attenuation);
                         ray = scattered_ray;
                     } else {
-                        pixel_color.mul_elementwise_inplace(&Vec3::zero());
+                        pixel_color.mul_elementwise_inplace(Vec3::zero());
                         break; // no scatter, return black
                     }
                 } else {
-                    pixel_color.mul_elementwise_inplace(&Vec3::zero());
+                    pixel_color.mul_elementwise_inplace(Vec3::zero());
                     break; // no material, return black
                 }
 
             } else { // if hit_anything == false, then ray hit nothing, goes off into sky
                 let sky_color = self.get_sky_color(&ray.direction);
-                pixel_color.mul_elementwise_inplace(&sky_color);
+                pixel_color.mul_elementwise_inplace(sky_color);
                 break;
             }
         }
@@ -240,7 +241,7 @@ impl Game {
 
                     if choose_mat < 0.8 {
                         // diffuse
-                        color = Vec3::random().mul_elementwise(&Vec3::random());
+                        color = Vec3::random().mul_elementwise(Vec3::random());
                         sphere_material = Box::new(Lambertian::default());
                     } else if choose_mat < 0.95 {
                         // metal
@@ -316,7 +317,7 @@ impl Lambertian {
 
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
-        let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(&hit_record.normal);
+        let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(hit_record.normal);
 
         if reflected_dir.near_zero() {
             console_log!("reflected_dir near zero");
@@ -345,11 +346,11 @@ impl Metal {
 
 impl Material for Metal {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
-        let mut reflected_dir = ray.direction.reflect(&hit_record.normal);
+        let mut reflected_dir = ray.direction.reflect(hit_record.normal);
         reflected_dir.normalize();
         reflected_dir += self.fuzz * Vec3::random_on_unit_sphere();
 
-        if reflected_dir.dot(&hit_record.normal) < 0.0 {
+        if reflected_dir.dot(hit_record.normal) < 0.0 {
             return (false, Vec3::zero(), Ray::default());
         } else  {
             let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
@@ -407,7 +408,7 @@ impl Material for Dielectric {
         
         let ray_dir = ray.direction.normalized();
 
-        let mut cos_theta = -ray_dir.dot(&hit_record.normal);
+        let mut cos_theta = -ray_dir.dot(hit_record.normal);
         cos_theta = cos_theta.min(1.0);
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
@@ -416,9 +417,9 @@ impl Material for Dielectric {
         let reflectance = self.reflectance(cos_theta, n1, n2);
 
         let refracted_dir = if cannot_refract || reflectance > random_float()  {
-            ray_dir.reflect(&hit_record.normal)
+            ray_dir.reflect(hit_record.normal)
         } else {
-            ray_dir.refract(&hit_record.normal, n1_over_n2)
+            ray_dir.refract(hit_record.normal, n1_over_n2)
         };
 
         let refracted_ray = Ray::new(hit_record.pos, refracted_dir);
