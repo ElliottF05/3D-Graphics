@@ -50,10 +50,10 @@ impl Light {
     fn add_triangle_to_shadow_map<T: SceneObject>(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &T) {
 
         // do not render if normal is pointing toward light - FRONT FACE CULLING
-        let normal = (&(v3 - v1)).cross(&(v2 - v1)).normalized();
+        let normal = (v3 - v1).cross(v2 - v1).normalized();
         let cam_to_triangle = v1 - self.camera.pos;
 
-        if normal.dot(&cam_to_triangle) < 0.0 {
+        if normal.dot(cam_to_triangle) < 0.0 {
             return;
         }
 
@@ -164,7 +164,7 @@ impl Light {
                             self.zbuf.set_depth(x, y, depth);
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(&old_color, &color) + (1.0 - properties.alpha) * old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -212,7 +212,7 @@ impl Light {
                         } else {
                             let old_color = self.color_buf.get_pixel(x, y);
                             // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(&old_color, &color) + (1.0 - properties.alpha) * old_color);
+                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
                             self.color_buf.set_pixel(x, y, new_color);
                         }
                     }
@@ -273,7 +273,7 @@ impl Light {
         }
 
         // compute lighting components
-        let angle_multiplier = pixel_to_light.dot(normal);
+        let angle_multiplier = pixel_to_light.dot(*normal);
         if angle_multiplier <= 0.0 || proportion_in_light == 0.0 || samples == 0 {
             return Vec3::new(0.0, 0.0, 0.0) // light is behind the surface or fully occluded
         }
@@ -281,9 +281,9 @@ impl Light {
         proportion_in_light /= samples as f32;
         shadow_color /= samples as f32;
 
-        let mut light_color = Vec3::mul_elementwise_of(&color, &self.color);
+        let mut light_color = Vec3::mul_elementwise_of(color, self.color);
         if properties.alpha == 1.0 {
-            light_color.mul_elementwise_inplace(&shadow_color);
+            light_color.mul_elementwise_inplace(shadow_color);
         }
 
         let diffuse_light = properties.diffuse
@@ -304,7 +304,7 @@ impl Light {
             let V = (*observer_camera_pos - *world_pos).normalized();
             let H = (V + pixel_to_light).normalized();
 
-            let NdotH = normal.dot(&H);
+            let NdotH = normal.dot(H);
             let exp_multiplier = 4;
             if NdotH >= 0.0 {
                 specular_light = properties.specular 

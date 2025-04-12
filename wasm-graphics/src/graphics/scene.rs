@@ -160,7 +160,7 @@ impl VertexObject {
             let v1 = vertices[indices[i]];
             let v2 = vertices[indices[i + 1]];
             let v3 = vertices[indices[i + 2]];
-            let normal = (v3 - v1).cross(&(v2 - v1)).normalized();
+            let normal = (v3 - v1).cross(v2 - v1).normalized();
             normals.push(normal);
         }
 
@@ -262,7 +262,7 @@ impl SceneObject for Sphere {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
         let oc = self.mesh.center - ray.origin;
         let a = ray.direction.len_squared();
-        let h = oc.dot(&ray.direction);
+        let h = oc.dot(ray.direction);
         let c = oc.len_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;
@@ -303,7 +303,7 @@ impl Sphere {
             let v1 = vertices[indices[i]];
             let v2 = vertices[indices[i + 1]];
             let v3 = vertices[indices[i + 2]];
-            let normal = (v3 - v1).cross(&(v2 - v1)).normalized();
+            let normal = (v3 - v1).cross(v2 - v1).normalized();
             normals.push(normal);
         }
 
@@ -377,7 +377,7 @@ fn get_or_create_midpoint(vertices: &mut Vec<Vec3>, midpoint_cache: &mut HashMap
 
     let v1 = vertices[i1];
     let v2 = vertices[i2];
-    let midpoint = v1.midpoint_with(&v2);
+    let midpoint = v1.midpoint_with(v2);
     let index = vertices.len();
     vertices.push(midpoint);
     midpoint_cache.insert(key, index);
