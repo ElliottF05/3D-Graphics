@@ -194,6 +194,22 @@ impl Vec3 {
         const EPSILON: f32 = 1e-8;
         return self.x.abs() < EPSILON && self.y.abs() < EPSILON && self.z.abs() < EPSILON;
     }
+    #[inline(always)]
+    pub fn min_elementwise(self, other: Vec3) -> Vec3 {
+        Vec3::new(
+            self.x.min(other.x),
+            self.y.min(other.y),
+            self.z.min(other.z)
+        )
+    }
+    #[inline(always)]
+    pub fn max_elementwise(self, other: Vec3) -> Vec3 {
+        Vec3::new(
+            self.x.max(other.x),
+            self.y.max(other.y),
+            self.z.max(other.z)
+        )
+    }
 
     #[inline(always)]
     pub fn reflect(self, normal: Vec3) -> Vec3 {

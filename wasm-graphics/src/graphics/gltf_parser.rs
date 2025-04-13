@@ -7,7 +7,7 @@ use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm
 
 use crate::utils::math::Vec3;
 
-use super::{rt::Lambertian, scene::{MaterialProperties, VertexObject}};
+use super::{ray_tracing::material::Lambertian, scene::{MaterialProperties, VertexObject}};
 
 #[wasm_bindgen]
 pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {

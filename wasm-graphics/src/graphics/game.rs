@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, rt::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, ray_tracing::material::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
