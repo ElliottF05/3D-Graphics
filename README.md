@@ -1,5 +1,7 @@
 # Web-Based 3D Graphics Renderer
 
+***NOTE:*** I am currently rewriting this in Rust (check out the ```rust``` branch) which has better WebAssembly support, in order to improve performance significantly and add more features. These include ray-tracing for any scene, importing arbitrary 3D models, (both currently implemented) and hopefully GPU support.
+
 ## Demo
 Check out the live demo of the project:  
 [**3D Graphics Renderer - Interactive Demo**](https://elliottf05.github.io/3D-Graphics/)
