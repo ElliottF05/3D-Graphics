@@ -14,15 +14,18 @@ pub fn get_time() -> f64 {
 }
 
 // RAND UTILITIES
+#[inline(always)]
 pub fn random_float() -> f32 {
     // let mut rng = rand::rng();
     // return rng.random();
     return rand::random::<f32>();
 }
+#[inline(always)]
 pub fn random_range(min: f32, max: f32) -> f32 {
     return random_float() * (max - min) + min;
 }
 /// Samples points in a square in the range [-0.5, 0.5].
+#[inline(always)]
 pub fn sample_square(side_length: f32) -> (f32, f32) {
     let x = random_float();
     let y = random_float();
@@ -30,6 +33,7 @@ pub fn sample_square(side_length: f32) -> (f32, f32) {
 }
 
 /// Returns a random x,y coordinate in the unit circle, with even distribution
+#[inline(always)]
 pub fn sample_circle(radius: f32) -> (f32 ,f32) {
     loop {
         let x = random_range(-1.0, 1.0);

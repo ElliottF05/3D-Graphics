@@ -4,4 +4,7 @@ pub mod scene;
 pub mod buffers;
 pub mod lighting;
 pub mod gltf_parser;
-pub mod rt;
+
+pub mod ray_tracing;
+// pub mod rt;
+// pub mod bvh;
