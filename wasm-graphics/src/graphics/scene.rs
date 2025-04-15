@@ -87,9 +87,17 @@ pub trait SceneObject: Debug {
         let scale = radius / max_dist;
         self.scale_by(scale);
     }
+
+    fn clone_box(&self) -> Box<dyn SceneObject>;
 }
 
-#[derive(Debug)]
+impl Clone for Box<dyn SceneObject> {
+    fn clone(&self) -> Self {
+        self.as_ref().clone_box()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct VertexObject {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
@@ -138,6 +146,10 @@ impl SceneObject for VertexObject {
             *v += delta;
         }
         self.center = center;
+    }
+
+    fn clone_box(&self) -> Box<dyn SceneObject> {
+        Box::new(self.clone())
     }
 }
 
@@ -201,7 +213,7 @@ impl VertexObject {
 
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Sphere {
     pub mesh: VertexObject,
     pub radius: f32,
@@ -241,6 +253,10 @@ impl SceneObject for Sphere {
             *v += delta;
         }
         self.mesh.center = center;
+    }
+
+    fn clone_box(&self) -> Box<dyn SceneObject> {
+        Box::new(self.clone())
     }
 }
 

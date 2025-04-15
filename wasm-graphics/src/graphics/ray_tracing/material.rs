@@ -7,6 +7,13 @@ use super::rt::{HitRecord, Ray};
 pub trait Material: Debug + Send + Sync {
     /// scatters the inbound ray and returns a tuple of the the attenuation color and the new ray.
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray);
+    fn clone_box(&self) -> Box<dyn Material>;
+}
+
+impl Clone for Box<dyn Material> {
+    fn clone(&self) -> Box<dyn Material> {
+        self.as_ref().clone_box()
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -29,9 +36,9 @@ impl Material for Lambertian {
         return (true, attenuation, reflected_ray)
     }
 
-    // fn clone_box(&self) -> Box<dyn Material> {
-    //     Box::new(self.clone())
-    // }
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -59,6 +66,10 @@ impl Material for Metal {
             return (true, attenuation, reflected_ray)
         }
     }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
+    }
 }
 
 
@@ -84,7 +95,6 @@ impl Dielectric {
 
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
-
         let attenuation;
         let n1;
         let n2;
@@ -102,7 +112,6 @@ impl Material for Dielectric {
         }
 
         let n1_over_n2 = n1 / n2;
-        
         let ray_dir = ray.direction.normalized();
 
         let mut cos_theta = -ray_dir.dot(hit_record.normal);
@@ -121,5 +130,9 @@ impl Material for Dielectric {
 
         let refracted_ray = Ray::new(hit_record.pos, refracted_dir);
         return (true, attenuation, refracted_ray);
+    }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
     }
 }
