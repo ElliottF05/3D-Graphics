@@ -3,7 +3,7 @@ use gltf::json::extensions::material;
 use crate::{console_log, utils::math::Vec3, graphics::ray_tracing::rt::Ray};
 use std::{collections::HashMap, fmt::Debug, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
 
-use super::{ray_tracing::bvh::AABoundingBox, ray_tracing::{rt::HitRecord, material::Material}};
+use super::ray_tracing::{bvh::AABoundingBox, hittable::Hittable, material::Material, rt::HitRecord};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -34,7 +34,7 @@ impl Default for MaterialProperties {
     }
 }
 
-pub trait SceneObject: Debug {
+pub trait SceneObject: Hittable + Debug {
     fn get_vertices(&self) -> &Vec<Vec3>;
     fn get_vertices_mut(&mut self) -> &mut Vec<Vec3>;
     fn get_indices(&self) -> &Vec<usize>;
@@ -110,6 +110,7 @@ pub struct VertexObject {
     pub id: usize,
 
     pub center: Vec3,
+    pub bounding_box: AABoundingBox,
 }
 
 impl SceneObject for VertexObject {
@@ -163,13 +164,25 @@ impl VertexObject {
         center /= vertices.len() as f32;
 
         let mut normals = Vec::with_capacity(colors.len());
+        let mut min_corner = vertices[0];
+        let mut max_corner = vertices[0];
         for i in (0..indices.len()).step_by(3) {
             let v1 = vertices[indices[i]];
             let v2 = vertices[indices[i + 1]];
             let v3 = vertices[indices[i + 2]];
             let normal = (v3 - v1).cross(v2 - v1).normalized();
             normals.push(normal);
+
+            min_corner.min_elementwise(v1);
+            min_corner.min_elementwise(v2);
+            min_corner.min_elementwise(v3);
+
+            max_corner.max_elementwise(v1);
+            max_corner.max_elementwise(v2);
+            max_corner.max_elementwise(v3);
         }
+
+        let bounding_box = AABoundingBox::new(min_corner, max_corner);
 
         VertexObject {
             vertices,
@@ -180,6 +193,7 @@ impl VertexObject {
             material,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
+            bounding_box,
         }
     }
     pub fn new_with_color(vertices: Vec<Vec3>, indices: Vec<usize>, color: Vec3, properties: MaterialProperties, material: Box<dyn Material>) -> VertexObject {
@@ -217,6 +231,7 @@ impl VertexObject {
 pub struct Sphere {
     pub mesh: VertexObject,
     pub radius: f32,
+    pub bounding_box: AABoundingBox,
 }
 
 impl SceneObject for Sphere {
@@ -272,6 +287,9 @@ impl Sphere {
             normals.push(normal);
         }
 
+        let radius_vector = Vec3::new(radius, radius, radius);
+        let bounding_box = AABoundingBox::new(center - radius_vector, center + radius_vector);
+
         let mesh = VertexObject {
             vertices,
             indices,
@@ -281,11 +299,13 @@ impl Sphere {
             material,
             id: NEXT_ID.fetch_add(1,Ordering::Relaxed),
             center,
+            bounding_box: bounding_box.clone(),
         };
 
         Sphere {
             mesh,
             radius,
+            bounding_box
         }
     }
 

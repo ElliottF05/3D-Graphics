@@ -1,4 +1,4 @@
-use rand::{distr::uniform::SampleRange, rngs::ThreadRng, Rng};
+use rand::{distr::{uniform::SampleRange, Uniform}, rngs::ThreadRng, Rng};
 
 use crate::graphics::scene::{SceneObject, VertexObject};
 
@@ -23,6 +23,12 @@ pub fn random_float() -> f32 {
 #[inline(always)]
 pub fn random_range(min: f32, max: f32) -> f32 {
     return random_float() * (max - min) + min;
+}
+/// Samples uniformly from the range [low, high]
+pub fn random_int(min: i32, max: i32) -> i32 {
+    let distr = Uniform::new_inclusive(min, max).expect("rand::distr::Uniform::new_inclusive failed");
+    let mut rng = rand::rng();
+    return rng.sample(distr);
 }
 /// Samples points in a square in the range [-0.5, 0.5].
 #[inline(always)]

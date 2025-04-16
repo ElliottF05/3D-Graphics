@@ -2,7 +2,7 @@ use std::{fmt::Debug};
 
 use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
-use super::{super::{game::Game, scene::{MaterialProperties, SceneObject, Sphere}}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}};
+use super::{super::{game::Game, scene::{MaterialProperties, SceneObject, Sphere}}, bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}};
 
 const SAMPLES: usize = 10;
 const MAX_DEPTH: usize = 10;
@@ -73,6 +73,9 @@ impl Game {
         // after removing indirection for Vec3 functions (and inlining them though compiler probably did this anyway)
         // 5.47 second avg
 
+        // after adding bvh
+        // 2.92 second avg
+
 
 
         self.status = GameStatus::RayTracing;
@@ -127,25 +130,21 @@ impl Game {
             let mut hit_anything = false;
             let mut closest_so_far = 1000.0;
 
-            // for obj in objects.iter() {
-            //     if obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+            // for sphere in spheres.iter() {
+            //     if sphere.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+            //         closest_so_far = hit_record.t;
+            //         hit_anything = true;
+            //     }
+            // }
+            // for vertex_obj in vertex_objects.iter() {
+            //     if vertex_obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
             //         closest_so_far = hit_record.t;
             //         hit_anything = true;
             //     }
             // }
 
-            for sphere in spheres.iter() {
-                if sphere.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
-                    closest_so_far = hit_record.t;
-                    hit_anything = true;
-                }
-            }
-
-            for vertex_obj in vertex_objects.iter() {
-                if vertex_obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
-                    closest_so_far = hit_record.t;
-                    hit_anything = true;
-                }
+            if self.bvh.as_ref().unwrap().hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+                hit_anything = true;
             }
 
             if hit_anything {
@@ -230,8 +229,10 @@ impl Game {
         self.add_scene_object(sphere);
         // self.spheres.push(sphere);
 
-        for a in -11..11 {
-            for b in -11..11 {
+        let lim = 11;
+
+        for a in -lim..lim {
+            for b in -lim..lim {
                 let choose_mat = random_float();
                 let center = Vec3::new(a as f32 + 0.9*random_float(), b as f32 + 0.9*random_float(), 0.2);
 
@@ -289,5 +290,17 @@ impl Game {
         self.camera.set_fov(degrees_to_radians(20.0));
         self.camera.pos = Vec3::new(13.0, 3.0, 2.0);
         self.camera.look_at(&Vec3::zero());
+
+
+        // set up bvh
+        let mut objects: Vec<Box<dyn SceneObject>> = Vec::new();
+        for s in self.spheres.borrow().iter() {
+            objects.push(s.clone_box());
+        }
+        for v in self.vertex_objects.borrow().iter() {
+            objects.push(v.clone_box());
+        }
+
+        self.bvh = Some(BVHNode::new(objects));
     }
 }
