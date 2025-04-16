@@ -6,15 +6,15 @@ use super::{bvh::AABoundingBox, rt::{HitRecord, Ray}};
 
 pub trait Hittable {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
-    fn get_bounding_box(&self) -> AABoundingBox;
+    fn get_bounding_box(&self) -> &AABoundingBox;
 }
 
 impl Hittable for VertexObject {
     fn hit(&self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord) -> bool {
         return false;
     }
-    fn get_bounding_box(&self) -> AABoundingBox {
-        AABoundingBox::default()
+    fn get_bounding_box(&self) -> &AABoundingBox {
+        return &self.bounding_box;
     }
 }
 
@@ -57,11 +57,7 @@ impl Hittable for Sphere {
 
     }
 
-    fn get_bounding_box(&self) -> AABoundingBox {
-        let radius_vector = Vec3::new(self.radius, self.radius, self.radius);
-        AABoundingBox::new(
-            self.get_center() - radius_vector,
-            self.get_center() + radius_vector,
-        )
+    fn get_bounding_box(&self) -> &AABoundingBox {
+        return &self.bounding_box;
     }
 }

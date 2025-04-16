@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, ray_tracing::material::{Dielectric, Lambertian, Metal}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, ray_tracing::{bvh::BVHNode, material::{Dielectric, Lambertian, Metal}}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
@@ -14,7 +14,6 @@ pub enum GameStatus {
 
 pub struct Game {
     pub camera: Camera,
-    // pub objects: RefCell<Vec<Box<dyn SceneObject>>>,
     pub lights: Vec<Light>,
 
     pub max_sky_color: Vec3,
@@ -33,6 +32,7 @@ pub struct Game {
     // testing stuff
     pub spheres: RefCell<Vec<Sphere>>,
     pub vertex_objects: RefCell<Vec<VertexObject>>,
+    pub bvh: Option<BVHNode>,
 
     // debug stuff
     pub rt_start_time: f64
@@ -64,6 +64,7 @@ impl Game {
             // testing stuff
             spheres: RefCell::new(Vec::new()),
             vertex_objects: RefCell::new(Vec::new()),
+            bvh: None,
 
             // debug stuff
             rt_start_time: 0.0,
