@@ -11,11 +11,16 @@ pub struct AABoundingBox {
 }
 
 impl AABoundingBox {
-    pub fn new(min: Vec3, max: Vec3) -> Self {
+    /// Assumes input vectors are already min and max
+    pub fn new_from_sorted(min: Vec3, max: Vec3) -> Self {
         AABoundingBox { min, max }
     }
+    pub fn new_from_unsorted(v1: Vec3, v2: Vec3) -> Self {
+        let (min, max) = (v1.min_elementwise(v2), v1.max_elementwise(v2));
+        return Self::new_from_sorted(min, max);
+    }
     pub fn from_sub_boxes(box1: &AABoundingBox, box2: &AABoundingBox) -> Self {
-        return AABoundingBox::new(
+        return AABoundingBox::new_from_sorted(
             box1.min.min_elementwise(box2.min),
             box1.max.max_elementwise(box2.max),
         )
@@ -42,6 +47,15 @@ impl AABoundingBox {
     pub fn get_z_bounds(&self) -> (f32, f32) {
         return (self.min.z, self.max.z);
     }
+    pub fn get_x_size(&self) -> f32 {
+        return self.max.x - self.min.x;
+    }
+    pub fn get_y_size(&self) -> f32 {
+        return self.max.y - self.min.y;
+    }
+    pub fn get_z_size(&self) -> f32 {
+        return self.max.z - self.min.x;
+    }
     pub fn get_center(&self) -> Vec3 {
         return 0.5 * (self.min + self.max);
     }
@@ -59,6 +73,22 @@ impl AABoundingBox {
             } else {
                 return 2;
             }
+        }
+    }
+
+    pub fn pad_to_minimums(&mut self) {
+        let delta = 0.0001;
+        if self.get_x_size() < delta {
+            self.min.x -= 0.5 * delta;
+            self.max.x += 0.5 * delta;
+        }
+        if self.get_y_size() < delta {
+            self.min.y -= 0.5 * delta;
+            self.max.y += 0.5 * delta;
+        }
+        if self.get_z_size() < delta {
+            self.min.z -= 0.5 * delta;
+            self.max.z += 0.5 * delta;
         }
     }
 
