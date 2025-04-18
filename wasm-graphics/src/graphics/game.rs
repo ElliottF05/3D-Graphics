@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, ray_tracing::{bvh::BVHNode, material::{Dielectric, Lambertian, Metal}}, scene::{build_checkerboard, build_cube, build_icosahedron, MaterialProperties, SceneObject, Sphere, VertexObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, material::{Dielectric, Lambertian, Material, Metal}}};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
@@ -14,6 +14,7 @@ pub enum GameStatus {
 
 pub struct Game {
     pub camera: Camera,
+    pub meshes: RefCell<Vec<Mesh>>,
     pub lights: Vec<Light>,
 
     pub max_sky_color: Vec3,
@@ -29,9 +30,7 @@ pub struct Game {
     pub status: GameStatus,
     pub rt_row: usize,
 
-    // testing stuff
-    pub spheres: RefCell<Vec<Sphere>>,
-    pub vertex_objects: RefCell<Vec<VertexObject>>,
+    // ray-tracing variables
     pub bvh: Option<BVHNode>,
 
     // debug stuff
@@ -43,9 +42,8 @@ impl Game {
     pub fn new() -> Game {
         let mut game = Game {
 
-            camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/8.0, 500, 500),
-
-            // objects: RefCell::new(Vec::new()),
+            camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/2.0, 500, 500),
+            meshes: RefCell::new(Vec::new()),
             lights: Vec::new(),
 
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
@@ -61,9 +59,7 @@ impl Game {
             status: GameStatus::Rasterizing,
             rt_row: 0,
 
-            // testing stuff
-            spheres: RefCell::new(Vec::new()),
-            vertex_objects: RefCell::new(Vec::new()),
+            // ray tracing variables
             bvh: None,
 
             // debug stuff
@@ -72,11 +68,11 @@ impl Game {
 
         game.create_rt_test_scene();
 
-        // game.add_scene_object(build_cube(
+        // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
         //     1.0,
         //     Vec3::new(1.0, 0.0, 0.0),
-        //     MaterialProperties::default())
+        //     PhongProperties::default())
         // );
 
         // central sphere
@@ -207,12 +203,12 @@ impl Game {
         //     ),
         // ));
 
-        // game.add_scene_object(build_checkerboard(
+        // game.add_mesh(Mesh::build_checkerboard(
         //         Vec3::new(10.0, 0.0, 0.0), 
         //         20, 
         //         Vec3::new(1.0, 1.0, 1.0), 
         //         Vec3::new(0.9, 0.9, 0.9),
-        //         MaterialProperties::default(),
+        //         PhongProperties::default(),
         //     )
         // );
 
@@ -243,13 +239,7 @@ impl Game {
         for light in game.lights.iter_mut() {
             light.clear_shadow_map();
 
-            // light.add_objects_to_shadow_map(&mut game.objects.borrow_mut());
-            for sphere in game.spheres.borrow().iter() {
-                light.add_object_to_shadow_map(sphere);
-            }
-            for vertex_obj in game.vertex_objects.borrow().iter() {
-                light.add_object_to_shadow_map(vertex_obj);
-            }
+            light.add_meshes_to_shadow_map(&game.meshes.borrow());
         }
 
         return game;
@@ -388,30 +378,20 @@ impl Game {
         // could try a hybrid approach of sorting the triangles within only each transparent object,
         // not within the whole scene.
 
-        let mut meshes = Vec::with_capacity(self.spheres.borrow().len() + self.vertex_objects.borrow().len());
-
-        let spheres = self.spheres.take();
-        let vertex_objects = self.vertex_objects.take();
-
-        for sphere in spheres.iter() {
-            meshes.push(sphere.get_mesh());
-        }
-        for vertex_obj in vertex_objects.iter() {
-            meshes.push(vertex_obj);
-        }
+        let mut meshes = self.meshes.take();
 
         sort_meshes_by_distance_to_camera(&mut meshes, &self.camera.pos);
 
         // opaque objects
         for mesh in meshes.iter() {
-            if mesh.get_properties().alpha < 1.0 {
+            if mesh.properties.alpha < 1.0 {
                 continue;
             }
-            let vertices = mesh.get_vertices();
+            let vertices = &mesh.vertices;
             let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = mesh.get_indices();
-            let colors = mesh.get_colors();
-            let normals = mesh.get_normals();
+            let indices = &mesh.indices;
+            let colors = &mesh.colors;
+            let normals = &mesh.normals;
             for i in 0..colors.len() {
                 let v1 = transformed_vertices[indices[i*3]];
                 let v2 = transformed_vertices[indices[i*3+1]];
@@ -424,14 +404,14 @@ impl Game {
 
         // transparent objects
         for mesh in meshes.iter().rev() {
-            if mesh.get_properties().alpha == 1.0 {
+            if mesh.properties.alpha == 1.0 {
                 continue;
             }
-            let vertices = mesh.get_vertices();
+            let vertices = &mesh.vertices;
             let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = mesh.get_indices();
-            let colors = mesh.get_colors();
-            let normals = mesh.get_normals();
+            let indices = &mesh.indices;
+            let colors = &mesh.colors;
+            let normals = &mesh.normals;
             for i in 0..colors.len() {
                 let v1 = transformed_vertices[indices[i*3]];
                 let v2 = transformed_vertices[indices[i*3+1]];
@@ -442,25 +422,24 @@ impl Game {
             }
         }
 
-        self.spheres.replace(spheres);
-        self.vertex_objects.replace(vertex_objects);
+        self.meshes.replace(meshes);
 
         let t2 = get_time();
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &VertexObject) {
+    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &Mesh) {
         // render triangle from transformed vertices
         let normal = (v3 - v1).cross(v2 - v1).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
         self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, mesh);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, mesh: &VertexObject) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, mesh: &Mesh) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
-        if mesh.get_properties().alpha == 1.0 {
+        if mesh.properties.alpha == 1.0 {
             let cam_normal = (v3 - v1).cross(v2 - v1);
             let cam_to_tri = v1;
             if cam_to_tri.dot(cam_normal) > 0.0 {
@@ -509,10 +488,10 @@ impl Game {
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, mesh: &VertexObject) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, mesh: &Mesh) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
-        let properties = mesh.get_properties();
+        let properties = &mesh.properties;
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -694,41 +673,7 @@ impl Game {
         }
     }
 
-    pub fn add_scene_object<T: SceneObject>(&mut self, obj: T)
-    where 
-        Game: SceneObjectAdder<T>
-    {
-        self.add_scene_object_helper(obj);
-    }
-
-    // pub fn add_scene_object<T: SceneObject + 'static>(&mut self, object: T) {
-    //     self.objects.borrow_mut().push(Box::new(object));
-    //     for light in self.lights.iter_mut() {
-    //         // light.clear_shadow_map();
-    //         // light.add_objects_to_shadow_map(&mut self.objects.borrow_mut());
-    //         light.add_object_to_shadow_map(self.objects.borrow().last().unwrap());
-    //     }
-    // }
-    // pub fn add_scene_objects<T: SceneObject + 'static>(&mut self, objects: Vec<T>) {
-    //     for obj in objects {
-    //         self.add_scene_object(obj);
-    //     }
-    // }
-}
-
-
-// Helper for adding generic SceneObjects to dedicated Vecs in Game
-pub trait SceneObjectAdder<SceneObject> {
-    fn add_scene_object_helper(&mut self, obj: SceneObject);
-}
-
-impl SceneObjectAdder<Sphere> for Game {
-    fn add_scene_object_helper(&mut self, obj: Sphere) {
-        self.spheres.borrow_mut().push(obj);
-    }
-}
-impl SceneObjectAdder<VertexObject> for Game {
-    fn add_scene_object_helper(&mut self, obj: VertexObject) {
-        self.vertex_objects.borrow_mut().push(obj);
+    pub fn add_mesh(&mut self, mesh: Mesh) {
+        self.meshes.borrow_mut().push(mesh);
     }
 }

@@ -1,6 +1,4 @@
-use std::hint;
-
-use crate::{graphics::scene::SceneObject, utils::{math::Vec3, utils::random_int}};
+use crate::{graphics::mesh::Mesh, utils::{math::Vec3, utils::random_int}};
 
 use super::{hittable::Hittable, rt::{HitRecord, Ray}};
 
@@ -44,6 +42,9 @@ impl AABoundingBox {
     pub fn get_z_bounds(&self) -> (f32, f32) {
         return (self.min.z, self.max.z);
     }
+    pub fn get_center(&self) -> Vec3 {
+        return 0.5 * (self.min + self.max);
+    }
 
     pub fn get_longest_axis(&self) -> i32 {
         if self.max.x - self.min.x > self.max.y - self.min.y {
@@ -61,6 +62,7 @@ impl AABoundingBox {
         }
     }
 
+    #[inline(always)]
     fn hit(&self, ray: &Ray, mut t_min: f32, mut t_max: f32) -> bool {
 
         // ray.origin + t * ray.direction = pos
@@ -72,7 +74,7 @@ impl AABoundingBox {
         (t0, t1) = (t0.min(t1), t0.max(t1));
         (t_min, t_max) = (t_min.max(t0), t_max.min(t1));
 
-        if t_max <= t_min {
+        if t_min > t_max {
             return false;
         }
 
@@ -102,7 +104,7 @@ impl AABoundingBox {
 pub enum BVHNode {
     Leaf {
         bounding_box: AABoundingBox,
-        object: Box<dyn SceneObject>,
+        object: Box<dyn Hittable>,
     },
     Internal {
         bounding_box: AABoundingBox,
@@ -112,7 +114,7 @@ pub enum BVHNode {
 }
 
 impl BVHNode {
-    pub fn new(mut objects: Vec<Box<dyn SceneObject>>) -> Self {
+    pub fn new(mut objects: Vec<Box<dyn Hittable>>) -> Self {
 
         // leaf node
         if objects.len() == 1 {
@@ -130,10 +132,12 @@ impl BVHNode {
 
         let axis = bounding_box.get_longest_axis();
         objects.sort_by(|obj1, obj2| {
+            let c1 = obj1.get_bounding_box().get_center();
+            let c2 = obj2.get_bounding_box().get_center();
             match axis {
-                0 => (obj1.get_center().x).partial_cmp(&obj2.get_center().x).unwrap(),
-                1 => (obj1.get_center().y).partial_cmp(&obj2.get_center().y).unwrap(),
-                2 => (obj1.get_center().z).partial_cmp(&obj2.get_center().z).unwrap(),
+                0 => (c1.x).partial_cmp(&c2.x).unwrap(),
+                1 => (c1.y).partial_cmp(&c2.y).unwrap(),
+                2 => (c1.z).partial_cmp(&c2.z).unwrap(),
                 _ => unreachable!("invalid axis to sort by"),
             }
         });
@@ -160,9 +164,12 @@ impl BVHNode {
 }
 
 impl Hittable for BVHNode {
+    #[inline(always)]
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
         match self {
-            BVHNode::Leaf { object, .. } => object.hit(ray, t_min, t_max, hit_record),
+            BVHNode::Leaf { object, .. } => {
+                return object.hit(ray, t_min, t_max, hit_record)
+            },
             BVHNode::Internal { bounding_box, left, right } => {
                 if !bounding_box.hit(ray, t_min, t_max) {
                     return false;
@@ -170,7 +177,7 @@ impl Hittable for BVHNode {
                 let hit_left = left.hit(ray, t_min, t_max, hit_record);
                 let new_tmax = if hit_left {hit_record.t} else {t_max};
                 let hit_right = right.hit(ray, t_min, new_tmax, hit_record);
-                hit_left || hit_right
+                return hit_left || hit_right;
             }
         }
     }

@@ -7,7 +7,7 @@ use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm
 
 use crate::utils::math::Vec3;
 
-use super::{ray_tracing::material::Lambertian, scene::{MaterialProperties, VertexObject}};
+use super::{ray_tracing::material::Lambertian, mesh::{PhongProperties, Mesh}};
 
 #[wasm_bindgen]
 pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
@@ -17,8 +17,8 @@ pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
                 Ok(mut vertex_objects) => {
 
                     // TODO: remove later, this is for testing
-                    for obj in vertex_objects.iter_mut() {
-                        for vertex in obj.vertices.iter_mut() {
+                    for mesh in vertex_objects.iter_mut() {
+                        for vertex in mesh.vertices.iter_mut() {
                             // vertex.rotate_z(PI / 2.0);
                             vertex.rotate_y(-PI / 2.0);
                             *vertex *= 0.2;
@@ -28,9 +28,9 @@ pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
                     }
 
                     GAME_INSTANCE.with(|game_instance| {
-                        let mut g = game_instance.borrow_mut();
-                        for obj in vertex_objects {
-                            g.add_scene_object(obj);
+                        let g = game_instance.borrow_mut();
+                        for mesh in vertex_objects {
+                            g.meshes.borrow_mut().push(mesh);
                         }
                         // game_instance.borrow_mut().add_scene_objects(vertex_objects);
                     });
@@ -76,7 +76,7 @@ pub fn decode_gltf_bytes(gltf_bytes: &[u8], bin_bytes: &[u8])
 }
 
 pub fn parse_gltf_objects(gltf: Gltf, buffers: &[Data]) 
-    -> Result<Vec<VertexObject>, String> {
+    -> Result<Vec<Mesh>, String> {
     
     let mut vertex_objects = Vec::new();
 
@@ -88,7 +88,7 @@ pub fn parse_gltf_objects(gltf: Gltf, buffers: &[Data])
     Ok(vertex_objects)
 }
 
-fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<VertexObject>, String> {
+fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<Mesh>, String> {
     let mut vertex_objects = Vec::new();
     for primitive in mesh.primitives() {
 
@@ -106,10 +106,10 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         flip_indices_winding(&mut indices);
 
         // Get material properties
-        let mut material_props = MaterialProperties::default();
+        let mut phong_properties = PhongProperties::default();
         let pbr = primitive.material().pbr_metallic_roughness();
         let pbr_base_color = pbr.base_color_factor();
-        material_props.alpha = pbr_base_color[3];
+        phong_properties.alpha = pbr_base_color[3];
         // material_props.alpha = 1.0;
         // TODO: user proper alpha and add metalic etc. properties
 
@@ -141,10 +141,9 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         };
         // console_log!("colors: {:?}", colors);
 
-        // TODO: replace placeholder material
-        let placeholder_mat = Box::new(Lambertian::default());
+        // TODO: ADD TO RT SCENE
 
-        let vertex_object = VertexObject::new(vertices, indices, colors, material_props, placeholder_mat);
+        let vertex_object = Mesh::new(vertices, indices, colors, phong_properties);
         
         vertex_objects.push(vertex_object);
     }
@@ -349,8 +348,8 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                 Ok(mut vertex_objects) => {
 
                     // TODO: remove later, this is for testing
-                    for obj in vertex_objects.iter_mut() {
-                        for vertex in obj.vertices.iter_mut() {
+                    for mesh in vertex_objects.iter_mut() {
+                        for vertex in mesh.vertices.iter_mut() {
                             // vertex.rotate_z(PI / 2.0);
                             vertex.rotate_y(-PI / 2.0);
                             *vertex *= 0.4;
@@ -361,9 +360,9 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
 
                     // Add objects to scene
                     GAME_INSTANCE.with(|game_instance| {
-                        let mut g = game_instance.borrow_mut();
-                        for obj in vertex_objects {
-                            g.add_scene_object(obj);
+                        let g = game_instance.borrow_mut();
+                        for mesh in vertex_objects {
+                            g.meshes.borrow_mut().push(mesh);
                         }
                         // game_instance.borrow_mut().add_scene_objects(vertex_objects);
                     });
