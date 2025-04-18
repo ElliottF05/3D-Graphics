@@ -310,4 +310,8 @@ impl Game {
 
         self.bvh = Some(BVHNode::new(bvh_objects));
     }
+
+    pub fn create_rt_test_scene_2(&mut self) {
+        
+    }
 }
