@@ -43,9 +43,10 @@ pub struct Triangle {
 
 impl Triangle {
     pub fn new_from_directions(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
-        let normal = u.cross(v);
-        let d = normal.dot(origin);
-        let w = normal / normal.len_squared();
+        let normal_unnormalized = u.cross(v);
+        let normal_normalized = normal_unnormalized.normalized();
+        let d = normal_normalized.dot(origin);
+        let w = normal_unnormalized / normal_unnormalized.len_squared();
 
         let min = origin.min_elementwise(origin + u).min_elementwise(origin + v);
         let max = origin.max_elementwise(origin + u).max_elementwise(origin + v);
@@ -57,7 +58,7 @@ impl Triangle {
             u,
             v,
             w,
-            normal: normal.normalized(),
+            normal: normal_normalized,
             d,
             color,
             material: material.clone_box(),
@@ -157,6 +158,7 @@ impl Hittable for Triangle {
         hit_record.pos = intersection;
         hit_record.material = Some(self.material.as_ref());
         hit_record.set_face_normal(ray, self.normal);
+        hit_record.surface_color = self.color;
 
         return true;
     }

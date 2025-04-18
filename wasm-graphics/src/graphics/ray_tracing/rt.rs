@@ -2,13 +2,10 @@ use std::{fmt::Debug};
 
 use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
-use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere}, material::{Dielectric, Lambertian, Material, Metal}};
+use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere, Triangle}, material::{Dielectric, Lambertian, Material, Metal}};
 
 const SAMPLES: usize = 10;
 const MAX_DEPTH: usize = 10;
-
-const DEFOCUS_ANGLE: f32 = degrees_to_radians(0.6); // 0.6
-const FOCUS_DIST: f32 = 10.0;
 
 #[derive(Debug, Clone, Default)]
 pub struct Ray {
@@ -129,22 +126,8 @@ impl Game {
             depth -= 1;
             let mut hit_record = HitRecord::default();
             let mut hit_anything = false;
-            let mut closest_so_far = 1000.0;
 
-            // for sphere in spheres.iter() {
-            //     if sphere.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
-            //         closest_so_far = hit_record.t;
-            //         hit_anything = true;
-            //     }
-            // }
-            // for vertex_obj in vertex_objects.iter() {
-            //     if vertex_obj.hit(&ray, 0.001, closest_so_far, &mut hit_record) {
-            //         closest_so_far = hit_record.t;
-            //         hit_anything = true;
-            //     }
-            // }
-
-            if self.bvh.as_ref().unwrap().hit(&ray, 0.001, closest_so_far, &mut hit_record) {
+            if self.bvh.as_ref().unwrap().hit(&ray, 0.001, 1000.0, &mut hit_record) {
                 hit_anything = true;
             }
 
@@ -198,12 +181,12 @@ impl Game {
     }
 
     fn get_rand_ray_at_pixel_with_defocus(&self, x: usize, y: usize) -> Ray {
-        let defocus_disk_radius = (0.5 * DEFOCUS_ANGLE).tan() * FOCUS_DIST;
+        let defocus_disk_radius = (0.5 * self.defocus_angle).tan() * self.focus_dist;
         let (disk_x, disk_y) = sample_circle(defocus_disk_radius);
         let (offset_x, offset_y) = sample_square(1.0);
 
 
-        let mut point_on_focus_plane = Vec3::new(x as f32 + offset_x, y as f32 + offset_y, FOCUS_DIST);
+        let mut point_on_focus_plane = Vec3::new(x as f32 + offset_x, y as f32 + offset_y, self.focus_dist);
         self.camera.vertex_screen_to_camera_space(&mut point_on_focus_plane);
 
         let mut point_on_defocus_disk = Vec3::new(0.0, disk_x, disk_y);
@@ -214,7 +197,6 @@ impl Game {
         let ray_dir = (point_on_focus_plane - point_on_defocus_disk).normalized();
 
         return Ray::new(point_on_defocus_disk, ray_dir);
-
     }
 
     pub fn create_rt_test_scene(&mut self) {
@@ -300,6 +282,9 @@ impl Game {
         self.camera.pos = Vec3::new(13.0, 3.0, 2.0);
         self.camera.look_at(&Vec3::zero());
 
+        self.defocus_angle = degrees_to_radians(0.6);
+        self.focus_dist = 10.0;
+
 
         // set up bvh
         let bvh_objects: Vec<Box<dyn Hittable>> = rt_objects
@@ -312,6 +297,73 @@ impl Game {
     }
 
     pub fn create_rt_test_scene_2(&mut self) {
-        
+
+        let origins = vec![
+            Vec3::new(-3.0, 5.0, -2.0),
+            Vec3::new(-2.0, 0.0, -2.0),
+            Vec3::new(3.0, 1.0, -2.0),
+            Vec3::new(-2.0, 1.0, 3.0),
+            Vec3::new(-2.0, 5.0, -3.0),
+        ];
+        let u_vectors = vec![
+            Vec3::new(0.0, -4.0, 0.0),
+            Vec3::new(4.0, 0.0, 0.0),
+            Vec3::new(0.0, 4.0, 0.0),
+            Vec3::new(4.0, 0.0, 0.0),
+            Vec3::new(4.0, 0.0, 0.0),
+        ];
+        let v_vectors = vec![
+            Vec3::new(0.0, 0.0, 4.0),
+            Vec3::new(0.0, 0.0, 4.0),
+            Vec3::new(0.0, 0.0, 4.0),
+            Vec3::new(0.0, 4.0, 0.0),
+            Vec3::new(0.0, -4.0, 0.0),
+        ];
+        let colors = vec![
+            Vec3::new(1.0, 0.2, 0.2),
+            Vec3::new(0.2, 1.0, 0.2),
+            Vec3::new(0.2, 0.2, 1.0),
+            Vec3::new(1.0, 0.5, 0.0),
+            Vec3::new(0.2, 0.8, 0.8),
+        ];
+
+        let mut mesh_vertices = Vec::new();
+        let mut mesh_colors = Vec::new();
+
+        for i in 0..origins.len() {
+            let origin = origins[i];
+            let u = u_vectors[i];
+            let v = v_vectors[i];
+            let color = colors[i];
+
+            mesh_vertices.push(origin);
+            mesh_vertices.push(origin+u);
+            mesh_vertices.push(origin+v);
+
+            mesh_vertices.push(origin+u);
+            mesh_vertices.push(origin+u+v);
+            mesh_vertices.push(origin+v);
+
+            mesh_colors.push(color);
+            mesh_colors.push(color);
+
+            // let t1 = Triangle::new_from_directions(origin, u, v, Vec3::new(1.0, 0.2, 0.2), &lambertian);
+            // let t2 = Triangle::new_from_directions(origin+u+v, -u, -v, Vec3::new(1.0, 0.2, 0.2), &lambertian);
+        }
+
+        let mesh = Mesh::new_from_non_indexed(mesh_vertices, mesh_colors, PhongProperties::default());
+        let rt_triangles = mesh.to_rt_triangles(&Lambertian::default());
+
+        self.add_mesh(mesh);
+
+        let rt_objects = rt_triangles.into_iter().map(|t| Box::new(t) as Box<dyn Hittable>).collect();
+        // let triangle = Triangle::new_from_vertices(Vec3::new(0.0, 0.0, 5.0), Vec3::new(0.0, 0.0, 0.0), Vec3::new(5.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0), &Lambertian::default());
+        // let rt_objects = vec![Box::new(triangle) as Box<dyn Hittable>];
+
+        self.bvh = Some(BVHNode::new(rt_objects));
+
+        self.camera.set_fov(degrees_to_radians(80.0));
+        self.camera.pos = Vec3::new(0.0, 9.0, 0.0);
+        self.camera.look_at(&Vec3::zero());
     }
 }
