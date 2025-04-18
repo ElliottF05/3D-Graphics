@@ -1,6 +1,6 @@
 use crate::{console_log, utils::{math::Vec3}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, scene::{MaterialProperties, SceneObject}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{PhongProperties, Mesh}};
 
 pub struct Light {
     pub color: Vec3,
@@ -33,21 +33,27 @@ impl Light {
     //     }
     // }
 
-    pub fn add_object_to_shadow_map<T: SceneObject>(&mut self, obj: &T) {
+    pub fn add_mesh_to_shadow_map(&mut self, mesh: &Mesh) {
         // TODO: don't recalculate the shared vertices, take advantage of indexed data structure
-        let vertices = obj.get_vertices();
-        let indices = obj.get_indices();
-        let colors = obj.get_colors();
+        let vertices = &mesh.vertices;
+        let indices = &mesh.indices;
+        let colors = &mesh.colors;
         for i in 0..colors.len() {
             let v1 = vertices[indices[i*3]];
             let v2 = vertices[indices[i*3+1]];
             let v3 = vertices[indices[i*3+2]];
             let color = colors[i];
-            self.add_triangle_to_shadow_map(v1, v2, v3, color, obj);
+            self.add_triangle_to_shadow_map(v1, v2, v3, color, mesh);
         }
     }
 
-    fn add_triangle_to_shadow_map<T: SceneObject>(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &T) {
+    pub fn add_meshes_to_shadow_map(&mut self, meshes: &Vec<Mesh>) {
+        for mesh in meshes {
+            self.add_mesh_to_shadow_map(mesh);
+        }
+    }
+
+    fn add_triangle_to_shadow_map(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &Mesh) {
 
         // do not render if normal is pointing toward light - FRONT FACE CULLING
         let normal = (v3 - v1).cross(v2 - v1).normalized();
@@ -76,7 +82,7 @@ impl Light {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, color, scene_obj);
+            self.fill_triangle(v1, v2, v3, color, mesh);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -85,8 +91,8 @@ impl Light {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, color, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, color, scene_obj);
+            self.fill_triangle(v1_new_1, v2, v3, color, mesh);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, color, mesh);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -94,16 +100,16 @@ impl Light {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, color, scene_obj);
+            self.fill_triangle(v1_new, v2_new, v3, color, mesh);
         } else { // no vertices in view
             return;
         }
     }
 
-    fn fill_triangle<T: SceneObject>(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &T) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &Mesh) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
-        let properties = scene_obj.get_properties();
+        let properties = &mesh.properties;
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -223,7 +229,7 @@ impl Light {
         }
     }
 
-    pub fn get_lighting_at(&self, world_pos: &Vec3, observer_camera_pos: &Vec3, normal: &Vec3, color: Vec3, properties: &MaterialProperties) -> Vec3 {
+    pub fn get_lighting_at(&self, world_pos: &Vec3, observer_camera_pos: &Vec3, normal: &Vec3, color: Vec3, properties: &PhongProperties) -> Vec3 {
         
         // compute pixel-to-light vector and normalize
         let pixel_to_light = (self.camera.pos - *world_pos).normalized();

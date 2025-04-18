@@ -2,12 +2,12 @@ use std::{fmt::Debug};
 
 use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
-use super::{super::{game::Game, scene::{MaterialProperties, SceneObject, Sphere}}, bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}};
+use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere}, material::{Dielectric, Lambertian, Material, Metal}};
 
 const SAMPLES: usize = 10;
 const MAX_DEPTH: usize = 10;
 
-const DEFOCUS_ANGLE: f32 = degrees_to_radians(0.6);
+const DEFOCUS_ANGLE: f32 = degrees_to_radians(0.6); // 0.6
 const FOCUS_DIST: f32 = 10.0;
 
 #[derive(Debug, Clone, Default)]
@@ -76,6 +76,10 @@ impl Game {
         // after adding bvh
         // 2.92 second avg
 
+        // next steps?
+        // 1) look into improving cache locality by have the BVH tree hold indexes into a Vec<SceneObject> 
+        //      - this is called a flattened bvh tree
+        // 2) Multi-threading (duh)
 
 
         self.status = GameStatus::RayTracing;
@@ -120,9 +124,6 @@ impl Game {
 
         // start with identity for multiplication = 1
         let mut pixel_color = Vec3::new(1.0, 1.0, 1.0);
-
-        let spheres = self.spheres.take();
-        let vertex_objects = self.vertex_objects.take();
 
         while depth > 0 {
             depth -= 1;
@@ -173,9 +174,6 @@ impl Game {
             }
         }
 
-        self.spheres.replace(spheres);
-        self.vertex_objects.replace(vertex_objects);
-
         return pixel_color;
     }
 
@@ -221,15 +219,19 @@ impl Game {
 
     pub fn create_rt_test_scene(&mut self) {
 
-        let ground_material = Lambertian::default();
-        let sphere = Sphere::build_sphere(
-            Vec3::new(0.0, 0.0, -1000.0), 
-            1000.0, 4, Vec3::new(0.5, 0.5, 0.5), 
-            MaterialProperties::default(), Box::new(ground_material.clone()));
-        self.add_scene_object(sphere);
-        // self.spheres.push(sphere);
+        let mut rt_objects = Vec::new();
 
-        let lim = 11;
+        let ground_material = Lambertian::default();
+        let sphere = Sphere::new(
+            Vec3::new(0.0, 0.0, -1000.0),
+            1000.0,
+            Vec3::new(0.5, 0.5, 0.5),
+            ground_material.clone_box(),
+        );
+        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
+        rt_objects.push(sphere);
+
+        let lim = 11; // 11
 
         for a in -lim..lim {
             for b in -lim..lim {
@@ -255,37 +257,44 @@ impl Game {
                         sphere_material = Box::new(Dielectric::new(1.5));
                     }
                     
-                    let sphere = Sphere::build_sphere(
-                        center, 0.2, 2, color, MaterialProperties::default(), sphere_material);
-                    self.add_scene_object(sphere);
+                    let sphere = Sphere::new(center, 0.2, color, sphere_material.clone_box());
+                    self.add_mesh(sphere.to_mesh(2, PhongProperties::default()));
+                    rt_objects.push(sphere);
+
                     // self.spheres.push(sphere);
                 }
             }
         }
 
         let material1 = Dielectric::new(1.5);
-        let sphere = Sphere::build_sphere(
-            Vec3::new(0.0, 0.0, 1.0), 1.0, 4, 
-            Vec3::new(1.0, 1.0, 1.0), MaterialProperties::default(), 
-            Box::new(material1));
-        self.add_scene_object(sphere);
-        // self.spheres.push(sphere);
+        let sphere = Sphere::new(
+            Vec3::new(0.0, 0.0, 1.0), 
+            1.0, 
+            Vec3::new(1.0, 1.0, 1.0), 
+            material1.clone_box()
+        );
+        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
+        rt_objects.push(sphere);
 
         let material2 = Lambertian::default();
-        let sphere = Sphere::build_sphere(
-            Vec3::new(-4.0, 0.0, 1.0), 1.0, 4, 
-            Vec3::new(0.4, 0.2, 0.1), MaterialProperties::default(), 
-            Box::new(material2));
-        self.add_scene_object(sphere);
-        // self.spheres.push(sphere);
+        let sphere = Sphere::new(
+            Vec3::new(-4.0, 0.0, 1.0), 
+            1.0 ,
+            Vec3::new(0.4, 0.2, 0.1), 
+            material2.clone_box()
+        );
+        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
+        rt_objects.push(sphere);
 
         let material3 = Metal::new(0.0);
-        let sphere = Sphere::build_sphere(
-            Vec3::new(4.0, 0.0, 1.0), 1.0, 4, 
-            Vec3::new(0.7, 0.6, 0.5), MaterialProperties::default(), 
-            Box::new(material3));
-        self.add_scene_object(sphere);
-        // self.spheres.push(sphere);
+        let sphere = Sphere::new(
+            Vec3::new(4.0, 0.0, 1.0), 
+            1.0, 
+            Vec3::new(0.7, 0.6, 0.5), 
+            material3.clone_box()
+        );
+        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
+        rt_objects.push(sphere);
 
         self.camera.set_fov(degrees_to_radians(20.0));
         self.camera.pos = Vec3::new(13.0, 3.0, 2.0);
@@ -293,14 +302,12 @@ impl Game {
 
 
         // set up bvh
-        let mut objects: Vec<Box<dyn SceneObject>> = Vec::new();
-        for s in self.spheres.borrow().iter() {
-            objects.push(s.clone_box());
-        }
-        for v in self.vertex_objects.borrow().iter() {
-            objects.push(v.clone_box());
-        }
+        let bvh_objects: Vec<Box<dyn Hittable>> = rt_objects
+            .iter()
+            .cloned()
+            .map(|o| Box::new(o) as Box<dyn Hittable>)
+            .collect();
 
-        self.bvh = Some(BVHNode::new(objects));
+        self.bvh = Some(BVHNode::new(bvh_objects));
     }
 }
