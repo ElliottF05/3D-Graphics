@@ -33,6 +33,9 @@ pub struct Game {
     // ray-tracing variables
     pub bvh: Option<BVHNode>,
 
+    pub defocus_angle: f32,
+    pub focus_dist: f32,
+
     // debug stuff
     pub rt_start_time: f64
 }
@@ -61,12 +64,14 @@ impl Game {
 
             // ray tracing variables
             bvh: None,
+            defocus_angle: 0.0,
+            focus_dist: 10.0,
 
             // debug stuff
             rt_start_time: 0.0,
         };
 
-        game.create_rt_test_scene();
+        game.create_rt_test_scene_2();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),

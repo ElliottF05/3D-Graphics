@@ -3,7 +3,7 @@ use gltf::json::extensions::material;
 use crate::{console_log, utils::math::Vec3, graphics::ray_tracing::rt::Ray};
 use std::{collections::HashMap, fmt::Debug, io::Cursor, sync::atomic::{AtomicUsize, Ordering}, vec};
 
-use super::ray_tracing::{bvh::AABoundingBox, hittable::Hittable, material::Material, rt::HitRecord};
+use super::ray_tracing::{bvh::AABoundingBox, hittable::{Hittable, Triangle}, material::Material, rt::HitRecord};
 
 static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
 
@@ -231,6 +231,20 @@ impl Mesh {
         mesh.center = center;
         mesh.radius = radius;
         return mesh;
+    }
+
+    pub fn to_rt_triangles(&self, material: &dyn Material) -> Vec<Triangle> {
+        let mut triangles = Vec::with_capacity(self.indices.len() / 3);
+        for i in (0..self.indices.len()).step_by(3) {
+            let v1 = self.vertices[self.indices[i]];
+            let v2 = self.vertices[self.indices[i+1]];
+            let v3 = self.vertices[self.indices[i+2]];
+            let color = self.colors[i / 3];
+
+            let triangle = Triangle::new_from_vertices(v1, v2, v3, color, material);
+            triangles.push(triangle);
+        }
+        return triangles;
     }
 
 
