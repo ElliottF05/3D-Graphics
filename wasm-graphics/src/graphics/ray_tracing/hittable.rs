@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::math::Vec3};
 
 use super::{bvh::AABoundingBox, material::Material, rt::{HitRecord, Ray}};
@@ -29,6 +31,7 @@ impl Sphere {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Triangle {
     pub origin: Vec3,
     pub u: Vec3,
@@ -78,7 +81,7 @@ impl Triangle {
     
 }
 
-pub trait Hittable {
+pub trait Hittable: Debug {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
     fn get_bounding_box(&self) -> &AABoundingBox;
 }

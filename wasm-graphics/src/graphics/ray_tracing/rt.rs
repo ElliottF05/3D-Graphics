@@ -4,8 +4,8 @@ use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_r
 
 use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere, Triangle}, material::{Dielectric, Lambertian, Material, Metal}};
 
-const SAMPLES: usize = 10;
-const MAX_DEPTH: usize = 10;
+const SAMPLES: usize = 100; // 10
+const MAX_DEPTH: usize = 50; // 10
 
 #[derive(Debug, Clone, Default)]
 pub struct Ray {

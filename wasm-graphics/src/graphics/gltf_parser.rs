@@ -7,7 +7,7 @@ use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm
 
 use crate::utils::math::Vec3;
 
-use super::{ray_tracing::material::Lambertian, mesh::{PhongProperties, Mesh}};
+use super::{mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::Lambertian}};
 
 #[wasm_bindgen]
 pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
@@ -345,10 +345,10 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
     match decode_glb_bytes(glb_bytes) {
         Ok((gltf, buffers)) => {
             match parse_gltf_objects(gltf, &buffers) {
-                Ok(mut vertex_objects) => {
+                Ok(mut meshes) => {
 
-                    // TODO: remove later, this is for testing
-                    for mesh in vertex_objects.iter_mut() {
+                    // TODO: remove later, this is for testing to translate the model to a good location
+                    for mesh in meshes.iter_mut() {
                         for vertex in mesh.vertices.iter_mut() {
                             // vertex.rotate_z(PI / 2.0);
                             vertex.rotate_y(-PI / 2.0);
@@ -358,13 +358,34 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                         }
                     }
 
+                    // TODO: improve this
+                    // add meshes to rt as triangles
+                    let mut rt_objects: Vec<Box<dyn Hittable>> = Vec::new();
+                    for mesh in meshes.iter() {
+                        let triangles: Vec<Box<dyn Hittable>> = mesh
+                            .to_rt_triangles(&Lambertian::default())
+                            .into_iter()
+                            .map(|t| Box::new(t) as Box<dyn Hittable>)
+                            .collect();
+                        rt_objects.extend(triangles);
+                    }
+                    GAME_INSTANCE.with(|game_instance| {
+                        let mut g = game_instance.borrow_mut();
+                        g.bvh = Some(BVHNode::new(rt_objects));
+                    });
+
                     // Add objects to scene
                     GAME_INSTANCE.with(|game_instance| {
-                        let g = game_instance.borrow_mut();
-                        for mesh in vertex_objects {
-                            g.meshes.borrow_mut().push(mesh);
+                        let mut g = game_instance.borrow_mut();
+                        let mut game_meshes = g.meshes.take();
+                        for mesh in meshes {
+                            game_meshes.push(mesh);
                         }
-                        // game_instance.borrow_mut().add_scene_objects(vertex_objects);
+                        for light in g.lights.iter_mut() {
+                            light.clear_shadow_map();
+                            light.add_meshes_to_shadow_map(&game_meshes);
+                        }
+                        g.meshes.replace(game_meshes);
                     });
                     true
                 },

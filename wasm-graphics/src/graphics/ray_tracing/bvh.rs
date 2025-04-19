@@ -54,7 +54,7 @@ impl AABoundingBox {
         return self.max.y - self.min.y;
     }
     pub fn get_z_size(&self) -> f32 {
-        return self.max.z - self.min.x;
+        return self.max.z - self.min.z;
     }
     pub fn get_center(&self) -> Vec3 {
         return 0.5 * (self.min + self.max);
@@ -114,7 +114,7 @@ impl AABoundingBox {
         (t0, t1) = (t0.min(t1), t0.max(t1));
         (t_min, t_max) = (t_min.max(t0), t_max.min(t1));
 
-        if t_max <= t_min {
+        if t_min > t_max {
             return false;
         }
 
@@ -131,6 +131,7 @@ impl AABoundingBox {
 }
 
 
+#[derive(Debug)]
 pub enum BVHNode {
     Leaf {
         bounding_box: AABoundingBox,

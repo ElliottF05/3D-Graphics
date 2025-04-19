@@ -71,7 +71,7 @@ impl Game {
             rt_start_time: 0.0,
         };
 
-        game.create_rt_test_scene_2();
+        // game.create_rt_test_scene_2();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -208,14 +208,14 @@ impl Game {
         //     ),
         // ));
 
-        // game.add_mesh(Mesh::build_checkerboard(
-        //         Vec3::new(10.0, 0.0, 0.0), 
-        //         20, 
-        //         Vec3::new(1.0, 1.0, 1.0), 
-        //         Vec3::new(0.9, 0.9, 0.9),
-        //         PhongProperties::default(),
-        //     )
-        // );
+        game.add_mesh(Mesh::build_checkerboard(
+                Vec3::new(0.0, 0.0, 0.0), 
+                1, 
+                Vec3::new(1.0, 1.0, 1.0), 
+                Vec3::new(0.9, 0.9, 0.9),
+                PhongProperties::default(),
+            )
+        );
 
         // let mut stl_obj = VertexObject::new_from_stl_bytes(
         //     &include_bytes!("../3DBenchy.stl").to_vec(),
@@ -243,9 +243,17 @@ impl Game {
 
         for light in game.lights.iter_mut() {
             light.clear_shadow_map();
-
             light.add_meshes_to_shadow_map(&game.meshes.borrow());
         }
+
+        // let rt_objects = game
+        //     .meshes
+        //     .borrow()
+        //     .iter()
+        //     .flat_map(|m| m.to_rt_hittables(&Lambertian::default()))
+        //     .collect();
+        
+        // game.bvh = Some(BVHNode::new(rt_objects));
 
         return game;
     }
@@ -358,7 +366,6 @@ impl Game {
 
         // Now testing on fantasy book gltf, with indexed triangles:
         // 65ms (from performance tab)
-        // 
 
         let t1 = get_time();
 

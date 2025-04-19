@@ -244,7 +244,16 @@ impl Mesh {
             let triangle = Triangle::new_from_vertices(v1, v2, v3, color, material);
             triangles.push(triangle);
         }
+        // console_log!("{:?}", self.colors.len());
+        // console_log!("{:?}", triangles.len());
         return triangles;
+    }
+    pub fn to_rt_hittables(&self, material: &dyn Material) -> Vec<Box< dyn Hittable>> {
+        return self
+            .to_rt_triangles(material)
+            .iter()
+            .map(|t| Box::new(t.clone()) as Box<dyn Hittable>)
+            .collect()
     }
 
 
