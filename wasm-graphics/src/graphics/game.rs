@@ -32,6 +32,8 @@ pub struct Game {
 
     // ray-tracing variables
     pub bvh: Option<BVHNode>,
+    pub ray_samples: usize,
+    pub ray_max_depth: usize,
 
     pub defocus_angle: f32,
     pub focus_dist: f32,
@@ -64,6 +66,8 @@ impl Game {
 
             // ray tracing variables
             bvh: None,
+            ray_samples: 10,
+            ray_max_depth: 10,
             defocus_angle: 0.0,
             focus_dist: 10.0,
 
@@ -71,7 +75,7 @@ impl Game {
             rt_start_time: 0.0,
         };
 
-        // game.create_rt_test_scene_2();
+        game.create_rt_test_scene_cornell();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -79,6 +83,28 @@ impl Game {
         //     Vec3::new(1.0, 0.0, 0.0),
         //     PhongProperties::default())
         // );
+
+        // game.add_mesh(Mesh::build_box_from_side_lengths(
+        //     Vec3::new(13.0, 0.0, 0.5),
+        //     1.0,
+        //     1.0, 
+        //     1.0,
+        //     Vec3::new(0.0, 1.0, 0.0),
+        //     PhongProperties::default())
+        // );
+
+        // game.add_mesh(Mesh::build_box_from_corners(
+        //     Vec3::new(15.5, 0.5, 1.0),
+        //     Vec3::new(14.5, -0.5, 0.0),
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     PhongProperties::default())
+        // );
+
+        // let mesh = Mesh::build_box_from_corners(Vec3::new(13.0, 6.50, 0.0), 
+        // Vec3::new(29.50, 23.0, 16.50), 
+        // Vec3::new(1.0, 1.0,1.0), 
+        // PhongProperties::default());
+        // game.add_mesh(mesh);
 
         // central sphere
         // game.add_scene_object(Sphere::build_sphere(
@@ -208,14 +234,14 @@ impl Game {
         //     ),
         // ));
 
-        game.add_mesh(Mesh::build_checkerboard(
-                Vec3::new(0.0, 0.0, 0.0), 
-                1, 
-                Vec3::new(1.0, 1.0, 1.0), 
-                Vec3::new(0.9, 0.9, 0.9),
-                PhongProperties::default(),
-            )
-        );
+        // game.add_mesh(Mesh::build_checkerboard(
+        //         Vec3::new(0.0, 0.0, 0.0), 
+        //         1, 
+        //         Vec3::new(1.0, 1.0, 1.0), 
+        //         Vec3::new(0.9, 0.9, 0.9),
+        //         PhongProperties::default(),
+        //     )
+        // );
 
         // let mut stl_obj = VertexObject::new_from_stl_bytes(
         //     &include_bytes!("../3DBenchy.stl").to_vec(),
@@ -231,20 +257,20 @@ impl Game {
         // stl_obj.set_center(Vec3::new(7.0, 0.0, 1.0));
         // game.add_scene_object(stl_obj);
 
-        let mut light = Light::new(
-            Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
-            Vec3::new(1.0, 1.0, 1.0),
-            50.0,
-            ZBuffer::new(2000, 2000),
-            PixelBuf::new(2000, 2000),
-        );
-        light.camera.look_at(&Vec3::new(15.0, 0.0, 1.0));
-        game.lights.push(light);
+        // let mut light = Light::new(
+        //     Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
+        //     Vec3::new(1.0, 1.0, 1.0),
+        //     50.0,
+        //     ZBuffer::new(2000, 2000),
+        //     PixelBuf::new(2000, 2000),
+        // );
+        // light.camera.look_at(&Vec3::new(15.0, 0.0, 1.0));
+        // game.lights.push(light);
 
-        for light in game.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_meshes_to_shadow_map(&game.meshes.borrow());
-        }
+        // for light in game.lights.iter_mut() {
+        //     light.clear_shadow_map();
+        //     light.add_meshes_to_shadow_map(&game.meshes.borrow());
+        // }
 
         // let rt_objects = game
         //     .meshes

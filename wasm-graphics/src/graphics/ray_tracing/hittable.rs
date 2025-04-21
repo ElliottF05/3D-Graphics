@@ -73,10 +73,22 @@ impl Triangle {
         let v = v2 - v1;
         return Triangle::new_from_directions(v1, u, v, color, material);
     }
+    pub fn new_quad(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> (Triangle, Triangle) {
+        let t1 = Triangle::new_from_directions(origin, u, v, color, material);
+        let t2 = Triangle::new_from_directions(origin+u+v, -u, -v, color, material);
+        return (t1, t2);
+    }
 
     #[inline(always)]
     fn intersection_is_interior(alpha: f32, beta: f32) -> bool {
         return alpha > 0.0 && beta > 0.0 && alpha + beta < 1.0;
+    }
+
+    pub fn to_mesh(&self, properties: PhongProperties) -> Mesh {
+        let vertices = vec![self.origin, self.origin + self.v, self.origin + self.u];
+        let indices = vec![0, 1, 2];
+        let colors = vec![self.color];
+        return Mesh::new(vertices, indices, colors, properties);
     }
     
 }
