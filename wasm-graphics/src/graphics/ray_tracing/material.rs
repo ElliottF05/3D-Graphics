@@ -7,6 +7,7 @@ use super::rt::{HitRecord, Ray};
 pub trait Material: Debug + Send + Sync {
     /// scatters the inbound ray and returns a tuple of the the attenuation color and the new ray.
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray);
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3;
     fn clone_box(&self) -> Box<dyn Material>;
 }
 
@@ -25,7 +26,7 @@ impl Lambertian {
 
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
-        let reflected_dir = hit_record.normal + Vec3::random_on_hemisphere(hit_record.normal);
+        let reflected_dir = hit_record.normal + Vec3::random_on_unit_sphere();
 
         if reflected_dir.near_zero() {
             console_log!("reflected_dir near zero");
@@ -34,6 +35,9 @@ impl Material for Lambertian {
         let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
         let attenuation = hit_record.surface_color;
         return (true, attenuation, reflected_ray)
+    }
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
+        return Vec3::zero();
     }
 
     fn clone_box(&self) -> Box<dyn Material> {
@@ -65,6 +69,9 @@ impl Material for Metal {
             let attenuation = hit_record.surface_color;
             return (true, attenuation, reflected_ray)
         }
+    }
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
+        return Vec3::zero();
     }
 
     fn clone_box(&self) -> Box<dyn Material> {
@@ -131,8 +138,32 @@ impl Material for Dielectric {
         let refracted_ray = Ray::new(hit_record.pos, refracted_dir);
         return (true, attenuation, refracted_ray);
     }
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
+        return Vec3::zero();
+    }
 
     fn clone_box(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
 }
+
+#[derive(Clone, Debug, Default)]
+pub struct DiffuseLight {
+}
+
+impl DiffuseLight {
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
+        return (false, Vec3::zero(), ray.clone());
+    }
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
+        return hit_record.surface_color;
+    }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        return Box::new(self.clone());
+    }
+}
+

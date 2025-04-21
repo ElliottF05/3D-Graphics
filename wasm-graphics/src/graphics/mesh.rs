@@ -120,18 +120,20 @@ impl Mesh {
 
     
     // BUILDING DIFFERENT TYPES OF MESHES
-    pub fn build_cube(pos: Vec3, side_length: f32, color: Vec3, properties: PhongProperties) -> Mesh {
-        let half = side_length / 2.0;
+    pub fn build_box_from_side_lengths(center: Vec3, x_length: f32, y_length: f32, z_length: f32, color: Vec3, properties: PhongProperties) -> Mesh {
+        let x_half = 0.5 * x_length;
+        let y_half = 0.5 * y_length;
+        let z_half = 0.5 * z_length;
     
-        let a = pos - Vec3::new(half, half, half);
-        let b = a + Vec3::new(0.0, side_length, 0.0);
-        let c = a + Vec3::new(side_length, side_length, 0.0);
-        let d = a + Vec3::new(side_length, 0.0, 0.0);
+        let a = center - Vec3::new(x_half, y_half, z_half);
+        let b = a + Vec3::new(0.0, y_length, 0.0);
+        let c = a + Vec3::new(x_length, y_length, 0.0);
+        let d = a + Vec3::new(x_length, 0.0, 0.0);
     
-        let e = a + Vec3::new(0.0, 0.0, side_length);
-        let f = b + Vec3::new(0.0, 0.0, side_length);
-        let g = c + Vec3::new(0.0, 0.0, side_length);
-        let h = d + Vec3::new(0.0, 0.0, side_length);
+        let e = a + Vec3::new(0.0, 0.0, z_length);
+        let f = b + Vec3::new(0.0, 0.0, z_length);
+        let g = c + Vec3::new(0.0, 0.0, z_length);
+        let h = d + Vec3::new(0.0, 0.0, z_length);
     
         let vertices = vec![a,b,c,d,e,f,g,h];
     
@@ -146,10 +148,22 @@ impl Mesh {
     
         let colors = vec![color; indices.len() / 3];
         let mut mesh = Mesh::new(vertices, indices, colors, properties);
-        mesh.center = pos;
+        mesh.center = center;
         return mesh;
     }
-    
+
+    pub fn build_box_from_corners(corner1: Vec3, corner2: Vec3, color: Vec3, properties: PhongProperties) -> Mesh {
+        let center = 0.5 * (corner1 + corner2);
+        let x_length = (corner1.x - corner2.x).abs();
+        let y_length = (corner1.y - corner2.y).abs();
+        let z_length = (corner1.z - corner2.z).abs();
+        return Mesh::build_box_from_side_lengths(center, x_length, y_length, z_length, color, properties);
+    }
+
+    pub fn build_cube(center: Vec3, side_length: f32, color: Vec3, properties: PhongProperties) -> Mesh {
+        return Mesh::build_box_from_side_lengths(center, side_length, side_length, side_length, color, properties)
+    }
+
     pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: PhongProperties) -> Mesh {
         let mut vertices = Vec::new();
         for x in -radius..=radius {
@@ -248,7 +262,7 @@ impl Mesh {
         // console_log!("{:?}", triangles.len());
         return triangles;
     }
-    pub fn to_rt_hittables(&self, material: &dyn Material) -> Vec<Box< dyn Hittable>> {
+    pub fn to_rt_hittables(&self, material: &dyn Material) -> Vec<Box<dyn Hittable>> {
         return self
             .to_rt_triangles(material)
             .iter()
