@@ -77,8 +77,11 @@ impl Game {
             rt_start_time: 0.0,
         };
 
+        game.create_rt_test_scene_spheres();
+        game.ray_samples = 50;
         // game.create_rt_test_scene_simple_light();
-        game.create_rt_test_scene_cornell();
+        //game.create_rt_test_scene_cornell();
+        // game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
