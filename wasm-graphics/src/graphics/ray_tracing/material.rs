@@ -1,12 +1,21 @@
-use std::fmt::Debug;
+use std::{f32::consts::PI, fmt::Debug};
 
-use crate::{console_log, utils::{math::Vec3, utils::random_float}};
+use crate::{console_log, utils::{math::Vec3, utils::{random_float, random_int, random_range}}};
 
-use super::rt::{HitRecord, Ray};
+use super::{bvh::BVHNode, hittable::Hittable, rt::{HitRecord, Ray}};
 
 pub trait Material: Debug + Send + Sync {
     /// scatters the inbound ray and returns a tuple of the the attenuation color and the new ray.
     fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray);
+
+    /// returns (successful_scatter, attenuation, scattered_ray, Option(light_dist, light_color)).
+    /// to use the results, attenuation must be multiplied by L_i, the incoming radiance 
+    /// calculated via the next ray. This next ray is either a full ray-tracing ray
+    /// if the option is None, or it is a simple shadow ray if the option is Some (direct light sampling).
+    fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(f32, Vec3)>) {
+        return (false, Vec3::zero(), Ray::new(Vec3::zero(), Vec3::new(1.0, 0.0, 0.0)), None);
+    }
+
     fn emitted(&self, hit_record: &HitRecord) -> Vec3;
     fn clone_box(&self) -> Box<dyn Material>;
 }
@@ -35,6 +44,50 @@ impl Material for Lambertian {
         let reflected_ray = Ray::new(hit_record.pos, reflected_dir);
         let attenuation = hit_record.surface_color;
         return (true, attenuation, reflected_ray)
+    }
+
+    /// returns (successful_scatter, attenuation, scattered_ray, Option(light_dist, light_color)).
+    /// to use the results, attenuation must be multiplied by L_i, the incoming radiance 
+    /// calculated via the next ray. This next ray is either a full ray-tracing ray
+    /// if the option is None, or it is a simple shadow ray if the option is Some (direct light sampling).
+    fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(f32, Vec3)>) {
+        let light = &lights[random_int(0, lights.len() as i32 - 1) as usize];
+        let light_sample_point = light.sample_random_point();
+        let threshold = 1.0;
+        let use_cosine = random_float() < threshold;
+
+        let cosine_dir = hit_record.normal + Vec3::random_on_unit_sphere();
+        let light_dir = light_sample_point - hit_record.pos;
+
+        let sample_dir = if use_cosine {
+            cosine_dir.normalized()
+        } else {
+            light_dir.normalized()
+        };
+
+        let cosine_pdf = hit_record.normal.dot(sample_dir).clamp(0.0, 1.0) / PI; // dot(n,w) / pi
+
+        let r_squared = light_dir.len_squared();
+        let area = light.get_area();
+        let cos_theta_light = light.get_normal(light_sample_point).dot(-sample_dir).abs().clamp(0.0, 1.0);
+        let light_pdf = (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+
+        let pdf_mix = (threshold * cosine_pdf + (1.0-threshold) * light_pdf).max(1e-6);
+
+        let cos_ray = hit_record.normal.dot(sample_dir).max(0.0);
+        let brdf = hit_record.surface_color / PI;
+
+        let attenuation = brdf * cos_ray / pdf_mix;
+        
+        let scattered_ray = Ray::new(hit_record.pos, sample_dir);
+
+        let light_option = if use_cosine {
+            None
+        } else {
+            Some((light_dir.len(), light.get_color()))
+        };
+
+        return (true, attenuation, scattered_ray, light_option);
     }
     fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
         return Vec3::zero();

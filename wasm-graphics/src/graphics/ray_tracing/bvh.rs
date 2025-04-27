@@ -1,4 +1,4 @@
-use crate::{graphics::mesh::Mesh, utils::{math::Vec3, utils::random_int}};
+use crate::{console_log, graphics::mesh::Mesh, utils::{math::Vec3, utils::random_int}};
 
 use super::{hittable::Hittable, rt::{HitRecord, Ray}};
 
@@ -211,6 +211,22 @@ impl Hittable for BVHNode {
                 return hit_left || hit_right;
             }
         }
+    }
+    fn sample_random_point(&self) -> Vec3 {
+        console_log!("BVHNode::sample_random_point() should NEVER be called, this is a mistake");
+        return Vec3::zero();
+    }
+    fn get_area(&self) -> f32 {
+        console_log!("BVHNode::get_area() should NEVER be called, this is a mistake");
+        return 1.0;
+    }
+    fn get_normal(&self, p: Vec3) -> Vec3 {
+        console_log!("BVHNode::get_normal() should NEVER be called, this is a mistake");
+        return Vec3::new(1.0, 0.0, 0.0);
+    }
+    fn get_color(&self) -> Vec3 {
+        console_log!("BVHNode::get_color() should NEVER be called, this is a mistake");
+        return Vec3::zero();
     }
     fn get_bounding_box(&self) -> &AABoundingBox {
         match self {

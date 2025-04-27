@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, material::{Dielectric, Lambertian, Material, Metal}}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
@@ -34,6 +34,7 @@ pub struct Game {
     pub bvh: Option<BVHNode>,
     pub ray_samples: usize,
     pub ray_max_depth: usize,
+    pub rt_lights: Vec<Box<dyn Hittable>>,
 
     pub defocus_angle: f32,
     pub focus_dist: f32,
@@ -68,6 +69,7 @@ impl Game {
             bvh: None,
             ray_samples: 10,
             ray_max_depth: 10,
+            rt_lights: Vec::new(),
             defocus_angle: 0.0,
             focus_dist: 10.0,
 
@@ -75,6 +77,7 @@ impl Game {
             rt_start_time: 0.0,
         };
 
+        // game.create_rt_test_scene_simple_light();
         game.create_rt_test_scene_cornell();
 
         // game.add_mesh(Mesh::build_cube(
