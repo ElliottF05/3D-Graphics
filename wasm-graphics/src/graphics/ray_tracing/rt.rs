@@ -91,7 +91,8 @@ impl Game {
                 let mut pixel_color = Vec3::zero();
                 for _ in 0..self.ray_samples {
                     let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
-                    let ray_color = self.ray_trace(ray, self.ray_max_depth);
+                    // let ray_color = self.ray_trace(ray, self.ray_max_depth);
+                    let ray_color = self.ray_trace_mis(ray, self.ray_max_depth);
                     pixel_color += ray_color;
                 }
                 pixel_color /= self.ray_samples as f32;
@@ -141,11 +142,69 @@ impl Game {
                     let emitted_color = material.emitted(&hit_record);
                     (successful_scatter, attenuation, scattered_ray) = material.scatter(&ray, &hit_record);
                     if successful_scatter {
-                        // pixel_color += emitted_color;
+                        pixel_color += emitted_color;
                         pixel_color.mul_elementwise_inplace(attenuation);
                         ray = scattered_ray;
                     } else {
-                        // pixel_color.mul_elementwise_inplace(Vec3::zero());
+                        return pixel_color.mul_elementwise(emitted_color);
+                        // no scatter, terminate here with current emitted color
+                    }
+
+                } else {
+                    return Vec3::zero(); // no material, return black
+                }
+
+            } else { // if hit_anything == false, then ray hit nothing, goes off into sky
+                let sky_color = self.get_sky_color(&ray.direction.normalized());
+                return pixel_color.mul_elementwise(sky_color);
+            }
+        }
+
+        // max depth reached, return black
+        return Vec3::zero();
+    }
+
+    fn ray_trace_mis(&self, mut ray: Ray, mut depth: usize) -> Vec3 {
+
+        // start with identity for multiplication = 1
+        let mut pixel_color = Vec3::new(1.0, 1.0, 1.0);
+
+        while depth > 0 {
+            depth -= 1;
+            let mut hit_record = HitRecord::default();
+            let mut hit_anything = false;
+
+            if self.bvh.as_ref().unwrap().hit(&ray, 0.001, 5000.0, &mut hit_record) {
+                hit_anything = true;
+            }
+
+            if hit_anything {
+                let successful_scatter;
+                let attenuation;
+                let scattered_ray;
+                let light_sampling_option;
+
+                if let Some(material) = hit_record.material {
+
+                    let emitted_color = material.emitted(&hit_record);
+                    (successful_scatter, attenuation, scattered_ray, light_sampling_option) = material.scatter_mis(&ray, &hit_record, &self.rt_lights);
+                    if successful_scatter {
+                        pixel_color += emitted_color;
+                        pixel_color.mul_elementwise_inplace(attenuation);
+
+                        if let Some((light_dist, light_color)) = light_sampling_option {
+                            let shadow_ray = scattered_ray;
+                            let mut shadow_ray_hit_record = HitRecord::default();
+                            let light_is_occluded = self.bvh.as_ref().unwrap().hit(&shadow_ray, 0.001, light_dist - 0.001, &mut shadow_ray_hit_record);
+                            if light_is_occluded {
+                                return Vec3::zero();
+                            } else {
+                                return pixel_color.mul_elementwise(light_color);
+                            }
+                        }
+
+                        ray = scattered_ray;
+                    } else {
                         return pixel_color.mul_elementwise(emitted_color);
                         // no scatter, terminate here with current emitted color
                     }
@@ -379,7 +438,7 @@ impl Game {
 
     pub fn create_rt_test_scene_simple_light(&mut self) {
 
-        self.ray_samples = 500;
+        self.ray_samples = 100;
         self.ray_max_depth = 50;
         
         let mut rt_objects: Vec<Box<dyn Hittable>> = Vec::new();
@@ -404,15 +463,17 @@ impl Game {
 
         let (t1, t2) = Triangle::new_quad(
             Vec3::new(3.0, -2.0, 1.0),
-            Vec3::new(2.0, 0.0, 0.0),
             Vec3::new(0.0, 0.0, 2.0),
+            Vec3::new(2.0, 0.0, 0.0),
             Vec3::new(4.0, 4.0, 4.0), 
             &DiffuseLight::default()
         );
         self.add_mesh(t1.to_mesh(PhongProperties::default()));
         self.add_mesh(t2.to_mesh(PhongProperties::default()));
-        rt_objects.push(Box::new(t1));
-        rt_objects.push(Box::new(t2));
+        rt_objects.push(Box::new(t1.clone()));
+        rt_objects.push(Box::new(t2.clone()));
+        self.rt_lights.push(Box::new(t1));
+        self.rt_lights.push(Box::new(t2));
 
         self.bvh = Some(BVHNode::new(rt_objects));
 
@@ -429,9 +490,10 @@ impl Game {
 
 
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 1000; // 200
-        self.ray_max_depth = 100; // 50
-        self.max_sky_color = Vec3::zero();
+        self.ray_samples = 100; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 50; // 50
+        // self.max_sky_color = Vec3::zero();
+        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
         let red_color = Vec3::new(0.65, 0.05, 0.05);
@@ -471,8 +533,10 @@ impl Game {
             light_color,
             &DiffuseLight::default(),
         );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
+        rt_triangles.push(t1.clone());
+        rt_triangles.push(t2.clone());
+        self.rt_lights.push(Box::new(t1));
+        self.rt_lights.push(Box::new(t2));
     
         // Floor
         let (t1, t2) = Triangle::new_quad(

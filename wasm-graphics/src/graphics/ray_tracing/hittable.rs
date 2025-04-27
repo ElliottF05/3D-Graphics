@@ -1,6 +1,6 @@
-use std::fmt::Debug;
+use std::{f32::consts::PI, fmt::Debug};
 
-use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::math::Vec3};
+use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::{math::Vec3, utils::random_float}};
 
 use super::{bvh::AABoundingBox, material::Material, rt::{HitRecord, Ray}};
 
@@ -95,6 +95,10 @@ impl Triangle {
 
 pub trait Hittable: Debug {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
+    fn sample_random_point(&self) -> Vec3;
+    fn get_area(&self) -> f32;
+    fn get_normal(&self, p: Vec3) -> Vec3;
+    fn get_color(&self) -> Vec3;
     fn get_bounding_box(&self) -> &AABoundingBox;
 }
 
@@ -132,7 +136,19 @@ impl Hittable for Sphere {
 
             return true;
         }
+    }
 
+    fn sample_random_point(&self) -> Vec3 {
+        return self.center + self.radius * Vec3::random_on_unit_sphere();
+    }
+    fn get_area(&self) -> f32 {
+        return 4.0 * PI * self.radius * self.radius;
+    }
+    fn get_normal(&self, p: Vec3) -> Vec3 {
+        return (p - self.center).normalized();
+    }
+    fn get_color(&self) -> Vec3 {
+        return self.color;
     }
 
     fn get_bounding_box(&self) -> &AABoundingBox {
@@ -176,6 +192,25 @@ impl Hittable for Triangle {
         hit_record.surface_color = self.color;
 
         return true;
+    }
+
+    fn sample_random_point(&self) -> Vec3 {
+        let mut alpha = random_float();
+        let mut beta = random_float();
+        if alpha + beta > 1.0 {
+            alpha = 1.0 - alpha;
+            beta = 1.0 - beta;
+        }
+        return self.origin + alpha * self.u + beta * self.v;
+    }
+    fn get_area(&self) -> f32 {
+        return 0.5 * self.u.cross(self.v).len();
+    }
+    fn get_normal(&self, p: Vec3) -> Vec3 {
+        return self.normal;
+    }
+    fn get_color(&self) -> Vec3 {
+        return self.color;
     }
 
     fn get_bounding_box(&self) -> &AABoundingBox {
