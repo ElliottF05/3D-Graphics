@@ -51,6 +51,10 @@ impl Material for Lambertian {
     /// The incoming radiance is calculated from the full scattered ray and the shadow 
     /// ray if it exists (direct light sampling).
     fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(Vec3, Ray, f32)>) {
+        if lights.len() == 0 {
+            let (successful_scatter, attenuation, scattered_ray) = self.scatter(ray, hit_record);
+            return (successful_scatter, attenuation, scattered_ray, None);
+        }
         let light = &lights[random_int(0, lights.len() as i32 - 1) as usize];
         let light_sample_point = light.sample_random_point();
 
@@ -137,6 +141,10 @@ impl Material for Metal {
             return (true, attenuation, reflected_ray)
         }
     }
+    fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(Vec3, Ray, f32)>) {
+        let (successful_scatter, attenuation, scattered_ray) = self.scatter(ray, hit_record);
+        return (successful_scatter, attenuation, scattered_ray, None);
+    }
     fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
         return Vec3::zero();
     }
@@ -147,7 +155,7 @@ impl Material for Metal {
 }
 
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Dielectric {
     index_of_refrac: f32,
     // TODO: should i add color here? Doesn't really make sense for dielectric to have multiple colors
@@ -204,6 +212,10 @@ impl Material for Dielectric {
 
         let refracted_ray = Ray::new(hit_record.pos, refracted_dir);
         return (true, attenuation, refracted_ray);
+    }
+    fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(Vec3, Ray, f32)>) {
+        let (successful_scatter, attenuation, scattered_ray) = self.scatter(ray, hit_record);
+        return (successful_scatter, attenuation, scattered_ray, None);
     }
     fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
         return Vec3::zero();

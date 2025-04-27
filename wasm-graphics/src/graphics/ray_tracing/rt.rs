@@ -47,7 +47,7 @@ impl Game {
         // perf tips here: https://users.rust-lang.org/t/peter-shirleys-ray-tracing-in-one-weekend-implementation-in-rust/26972/11
 
         // benchmark conditions:
-        // scene: create_rt_test_scene()
+        // scene: create_rt_test_scene_spheres()
         // samples: 10
         // max_depth: 10
         // also: dev console closed in browser
@@ -78,6 +78,10 @@ impl Game {
         //      - this is called a flattened bvh tree
         // 2) Multi-threading (duh)
 
+        if self.bvh.is_none() {
+            console_log!("No RT objects in the scene, can't raytrace!");
+            return;
+        }
 
         self.status = GameStatus::RayTracing;
         console_log!("Rendering ray tracing");
@@ -179,12 +183,17 @@ impl Game {
             let mut hit_anything = false;
 
             // russian-roulette optimization
-            // 55.79s without, 18.89 seconds with
-            let max_comp = (throughput.x).max(throughput.y).max(throughput.z).clamp(0.05, 1.0);
-            if random_float() > max_comp {
-                break;
+            if depth >= self.ray_max_depth - 3 {
+                // skip russian roullete on first bounces
+            } else {
+                // use luminance
+                let lum = 0.2126*throughput.x + 0.7152*throughput.y + 0.0722*throughput.z;
+                let p_continue = lum.clamp(0.05, 1.0);
+                if random_float() > p_continue {
+                    break;
+                }
+                throughput /= p_continue;
             }
-            throughput /= max_comp;
 
             if self.bvh.as_ref().unwrap().hit(&ray, 0.001, 5000.0, &mut hit_record) {
                 hit_anything = true;
@@ -505,10 +514,10 @@ impl Game {
 
 
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 20; // 50
-        // self.max_sky_color = Vec3::zero();
-        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.ray_samples = 1000; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 50; // 50
+        self.max_sky_color = Vec3::zero();
+        // self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
         let red_color = Vec3::new(0.65, 0.05, 0.05);
@@ -521,8 +530,8 @@ impl Game {
         // Green wall (left)
         let (t1, t2) = Triangle::new_quad(
             Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 555.0, 0.0),
-            Vec3::new(0.0, 0.0, 555.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
             green_color,
             &Lambertian::default(),
         );
@@ -531,9 +540,9 @@ impl Game {
     
         // Red wall (right)
         let (t1, t2) = Triangle::new_quad(
-            Vec3::new(555.0, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 555.0),
-            Vec3::new(0.0, 555.0, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            Vec3::new(0.0, 55.5, 0.0),
             red_color,
             &Lambertian::default(),
         );
@@ -542,9 +551,9 @@ impl Game {
     
         // Light (on ceiling)
         let (t1, t2) = Triangle::new_quad(
-            Vec3::new(343.0, 332.0, 554.0),
-            Vec3::new(0.0, -105.0, 0.0),
-            Vec3::new(-130.0, 0.0, 0.0),
+            Vec3::new(36.3, 35.2, 55.4),
+            Vec3::new(0.0, -14.5, 0.0),
+            Vec3::new(-17.0, 0.0, 0.0),
             light_color,
             &DiffuseLight::default(),
         );
@@ -556,8 +565,8 @@ impl Game {
         // Floor
         let (t1, t2) = Triangle::new_quad(
             Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(555.0, 0.0, 0.0),
-            Vec3::new(0.0, 555.0, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 55.5, 0.0),
             white_color,
             &Lambertian::default(),
         );
@@ -566,9 +575,9 @@ impl Game {
     
         // Ceiling
         let (t1, t2) = Triangle::new_quad(
-            Vec3::new(555.0, 555.0, 555.0),
-            Vec3::new(0.0, -555.0, 0.0),
-            Vec3::new(-555.0, 0.0, 0.0),
+            Vec3::new(55.5, 55.5, 55.5),
+            Vec3::new(0.0, -55.5, 0.0),
+            Vec3::new(-55.5, 0.0, 0.0),
             white_color,
             &Lambertian::default(),
         );
@@ -577,9 +586,9 @@ impl Game {
     
         // Back wall
         let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 555.0, 0.0),
-            Vec3::new(555.0, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 555.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
             white_color,
             &Lambertian::default(),
         );
@@ -587,16 +596,16 @@ impl Game {
         rt_triangles.push(t2);
 
         // Left box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(271.0, 295.0, 0.0), 
-        Vec3::new(106.0, 460.0, 330.0), 
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
+        Vec3::new(10.6, 46.0, 33.0), 
         white_color, 
         PhongProperties::default());
         mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
         rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
 
         // Right box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(451.0, 65.0, 0.0), 
-        Vec3::new(286.0, 230.0, 165.0), 
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
+        Vec3::new(28.6, 23.0, 16.5), 
         white_color, 
         PhongProperties::default());
         mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
@@ -614,8 +623,124 @@ impl Game {
         self.bvh = Some(BVHNode::new(rt_objects));
     
         self.camera.set_fov(degrees_to_radians(40.0));
-        self.camera.pos = Vec3::new(278.0, -800.0, 278.0); // looking along +y now
-        self.camera.look_at(&Vec3::new(278.0, 0.0, 278.0));
+        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
+        self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
+        self.defocus_angle = 0.0;
+    }
+
+
+    pub fn create_rt_test_scene_cornell_metal(&mut self) {
+        self.ray_samples = 500; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 50; // 50
+        self.max_sky_color = Vec3::zero();
+        // self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.min_sky_color = Vec3::zero();
+    
+        let red_color = Vec3::new(0.65, 0.05, 0.05);
+        let green_color = Vec3::new(0.12, 0.45, 0.15);
+        let white_color = Vec3::new(0.73, 0.73, 0.73);
+        let light_color = Vec3::new(15.0, 15.0, 15.0);
+    
+        let mut rt_triangles: Vec<Triangle> = vec![];
+
+        // Green wall (left)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            green_color,
+            &Metal::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Red wall (right)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            Vec3::new(0.0, 55.5, 0.0),
+            red_color,
+            &Metal::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Light (on ceiling)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(36.3, 35.2, 55.4),
+            Vec3::new(0.0, -14.5, 0.0),
+            Vec3::new(-17.0, 0.0, 0.0),
+            light_color,
+            &DiffuseLight::default(),
+        );
+        rt_triangles.push(t1.clone());
+        rt_triangles.push(t2.clone());
+        self.rt_lights.push(Box::new(t1));
+        self.rt_lights.push(Box::new(t2));
+    
+        // Floor
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Ceiling
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(55.5, 55.5, 55.5),
+            Vec3::new(0.0, -55.5, 0.0),
+            Vec3::new(-55.5, 0.0, 0.0),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Back wall
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+
+        // Left box
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
+        Vec3::new(10.6, 46.0, 33.0), 
+        white_color, 
+        PhongProperties::default());
+        mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
+
+        // Right box
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
+        Vec3::new(28.6, 23.0, 16.5), 
+        white_color, 
+        PhongProperties::default());
+        mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
+        rt_triangles.append(&mut mesh.to_rt_triangles(&Dielectric::new(1.5)));
+    
+        // Convert to rasterization meshes
+        for tri in rt_triangles.iter() {
+            self.add_mesh(tri.to_mesh(PhongProperties::default()));
+        }
+        let rt_objects: Vec<Box<dyn Hittable>> = rt_triangles
+            .iter()
+            .map(|t| Box::new(t.clone()) as Box<dyn Hittable>)
+            .collect();
+    
+        self.bvh = Some(BVHNode::new(rt_objects));
+    
+        self.camera.set_fov(degrees_to_radians(40.0));
+        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
+        self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
     }
 }
