@@ -166,13 +166,25 @@ impl Game {
 
     fn ray_trace_mis(&self, mut ray: Ray, mut depth: usize) -> Vec3 {
 
-        // start with identity for multiplication = 1
-        let mut pixel_color = Vec3::new(1.0, 1.0, 1.0);
+        let use_direct = true;
+
+        // throughput will hold the multiplied indirect attenuations, start with identity for multiplication = 1
+        // accum color will hold the accumulated direct lighting, start with 0
+        let mut throughput = Vec3::new(1.0, 1.0, 1.0);
+        let mut accum_color = Vec3::zero();
 
         while depth > 0 {
             depth -= 1;
             let mut hit_record = HitRecord::default();
             let mut hit_anything = false;
+
+            // russian-roulette optimization
+            // 55.79s without, 18.89 seconds with
+            let max_comp = (throughput.x).max(throughput.y).max(throughput.z).clamp(0.05, 1.0);
+            if random_float() > max_comp {
+                break;
+            }
+            throughput /= max_comp;
 
             if self.bvh.as_ref().unwrap().hit(&ray, 0.001, 5000.0, &mut hit_record) {
                 hit_anything = true;
@@ -189,23 +201,25 @@ impl Game {
                     let emitted_color = material.emitted(&hit_record);
                     (successful_scatter, attenuation, scattered_ray, light_sampling_option) = material.scatter_mis(&ray, &hit_record, &self.rt_lights);
                     if successful_scatter {
-                        pixel_color += emitted_color;
-                        pixel_color.mul_elementwise_inplace(attenuation);
 
-                        if let Some((light_dist, light_color)) = light_sampling_option {
-                            let shadow_ray = scattered_ray;
-                            let mut shadow_ray_hit_record = HitRecord::default();
-                            let light_is_occluded = self.bvh.as_ref().unwrap().hit(&shadow_ray, 0.001, light_dist - 0.001, &mut shadow_ray_hit_record);
-                            if light_is_occluded {
-                                return Vec3::zero();
-                            } else {
-                                return pixel_color.mul_elementwise(light_color);
+                        let mut direct_lighting = Vec3::zero();
+                        if use_direct {
+                            if let Some((direct_attenuation, shadow_ray, light_dist)) = light_sampling_option {
+                                let mut shadow_ray_hit_record = HitRecord::default();
+                                let light_is_occluded = self.bvh.as_ref().unwrap().hit(&shadow_ray, 0.001, light_dist - 0.001, &mut shadow_ray_hit_record);
+                                if !light_is_occluded {
+                                    direct_lighting = direct_attenuation;
+                                }
                             }
                         }
 
+                        accum_color += throughput.mul_elementwise(emitted_color);
+                        accum_color += throughput.mul_elementwise(direct_lighting);
+                        throughput.mul_elementwise_inplace(attenuation);
+
                         ray = scattered_ray;
                     } else {
-                        return pixel_color.mul_elementwise(emitted_color);
+                        return accum_color + throughput.mul_elementwise(emitted_color);
                         // no scatter, terminate here with current emitted color
                     }
 
@@ -215,12 +229,13 @@ impl Game {
 
             } else { // if hit_anything == false, then ray hit nothing, goes off into sky
                 let sky_color = self.get_sky_color(&ray.direction.normalized());
-                return pixel_color.mul_elementwise(sky_color);
+                accum_color += throughput.mul_elementwise(sky_color);
+                return accum_color;
             }
         }
 
-        // max depth reached, return black
-        return Vec3::zero();
+        // max depth reached, return accumulated color
+        return accum_color;
     }
 
     fn get_ray_at_pixel(&self, x: usize, y: usize) -> Ray {
@@ -490,8 +505,8 @@ impl Game {
 
 
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 100; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 50; // 50
+        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 20; // 50
         // self.max_sky_color = Vec3::zero();
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
