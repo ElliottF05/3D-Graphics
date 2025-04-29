@@ -1,6 +1,6 @@
-use std::{fmt::Debug};
+use std::{f32::consts::PI, fmt::Debug};
 
-use crate::{console_log, graphics::game::GameStatus, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
+use crate::{console_log, graphics::{buffers::{PixelBuf, ZBuffer}, camera::Camera, game::GameStatus, lighting::Light}, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
 use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere, Triangle}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}};
 
@@ -514,11 +514,12 @@ impl Game {
 
 
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 1000; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 50; // 50
-        self.max_sky_color = Vec3::zero();
-        // self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 10; // 50
+        // self.max_sky_color = Vec3::zero();
+        self.max_sky_color = Vec3::new(0.2, 0.2, 0.2);
         self.min_sky_color = Vec3::zero();
+        self.min_sky_color = Vec3::new(0.1, 0.1, 0.1);
     
         let red_color = Vec3::new(0.65, 0.05, 0.05);
         let green_color = Vec3::new(0.12, 0.45, 0.15);
@@ -559,8 +560,15 @@ impl Game {
         );
         rt_triangles.push(t1.clone());
         rt_triangles.push(t2.clone());
-        self.rt_lights.push(Box::new(t1));
+        self.rt_lights.push(Box::new(t1.clone()));
         self.rt_lights.push(Box::new(t2));
+        let lights = Light::new_omnidirectional(
+            t1.origin + 0.5*t1.u + 0.5*t1.v, 
+            Vec3::white(), 
+            50.0, 
+            0.1,
+            1000);
+        self.lights.extend(lights);
     
         // Floor
         let (t1, t2) = Triangle::new_quad(
@@ -626,6 +634,12 @@ impl Game {
         self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
         self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
+
+        // add to shadow maps
+        for light in self.lights.iter_mut() {
+            light.clear_shadow_map();
+            light.add_meshes_to_shadow_map(&self.meshes.borrow());
+        }
     }
 
 
