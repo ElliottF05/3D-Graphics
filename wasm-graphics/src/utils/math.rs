@@ -26,6 +26,15 @@ impl Vec3 {
     pub fn zero() -> Self {
         return Vec3::new(0.0, 0.0, 0.0);
     }
+    #[inline(always)]
+    pub fn ones() -> Self {
+        return Vec3::new(1.0, 1.0, 1.0);
+    }
+    #[inline(always)]
+    pub fn white() -> Self {
+        return Vec3::ones();
+    }
+
 
     /// Returns a vector with each component in range [0, 1.0]
     #[inline(always)]

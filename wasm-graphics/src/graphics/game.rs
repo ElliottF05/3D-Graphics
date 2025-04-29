@@ -77,10 +77,9 @@ impl Game {
             rt_start_time: 0.0,
         };
 
-        game.create_rt_test_scene_spheres();
-        game.ray_samples = 50;
+        // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
-        //game.create_rt_test_scene_cornell();
+        game.create_rt_test_scene_cornell();
         // game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
@@ -88,83 +87,6 @@ impl Game {
         //     1.0,
         //     Vec3::new(1.0, 0.0, 0.0),
         //     PhongProperties::default())
-        // );
-
-        // game.add_mesh(Mesh::build_box_from_side_lengths(
-        //     Vec3::new(13.0, 0.0, 0.5),
-        //     1.0,
-        //     1.0, 
-        //     1.0,
-        //     Vec3::new(0.0, 1.0, 0.0),
-        //     PhongProperties::default())
-        // );
-
-        // game.add_mesh(Mesh::build_box_from_corners(
-        //     Vec3::new(15.5, 0.5, 1.0),
-        //     Vec3::new(14.5, -0.5, 0.0),
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     PhongProperties::default())
-        // );
-
-        // let mesh = Mesh::build_box_from_corners(Vec3::new(13.0, 6.50, 0.0), 
-        // Vec3::new(29.50, 23.0, 16.50), 
-        // Vec3::new(1.0, 1.0,1.0), 
-        // PhongProperties::default());
-        // game.add_mesh(mesh);
-
-        // central sphere
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.2, 0.0, 0.5), 
-        //     0.5, 
-        //     4, 
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     MaterialProperties::default(),
-        //     Box::new(Lambertian::default())
-        // )
-        // );
-
-        // left sphere
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, 1.0, 0.5), 
-        //     0.5, 
-        //     4, 
-        //     Vec3::new(1.0, 1.0, 1.0),
-        //     MaterialProperties::default(),
-        //     Box::new(Dielectric::new(1.5))
-        // )
-        // );
-
-        // inner left bubble
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, 1.0, 0.5), 
-        //     0.4, 
-        //     4, 
-        //     Vec3::new(1.0, 1.0, 1.0),
-        //     MaterialProperties::default(),
-        //     Box::new(Dielectric::new(1.0 / 1.5))
-        // )
-        // );
-
-        // right sphere
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, -1.0, 0.5), 
-        //     0.5, 
-        //     4, 
-        //     Vec3::new(0.8, 0.6, 0.2),
-        //     MaterialProperties::default(),
-        //     Box::new(Metal::new(1.0))
-        // )
-        // );
-
-        // bottom large sphere "ground/floor"
-        // game.add_scene_object(Sphere::build_sphere(
-        //     Vec3::new(10.0, 0.0, -100.0), 
-        //     100.0, 
-        //     4, 
-        //     Vec3::new(0.5, 1.0, 0.5),
-        //     MaterialProperties::default(),
-        //     Box::new(Lambertian::default())
-        // )
         // );
         
         // game.add_scene_object(build_cube(
@@ -242,7 +164,7 @@ impl Game {
 
         // game.add_mesh(Mesh::build_checkerboard(
         //         Vec3::new(0.0, 0.0, 0.0), 
-        //         1, 
+        //         30, 
         //         Vec3::new(1.0, 1.0, 1.0), 
         //         Vec3::new(0.9, 0.9, 0.9),
         //         PhongProperties::default(),

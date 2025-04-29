@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::{console_log, utils::math::Vec3};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Camera {
     pub pos: Vec3,
     theta_y: f32,

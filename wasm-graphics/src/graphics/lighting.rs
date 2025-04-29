@@ -1,24 +1,68 @@
+use std::f32::consts::PI;
+
 use crate::{console_log, utils::{math::Vec3}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{PhongProperties, Mesh}};
 
+#[derive(Clone)]
 pub struct Light {
     pub color: Vec3,
     pub intensity: f32,
+    pub min_dist: f32,
+    pub max_dist: f32,
     pub zbuf: ZBuffer,
     pub color_buf: PixelBuf,
     pub camera: Camera,
 }
 
 impl Light {
-    pub fn new(camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer, color_buf: PixelBuf) -> Light {
+    // pub fn new(camera: Camera, color: Vec3, intensity: f32, zbuf: ZBuffer, color_buf: PixelBuf) -> Light {
+    //     return Light {
+    //         color,
+    //         intensity,
+    //         zbuf,
+    //         camera,
+    //         color_buf,
+    //     }
+    // }
+    pub fn new(pos: Vec3, direction: Vec3, fov: f32, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
+        let mut cam = Camera::new(pos, 0.0, 0.0, fov, buf_width, buf_height);
+        cam.look_in_direction(&direction);
         return Light {
+            camera: cam,
             color,
             intensity,
-            zbuf,
-            camera,
-            color_buf,
+            min_dist,
+            max_dist: 1000.0,
+            zbuf: ZBuffer::new(buf_width, buf_height),
+            color_buf: PixelBuf::new(buf_width, buf_height)
         }
+    }
+    pub fn new_with_angle(pos: Vec3, theta_y: f32, theta_z: f32, fov: f32, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
+        let cam = Camera::new(pos, theta_y, theta_z, fov, buf_width, buf_height);
+        return Light {
+            camera: cam,
+            color,
+            intensity,
+            min_dist,
+            max_dist: 1000.0,
+            zbuf: ZBuffer::new(buf_width, buf_height),
+            color_buf: PixelBuf::new(buf_width, buf_height)
+        }
+    }
+    pub fn new_omnidirectional(pos: Vec3, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize) -> Vec<Light> {
+        let directions = vec![
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(-1.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            Vec3::new(0.0, -1.0, 0.0),
+            Vec3::new(0.0, 0.0, 1.0),
+            Vec3::new(0.0, 0.0, -1.0),
+        ];
+        return directions
+            .iter()
+            .map(|d| Light::new(pos, *d, PI/2.0, color, intensity, min_dist, buf_width, buf_width))
+            .collect();
     }
 
     pub fn clear_shadow_map(&mut self) {
@@ -165,6 +209,12 @@ impl Light {
                     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
                     let depth = 1.0 / inv_depth;
 
+                    let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                    self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                    if world_pos.len_squared() < self.min_dist * self.min_dist {
+                        continue;
+                    }
+
                     if depth < self.zbuf.get_depth(x, y) {
                         if properties.alpha == 1.0 {
                             self.zbuf.set_depth(x, y, depth);
@@ -211,6 +261,12 @@ impl Light {
                     let q3 = (x as f32 - x1) / (x2 - x1);
                     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
                     let depth = 1.0 / inv_depth;
+
+                    let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                    self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                    if world_pos.len_squared() < self.min_dist * self.min_dist {
+                        continue;
+                    }
 
                     if depth < self.zbuf.get_depth(x, y) {
                         if properties.alpha == 1.0 {
@@ -317,7 +373,6 @@ impl Light {
                 * NdotH.powi(exp_multiplier * properties.shininess) 
                 * self.intensity * inv_dist * proportion_in_light 
                 * light_color;
-
             }
         }
         return diffuse_light + specular_light;

@@ -1,5 +1,6 @@
 use crate::utils::{math::Vec3, utils::color_to_u8};
 
+#[derive(Clone)]
 pub struct PixelBuf {
     pub width: usize,
     pub height: usize,
@@ -55,7 +56,7 @@ impl PixelBuf {
     }
 }
 
-
+#[derive(Clone)]
 pub struct ZBuffer {
     pub width: usize,
     pub height: usize,
