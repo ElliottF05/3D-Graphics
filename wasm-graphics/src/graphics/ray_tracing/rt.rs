@@ -1,6 +1,6 @@
 use std::{f32::consts::PI, fmt::Debug};
 
-use crate::{console_log, graphics::{buffers::{PixelBuf, ZBuffer}, camera::Camera, game::GameStatus, lighting::Light}, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
+use crate::{console_log, graphics::{buffers::{PixelBuf, ZBuffer}, camera::Camera, game::GameStatus, lighting::Light, scene::SceneObject}, utils::{math::{degrees_to_radians, Vec3}, utils::{get_time, random_float, random_range, sample_circle, sample_square}}};
 
 use super::{super::{game::Game, mesh::{Mesh, PhongProperties}}, bvh::BVHNode, hittable::{Hittable, Sphere, Triangle}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}};
 
@@ -564,8 +564,133 @@ impl Game {
         self.rt_lights.push(Box::new(t2));
         let lights = Light::new_omnidirectional(
             t1.origin + 0.5*t1.u + 0.5*t1.v, 
-            Vec3::white(), 
-            50.0, 
+            50.0 * Vec3::white(), 
+            0.1,
+            1000);
+        self.lights.extend(lights);
+    
+        // Floor
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Ceiling
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(55.5, 55.5, 55.5),
+            Vec3::new(0.0, -55.5, 0.0),
+            Vec3::new(-55.5, 0.0, 0.0),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Back wall
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            white_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+
+        // Left box
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
+        Vec3::new(10.6, 46.0, 33.0), 
+        white_color, 
+        PhongProperties::default());
+        mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
+
+        // Right box
+        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
+        Vec3::new(28.6, 23.0, 16.5), 
+        white_color, 
+        PhongProperties::default());
+        mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
+        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
+    
+        // Convert to rasterization meshes
+        for tri in rt_triangles.iter() {
+            self.add_mesh(tri.to_mesh(PhongProperties::default()));
+        }
+        let rt_objects: Vec<Box<dyn Hittable>> = rt_triangles
+            .iter()
+            .map(|t| Box::new(t.clone()) as Box<dyn Hittable>)
+            .collect();
+    
+        self.bvh = Some(BVHNode::new(rt_objects));
+    
+        self.camera.set_fov(degrees_to_radians(40.0));
+        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
+        self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
+        self.defocus_angle = 0.0;
+
+        // add to shadow maps
+        for light in self.lights.iter_mut() {
+            light.clear_shadow_map();
+            light.add_meshes_to_shadow_map(&self.meshes.borrow());
+        }
+    }
+
+    pub fn create_rt_test_scene_cornell_2(&mut self) {
+        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
+        self.ray_max_depth = 10; // 50
+        // self.max_sky_color = Vec3::zero();
+        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.min_sky_color = Vec3::zero();
+    
+        let red_color = Vec3::new(0.65, 0.05, 0.05);
+        let green_color = Vec3::new(0.12, 0.45, 0.15);
+        let white_color = Vec3::new(0.73, 0.73, 0.73);
+        let light_color = Vec3::new(15.0, 15.0, 15.0);
+        
+        let mut rt_triangles = vec![];
+        // Green wall (left)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 55.5, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            green_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Red wall (right)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(55.5, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 55.5),
+            Vec3::new(0.0, 55.5, 0.0),
+            red_color,
+            &Lambertian::default(),
+        );
+        rt_triangles.push(t1);
+        rt_triangles.push(t2);
+    
+        // Light (on ceiling)
+        let (t1, t2) = Triangle::new_quad(
+            Vec3::new(36.3, 35.2, 55.4),
+            Vec3::new(0.0, -14.5, 0.0),
+            Vec3::new(-17.0, 0.0, 0.0),
+            light_color,
+            &DiffuseLight::default(),
+        );
+        rt_triangles.push(t1.clone());
+        rt_triangles.push(t2.clone());
+        self.rt_lights.push(Box::new(t1.clone()));
+        self.rt_lights.push(Box::new(t2));
+        let lights = Light::new_omnidirectional(
+            t1.origin + 0.5*t1.u + 0.5*t1.v, 
+            50.0 * Vec3::white(), 
             0.1,
             1000);
         self.lights.extend(lights);
