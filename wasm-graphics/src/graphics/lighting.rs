@@ -7,7 +7,6 @@ use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{PhongProperties
 #[derive(Clone)]
 pub struct Light {
     pub color: Vec3,
-    pub intensity: f32,
     pub min_dist: f32,
     pub max_dist: f32,
     pub zbuf: ZBuffer,
@@ -25,32 +24,30 @@ impl Light {
     //         color_buf,
     //     }
     // }
-    pub fn new(pos: Vec3, direction: Vec3, fov: f32, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
+    pub fn new(pos: Vec3, direction: Vec3, fov: f32, color: Vec3, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
         let mut cam = Camera::new(pos, 0.0, 0.0, fov, buf_width, buf_height);
         cam.look_in_direction(&direction);
         return Light {
             camera: cam,
             color,
-            intensity,
             min_dist,
             max_dist: 1000.0,
             zbuf: ZBuffer::new(buf_width, buf_height),
             color_buf: PixelBuf::new(buf_width, buf_height)
         }
     }
-    pub fn new_with_angle(pos: Vec3, theta_y: f32, theta_z: f32, fov: f32, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
+    pub fn new_with_angle(pos: Vec3, theta_y: f32, theta_z: f32, fov: f32, color: Vec3, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
         let cam = Camera::new(pos, theta_y, theta_z, fov, buf_width, buf_height);
         return Light {
             camera: cam,
             color,
-            intensity,
             min_dist,
             max_dist: 1000.0,
             zbuf: ZBuffer::new(buf_width, buf_height),
             color_buf: PixelBuf::new(buf_width, buf_height)
         }
     }
-    pub fn new_omnidirectional(pos: Vec3, color: Vec3, intensity: f32, min_dist: f32, buf_width: usize) -> Vec<Light> {
+    pub fn new_omnidirectional(pos: Vec3, color: Vec3, min_dist: f32, buf_width: usize) -> Vec<Light> {
         let directions = vec![
             Vec3::new(1.0, 0.0, 0.0),
             Vec3::new(-1.0, 0.0, 0.0),
@@ -61,7 +58,7 @@ impl Light {
         ];
         return directions
             .iter()
-            .map(|d| Light::new(pos, *d, PI/2.0, color, intensity, min_dist, buf_width, buf_width))
+            .map(|d| Light::new(pos, *d, PI/2.0, color, min_dist, buf_width, buf_width))
             .collect();
     }
 
@@ -351,7 +348,6 @@ impl Light {
         let diffuse_light = properties.diffuse
             * angle_multiplier
             * inv_dist 
-            * self.intensity 
             * proportion_in_light
             * light_color;
             // Vec3::pairwise_mul_new(&properties.color, &self.color);
@@ -370,9 +366,8 @@ impl Light {
             let exp_multiplier = 4;
             if NdotH >= 0.0 {
                 specular_light = properties.specular 
-                * NdotH.powi(exp_multiplier * properties.shininess) 
-                * self.intensity * inv_dist * proportion_in_light 
-                * light_color;
+                * NdotH.powi(exp_multiplier * properties.shininess)
+                * inv_dist * proportion_in_light * light_color;
             }
         }
         return diffuse_light + specular_light;

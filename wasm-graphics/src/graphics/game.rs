@@ -79,126 +79,39 @@ impl Game {
 
         // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
-        game.create_rt_test_scene_cornell();
+        // game.create_rt_test_scene_cornell();
         // game.create_rt_test_scene_cornell_metal();
 
-        // game.add_mesh(Mesh::build_cube(
-        //     Vec3::new(11.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     PhongProperties::default())
-        // );
-        
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(12.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     MaterialProperties::new(
-        //         0.05,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(13.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(0.0, 1.0, 0.0),
-        //     MaterialProperties::new(
-        //         0.2,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(14.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(0.0, 0.0, 1.0),
-        //     MaterialProperties::new(
-        //         0.5,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(15.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(1.0, 0.0, 0.0),
-        //     MaterialProperties::new(
-        //         0.8,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(16.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(0.0, 1.0, 0.0),
-        //     MaterialProperties::new(
-        //         0.95,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
-        // game.add_scene_object(build_cube(
-        //     Vec3::new(17.0, 0.0, 0.5),
-        //     1.0,
-        //     Vec3::new(0.0, 0.0, 1.0),
-        //     MaterialProperties::new(
-        //         1.0,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ),
-        // ));
+        game.add_mesh(Mesh::build_cube(
+            Vec3::new(11.0, 0.0, 0.5),
+            1.0,
+            Vec3::new(1.0, 0.0, 0.0),
+            PhongProperties::default())
+        );
 
-        // game.add_mesh(Mesh::build_checkerboard(
-        //         Vec3::new(0.0, 0.0, 0.0), 
-        //         30, 
-        //         Vec3::new(1.0, 1.0, 1.0), 
-        //         Vec3::new(0.9, 0.9, 0.9),
-        //         PhongProperties::default(),
-        //     )
-        // );
+        game.add_mesh(Mesh::build_checkerboard(
+            Vec3::zero(), 
+            20, 
+            Vec3::new(0.8, 0.8, 0.8), 
+            Vec3::new(0.6, 0.6, 0.6), 
+            PhongProperties::default(),
+        ));
 
-        // let mut stl_obj = VertexObject::new_from_stl_bytes(
-        //     &include_bytes!("../3DBenchy.stl").to_vec(),
-        //     Vec3::new(1.0, 0.2, 0.5), 
-        //     MaterialProperties::new(
-        //         1.0,
-        //         0.8,
-        //         1.0,
-        //         1.0,
-        //         32,
-        //     ));
-        // stl_obj.scale_to_radius(2.0);
-        // stl_obj.set_center(Vec3::new(7.0, 0.0, 1.0));
-        // game.add_scene_object(stl_obj);
+        let light = Light::new(
+            Vec3::new(10.0, 100.0, 100.0), 
+            Vec3::new(0.0, -100.0, -100.0),
+            PI/15.0,
+            50.0 * Vec3::white(),
+            1.0,
+            2000,
+            2000
+        );
+        game.lights.push(light);
 
-        // let mut light = Light::new(
-        //     Camera::new(Vec3::new(10.0, 100.0, 100.0), 0.0, 0.0, PI/15.0, 2000, 2000),
-        //     Vec3::new(1.0, 1.0, 1.0),
-        //     50.0,
-        //     ZBuffer::new(2000, 2000),
-        //     PixelBuf::new(2000, 2000),
-        // );
-        // light.camera.look_at(&Vec3::new(15.0, 0.0, 1.0));
-        // game.lights.push(light);
-
-        // for light in game.lights.iter_mut() {
-        //     light.clear_shadow_map();
-        //     light.add_meshes_to_shadow_map(&game.meshes.borrow());
-        // }
+        for light in game.lights.iter_mut() {
+            light.clear_shadow_map();
+            light.add_meshes_to_shadow_map(&game.meshes.borrow());
+        }
 
         // let rt_objects = game
         //     .meshes
@@ -516,32 +429,34 @@ impl Game {
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                        self.camera.vertex_camera_to_world_space(&mut world_pos);
-
-                        let sky_color = self.get_sky_color(normal);
-
-                        // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
-
-                        for light in &self.lights {
-                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                        }
-                        blended_color.x = blended_color.x.min(1.0);
-                        blended_color.y = blended_color.y.min(1.0);
-                        blended_color.z = blended_color.z.min(1.0);
-
-                        if properties.alpha == 1.0 {
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, blended_color);
+                        if properties.is_light {
+                            self.pixel_buf.set_pixel(x, y, color);
                         } else {
-                            // alpha blending, don't set depth
-                            let old_color = self.pixel_buf.get_pixel(x, y);
-                            blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                            self.pixel_buf.set_pixel(x, y, blended_color);
+                            let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                            self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                            self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                            // self.pixel_buf.set_pixel(x, y, color);
+                            let sky_color = self.get_sky_color(normal);
+
+                            // start as ambient light
+                            let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
+
+                            for light in &self.lights {
+                                blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                            }
+                            blended_color.x = blended_color.x.min(1.0);
+                            blended_color.y = blended_color.y.min(1.0);
+                            blended_color.z = blended_color.z.min(1.0);
+
+                            if properties.alpha == 1.0 {
+                                self.zbuf.set_depth(x, y, depth);
+                                self.pixel_buf.set_pixel(x, y, blended_color);
+                            } else {
+                                // alpha blending, don't set depth
+                                let old_color = self.pixel_buf.get_pixel(x, y);
+                                blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                                self.pixel_buf.set_pixel(x, y, blended_color);
+                            }
                         }
                     }
                 }
@@ -585,32 +500,34 @@ impl Game {
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                        self.camera.vertex_camera_to_world_space(&mut world_pos);
-
-                        let sky_color = self.get_sky_color(normal);
-
-                        // start as ambient light
-                        let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
-
-                        for light in &self.lights {
-                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                        }
-                        blended_color.x = blended_color.x.min(1.0);
-                        blended_color.y = blended_color.y.min(1.0);
-                        blended_color.z = blended_color.z.min(1.0);
-
-                        if properties.alpha == 1.0 {
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, blended_color);
+                        if properties.is_light {
+                            self.pixel_buf.set_pixel(x, y, color);
                         } else {
-                            // alpha blending, don't set depth
-                            let old_color = self.pixel_buf.get_pixel(x, y);
-                            blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                            self.pixel_buf.set_pixel(x, y, blended_color);
+                            let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                            self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                            self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                            // self.pixel_buf.set_pixel(x, y, color);
+                            let sky_color = self.get_sky_color(normal);
+
+                            // start as ambient light
+                            let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
+
+                            for light in &self.lights {
+                                blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                            }
+                            blended_color.x = blended_color.x.min(1.0);
+                            blended_color.y = blended_color.y.min(1.0);
+                            blended_color.z = blended_color.z.min(1.0);
+
+                            if properties.alpha == 1.0 {
+                                self.zbuf.set_depth(x, y, depth);
+                                self.pixel_buf.set_pixel(x, y, blended_color);
+                            } else {
+                                // alpha blending, don't set depth
+                                let old_color = self.pixel_buf.get_pixel(x, y);
+                                blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                                self.pixel_buf.set_pixel(x, y, blended_color);
+                            }
                         }
                     }
                 }
