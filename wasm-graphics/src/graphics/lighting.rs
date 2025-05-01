@@ -100,7 +100,7 @@ impl Light {
         let normal = (v3 - v1).cross(v2 - v1).normalized();
         let cam_to_triangle = v1 - self.camera.pos;
 
-        if normal.dot(cam_to_triangle) < 0.0 {
+        if mesh.properties.cull_faces && normal.dot(cam_to_triangle) < 0.0 {
             return;
         }
 
@@ -287,6 +287,11 @@ impl Light {
         // compute pixel-to-light vector and normalize
         let pixel_to_light = (self.camera.pos - *world_pos).normalized();
 
+        // if normal pointing away from light, in shadow
+        if normal.dot(pixel_to_light) < 0.0 {
+            return Vec3::zero();
+        }
+
         // transform world position to camera space
         let mut v = world_pos.clone();
         self.camera.vertex_world_to_camera_space(&mut v);
@@ -305,7 +310,7 @@ impl Light {
         let mut shadow_color = Vec3::new(0.0, 0.0, 0.0);
         let mut samples = 0;
         let filter_radius = 1;
-        let bias = 0.0;
+        let bias = if properties.cull_faces {0.0} else {0.03};
 
         let x = v.x.round() as i32;
         let y = v.y.round() as i32;

@@ -314,7 +314,7 @@ impl Game {
         self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, mesh);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, mesh: &Mesh) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, mesh: &Mesh) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
@@ -322,7 +322,11 @@ impl Game {
             let cam_normal = (v3 - v1).cross(v2 - v1);
             let cam_to_tri = v1;
             if cam_to_tri.dot(cam_normal) > 0.0 {
-                return;
+                if mesh.properties.cull_faces {
+                    return; // cull triangle
+                } else {
+                    normal *= -1.0; // ensure normal points towards cam if not culling faces
+                }
             }
         }
 
