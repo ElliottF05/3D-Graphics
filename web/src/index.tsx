@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as wasm from '../wasm/wasm_graphics'
 
-import App from './App.tsx'
+import App from './App'
 
 // Create a root and render the App component
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
@@ -72,7 +72,7 @@ async function loadGltfModelFromBaseUrl(baseUrl: string) {
     return loadGltfModel(gltfUrl, binUrl);
 }
 
-async function loadGlbModel(url) {
+async function loadGlbModel(url: string) {
     try {
         const response = await fetch(url);
         const glbBuffer = await response.arrayBuffer();

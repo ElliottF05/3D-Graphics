@@ -1,10 +1,10 @@
 import React from 'react';
 import MainCanvas from './MainCanvas/MainCanvas';
+import { Button } from "@/components/ui/button";
 
 const App = () => {
     return (
         <div>
-            <h1>Check the console for WebAssembly output!</h1>
             <MainCanvas></MainCanvas>
         </div>
     )
