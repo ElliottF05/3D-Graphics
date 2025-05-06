@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::At
 
 use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
@@ -40,7 +40,10 @@ pub struct Game {
     pub focus_dist: f32,
 
     // debug stuff
-    pub rt_start_time: f64
+    pub rt_start_time: f64,
+
+    // testing
+    pub scene_objects: Vec<SceneObject>,
 }
 
 impl Game {
@@ -75,43 +78,49 @@ impl Game {
 
             // debug stuff
             rt_start_time: 0.0,
+
+            // testing
+            scene_objects: Vec::new(),
         };
 
         // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
+        // game.create_rt_test_scene_cornell_2();
+        game.create_rt_test_scene_cornell_3();
         // game.create_rt_test_scene_cornell_metal();
 
-        game.add_mesh(Mesh::build_cube(
-            Vec3::new(11.0, 0.0, 0.5),
-            1.0,
-            Vec3::new(1.0, 0.0, 0.0),
-            PhongProperties::default())
-        );
+        // game.add_mesh(Mesh::build_cube(
+        //     Vec3::new(11.0, 0.0, 0.5),
+        //     1.0,
+        //     Vec3::new(1.0, 0.0, 0.0),
+        //     PhongProperties::default())
+        // );
 
-        game.add_mesh(Mesh::build_checkerboard(
-            Vec3::zero(), 
-            20, 
-            Vec3::new(0.8, 0.8, 0.8), 
-            Vec3::new(0.6, 0.6, 0.6), 
-            PhongProperties::default(),
-        ));
+        // game.add_mesh(Mesh::build_checkerboard(
+        //     Vec3::zero(), 
+        //     20, 
+        //     Vec3::new(0.8, 0.8, 0.8), 
+        //     Vec3::new(0.6, 0.6, 0.6), 
+        //     PhongProperties::default(),
+        //     false,
+        // ));
 
-        let light = Light::new(
-            Vec3::new(10.0, 100.0, 100.0), 
-            Vec3::new(0.0, -100.0, -100.0),
-            PI/15.0,
-            50.0 * Vec3::white(),
-            1.0,
-            2000,
-            2000
-        );
-        game.lights.push(light);
+        // let light = Light::new(
+        //     Vec3::new(10.0, 100.0, 100.0), 
+        //     Vec3::new(0.0, -100.0, -100.0),
+        //     PI/15.0,
+        //     50.0 * Vec3::white(),
+        //     1.0,
+        //     2000,
+        //     2000
+        // );
+        // game.lights.push(light);
 
-        for light in game.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_meshes_to_shadow_map(&game.meshes.borrow());
-        }
+        // for light in game.lights.iter_mut() {
+        //     light.clear_shadow_map();
+        //     light.add_meshes_to_shadow_map(&game.meshes.borrow());
+        // }
 
         // let rt_objects = game
         //     .meshes

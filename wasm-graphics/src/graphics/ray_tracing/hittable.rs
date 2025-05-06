@@ -46,27 +46,38 @@ pub struct Triangle {
 
 impl Triangle {
     pub fn new_from_directions(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
-        let normal_unnormalized = u.cross(v);
-        let normal_normalized = normal_unnormalized.normalized();
-        let d = normal_normalized.dot(origin);
-        let w = normal_unnormalized / normal_unnormalized.len_squared();
-
-        let min = origin.min_elementwise(origin + u).min_elementwise(origin + v);
-        let max = origin.max_elementwise(origin + u).max_elementwise(origin + v);
-        let mut bounding_box = AABoundingBox::new_from_sorted(min, max);
-        bounding_box.pad_to_minimums();
-
-        return Triangle {
+        let mut triangle = Triangle {
             origin,
             u,
             v,
-            w,
-            normal: normal_normalized,
-            d,
+            w: Vec3::zero(),
+            normal: Vec3::zero(),
+            d: 0.0,
             color,
             material: material.clone_box(),
-            bounding_box
-        }
+            bounding_box: AABoundingBox::empty(),
+        };
+        triangle.update_geometry();
+        return triangle;
+    }
+
+    /// Sets various geometry members given that origin,u,v is known.
+    /// Finds w, nomral, d, and bounding_box.
+    pub fn update_geometry(&mut self) {
+        let normal_unnormalized = self.u.cross(self.v);
+        let normal_normalized = normal_unnormalized.normalized();
+        let d = normal_normalized.dot(self.origin);
+        let w = normal_unnormalized / normal_unnormalized.len_squared();
+
+        let min = self.origin.min_elementwise(self.origin + self.u).min_elementwise(self.origin + self.v);
+        let max = self.origin.max_elementwise(self.origin + self.u).max_elementwise(self.origin + self.v);
+        let mut bounding_box = AABoundingBox::new_from_sorted(min, max);
+        bounding_box.pad_to_minimums();
+
+        self.w = w;
+        self.normal = normal_normalized;
+        self.d = d;
+        self.bounding_box = bounding_box;
     }
     pub fn new_from_vertices(v1: Vec3, v2: Vec3, v3: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
         let u = v3 - v1;
@@ -100,6 +111,12 @@ pub trait Hittable: Debug {
     fn get_normal(&self, p: Vec3) -> Vec3;
     fn get_color(&self) -> Vec3;
     fn get_bounding_box(&self) -> &AABoundingBox;
+    fn set_material(&mut self, material: Box<dyn Material>);
+    fn translate_by(&mut self, offset: Vec3);
+    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32);
+    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32);
+
+    fn clone_box(&self) -> Box<dyn Hittable>;
 }
 
 impl Hittable for Sphere {
@@ -150,9 +167,33 @@ impl Hittable for Sphere {
     fn get_color(&self) -> Vec3 {
         return self.color;
     }
-
     fn get_bounding_box(&self) -> &AABoundingBox {
         return &self.bounding_box;
+    }
+    fn set_material(&mut self, material: Box<dyn Material>) {
+        self.material = material;
+    }
+    fn translate_by(&mut self, offset: Vec3) {
+        self.center += offset;
+    }
+    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
+        self.center -= center_of_rotation;
+        let (sin_z, cos_z) = theta_z.sin_cos();
+        let (sin_y, cos_y) = theta_y.sin_cos();
+        self.center.rotate_z_fast(sin_z, cos_z);
+        self.center.rotate_y_fast(sin_y, cos_y);
+        self.center += center_of_rotation;
+    }
+    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
+        self.center -= center_of_scale;
+        self.radius *= scale_factor;
+        self.center += center_of_scale;
+        let r_vector = self.radius * Vec3::ones();
+        self.bounding_box = AABoundingBox::new_from_sorted(self.center - r_vector, self.center + r_vector);
+    }
+
+    fn clone_box(&self) -> Box<dyn Hittable> {
+        return Box::new(self.clone());
     }
 }
 
@@ -212,8 +253,49 @@ impl Hittable for Triangle {
     fn get_color(&self) -> Vec3 {
         return self.color;
     }
-
     fn get_bounding_box(&self) -> &AABoundingBox {
         &self.bounding_box
+    }
+    fn set_material(&mut self, material: Box<dyn Material>) {
+        self.material = material;
+    }
+    fn translate_by(&mut self, offset: Vec3) {
+        self.origin += offset;
+        self.u += offset;
+        self.v += offset;
+    }
+    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
+        let (sin_z, cos_z) = theta_z.sin_cos();
+        let (sin_y, cos_y) = theta_y.sin_cos();
+
+        self.origin -= center_of_rotation;
+        self.origin.rotate_z_fast(sin_z, cos_z);
+        self.origin.rotate_y_fast(sin_y, cos_y);
+        self.origin += center_of_rotation;
+
+        self.u.rotate_z_fast(sin_z, cos_z);
+        self.u.rotate_y_fast(sin_y, cos_y);
+
+        self.v.rotate_z_fast(sin_z, cos_z);
+        self.v.rotate_y_fast(sin_y, cos_y);
+
+        self.update_geometry();
+    }
+    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
+        self.origin -= center_of_scale;
+        self.u -= center_of_scale;
+        self.v -= center_of_scale;
+
+        self.origin *= scale_factor;
+        self.u *= scale_factor;
+        self.v *= scale_factor;
+
+        self.origin += center_of_scale;
+        self.u += center_of_scale;
+        self.v += center_of_scale;
+    }
+
+    fn clone_box(&self) -> Box<dyn Hittable> {
+        return Box::new(self.clone());
     }
 }
