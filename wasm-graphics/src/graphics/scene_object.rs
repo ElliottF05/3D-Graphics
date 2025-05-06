@@ -109,18 +109,21 @@ impl SceneObject {
         let mat = Lambertian::default();
         return (phong, Box::new(mat));
     }
-    pub fn new_glossy_mat(metalness: f32) -> (PhongProperties, Box<dyn Material>) {
+    pub fn new_glossy_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new(
             1.0, 
             0.2, 
-            1.0 - metalness, 
-            metalness, 
-            metalness as i32 * 32, 
+            fuzz, 
+            1.0 - fuzz, 
+            ((1.0 - fuzz) * 32.0) as i32, 
             false,
             true
         );
-        let mat = Metal::new(1.0 - metalness);
+        let mat = Metal::new(fuzz);
         return (phong, Box::new(mat));
+    }
+    pub fn new_metal_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
+        return SceneObject::new_glossy_mat(fuzz);
     }
     pub fn new_glass_mat(alpha: f32) -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new(

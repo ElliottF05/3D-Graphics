@@ -208,7 +208,7 @@ impl Game {
                 if let Some(material) = hit_record.material {
 
                     let emitted_color = material.emitted(&hit_record);
-                    (successful_scatter, attenuation, scattered_ray, light_sampling_option) = material.scatter_mis(&ray, &hit_record, &self.rt_lights);
+                    (successful_scatter, attenuation, scattered_ray, light_sampling_option) = material.scatter_mis(&ray, &hit_record, self.get_rt_lights());
                     if successful_scatter {
 
                         let mut direct_lighting = Vec3::zero();
@@ -286,22 +286,29 @@ impl Game {
         return Ray::new(point_on_defocus_disk, ray_dir);
     }
 
-    pub fn create_rt_test_scene_spheres(&mut self) {
+    pub fn create_bvh_from_scene_objs(&mut self) {
+        let hittables = self.scene_objects
+            .borrow()
+            .iter()
+            .flat_map(|o| o.hittables.iter().map(|h| h.clone_box()))
+            .collect();
+        self.bvh = Some(BVHNode::new(hittables));
+    }
 
-        let mut rt_objects = Vec::new();
+    pub fn create_rt_test_scene_spheres(&mut self) {
 
         self.ray_samples = 10;
         self.ray_max_depth = 10;
 
         let ground_material = Lambertian::default();
-        let sphere = Sphere::new(
+        let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, -1000.0),
             1000.0,
             Vec3::new(0.5, 0.5, 0.5),
-            ground_material.clone_box(),
+            4,
+            SceneObject::new_diffuse_mat(),
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(sphere);
+        self.add_scene_object(sphere);
 
         let lim = 11; // 11
 
@@ -314,59 +321,64 @@ impl Game {
                     let sphere_material: Box<dyn Material>;
                     let color;
 
+                    let unified_mat;
+
                     if choose_mat < 0.8 {
                         // diffuse
                         color = Vec3::random().mul_elementwise(Vec3::random());
                         sphere_material = Lambertian::default().clone_box();
+                        unified_mat = SceneObject::new_diffuse_mat();
                     } else if choose_mat < 0.95 {
                         // metal
                         color = Vec3::random() * 0.5 + Vec3::new(0.5, 0.5, 0.5);
                         let fuzz = random_range(0.0, 0.5);
                         sphere_material = Metal::new(fuzz).clone_box();
+                        unified_mat = SceneObject::new_glossy_mat(fuzz)
                     } else {
                         // glass
                         color = Vec3::new(1.0, 1.0, 1.0);
                         sphere_material = Dielectric::new(1.5).clone_box();
+                        unified_mat = SceneObject::new_glass_mat(0.5);
                     }
                     
-                    let sphere = Sphere::new(center, 0.2, color, sphere_material);
-                    self.add_mesh(sphere.to_mesh(2, PhongProperties::default()));
-                    rt_objects.push(sphere);
-
-                    // self.spheres.push(sphere);
+                    // let sphere = Sphere::new(center, 0.2, color, 2, sphere_material);
+                    // self.add_mesh(sphere.to_mesh(2, PhongProperties::default()));
+                    
+                    let sphere = SceneObject::new_sphere(center, 0.2, color, 2, unified_mat);
+                    self.add_scene_object(sphere);
                 }
             }
         }
 
-        let material1 = Dielectric::new(1.5);
-        let sphere = Sphere::new(
+        // glass
+        let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, 1.0), 
             1.0, 
             Vec3::new(1.0, 1.0, 1.0), 
-            material1.clone_box()
+            4,
+            SceneObject::new_glass_mat(0.5)
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(sphere);
+        self.add_scene_object(sphere);
 
-        let material2 = Lambertian::default();
-        let sphere = Sphere::new(
+        // lambertian
+        let sphere = SceneObject::new_sphere(
             Vec3::new(-4.0, 0.0, 1.0), 
             1.0 ,
             Vec3::new(0.4, 0.2, 0.1), 
-            material2.clone_box()
+            4,
+            SceneObject::new_diffuse_mat(),
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(sphere);
+        self.add_scene_object(sphere);
 
-        let material3 = Metal::new(0.0);
-        let sphere = Sphere::new(
+        // metal
+        let sphere = SceneObject::new_sphere(
             Vec3::new(4.0, 0.0, 1.0), 
             1.0, 
             Vec3::new(0.7, 0.6, 0.5), 
-            material3.clone_box()
+            4,
+            SceneObject::new_glossy_mat(0.0)
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(sphere);
+        self.add_scene_object(sphere);
 
         self.camera.set_fov(degrees_to_radians(20.0));
         self.camera.pos = Vec3::new(13.0, 3.0, 2.0);
@@ -375,15 +387,9 @@ impl Game {
         self.defocus_angle = degrees_to_radians(0.6);
         self.focus_dist = 10.0;
 
-
         // set up bvh
-        let bvh_objects: Vec<Box<dyn Hittable>> = rt_objects
-            .iter()
-            .cloned()
-            .map(|o| Box::new(o) as Box<dyn Hittable>)
-            .collect();
-
-        self.bvh = Some(BVHNode::new(bvh_objects));
+        self.create_bvh_from_scene_objs();
+    
     }
 
     pub fn create_rt_test_scene_quads(&mut self) {
@@ -445,15 +451,10 @@ impl Game {
         }
 
         let mesh = Mesh::new_from_non_indexed(mesh_vertices, mesh_colors, PhongProperties::default());
-        let rt_triangles = mesh.to_rt_triangles(&Lambertian::default());
+        let scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box());
+        self.add_scene_object(scene_obj);
 
-        self.add_mesh(mesh);
-
-        let rt_objects = rt_triangles.into_iter().map(|t| Box::new(t) as Box<dyn Hittable>).collect();
-        // let triangle = Triangle::new_from_vertices(Vec3::new(0.0, 0.0, 5.0), Vec3::new(0.0, 0.0, 0.0), Vec3::new(5.0, 0.0, 0.0), Vec3::new(1.0, 0.0, 0.0), &Lambertian::default());
-        // let rt_objects = vec![Box::new(triangle) as Box<dyn Hittable>];
-
-        self.bvh = Some(BVHNode::new(rt_objects));
+        self.create_bvh_from_scene_objs();
 
         self.camera.set_fov(degrees_to_radians(80.0));
         self.camera.pos = Vec3::new(0.0, 9.0, 0.0);
@@ -464,45 +465,52 @@ impl Game {
 
         self.ray_samples = 100;
         self.ray_max_depth = 50;
-        
-        let mut rt_objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-        let sphere = Sphere::new(
+        let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, -1000.0), 
             1000.0, 
             Vec3::new(0.9, 0.9, 0.9), 
-            Lambertian::default().clone_box()
+            4,
+            SceneObject::new_diffuse_mat()
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(Box::new(sphere));
+        self.add_scene_object(sphere);
 
-        let sphere = Sphere::new(
+        let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, 2.0), 
             2.0, 
             Vec3::new(0.9, 0.9, 0.9), 
-            Lambertian::default().clone_box()
+            4,
+            SceneObject::new_diffuse_mat()
         );
-        self.add_mesh(sphere.to_mesh(4, PhongProperties::default()));
-        rt_objects.push(Box::new(sphere));
+        self.add_scene_object(sphere);
 
-        let (t1, t2) = Triangle::new_quad(
+        // let (t1, t2) = Triangle::new_quad(
+        //     Vec3::new(3.0, -2.0, 1.0),
+        //     Vec3::new(0.0, 0.0, 2.0),
+        //     Vec3::new(2.0, 0.0, 0.0),
+        //     Vec3::new(4.0, 4.0, 4.0), 
+        //     &DiffuseLight::default()
+        // );
+        // self.add_mesh(t1.to_mesh(PhongProperties::default()));
+        // self.add_mesh(t2.to_mesh(PhongProperties::default()));
+        // rt_objects.push(Box::new(t1.clone()));
+        // rt_objects.push(Box::new(t2.clone()));
+        // self.rt_lights.push(Box::new(t1));
+        // self.rt_lights.push(Box::new(t2));
+        let light_rec = SceneObject::new_rectangle_light(
             Vec3::new(3.0, -2.0, 1.0),
             Vec3::new(0.0, 0.0, 2.0),
             Vec3::new(2.0, 0.0, 0.0),
-            Vec3::new(4.0, 4.0, 4.0), 
-            &DiffuseLight::default()
-        );
-        self.add_mesh(t1.to_mesh(PhongProperties::default()));
-        self.add_mesh(t2.to_mesh(PhongProperties::default()));
-        rt_objects.push(Box::new(t1.clone()));
-        rt_objects.push(Box::new(t2.clone()));
-        self.rt_lights.push(Box::new(t1));
-        self.rt_lights.push(Box::new(t2));
+            Vec3::new(4.0, 4.0, 4.0),
+            0.1, 2000);
+        self.add_scene_object(light_rec);
 
-        self.bvh = Some(BVHNode::new(rt_objects));
+        self.extract_lights_from_scene_objects();
+        self.recalculate_shadow_maps();
+
+        self.create_bvh_from_scene_objs();
 
         self.max_sky_color = Vec3::new(0.01, 0.01, 0.01);
-        // self.max_sky_color = Vec3::zero();
         self.min_sky_color = Vec3::zero();
 
         self.camera.pos = Vec3::new(26.0, 6.0, 3.0);
@@ -512,245 +520,7 @@ impl Game {
         self.defocus_angle = 0.0;
     }
 
-
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 10; // 50
-        // self.max_sky_color = Vec3::zero();
-        self.max_sky_color = Vec3::new(0.2, 0.2, 0.2);
-        self.min_sky_color = Vec3::zero();
-        self.min_sky_color = Vec3::new(0.1, 0.1, 0.1);
-    
-        let red_color = Vec3::new(0.65, 0.05, 0.05);
-        let green_color = Vec3::new(0.12, 0.45, 0.15);
-        let white_color = Vec3::new(0.73, 0.73, 0.73);
-        let light_color = Vec3::new(15.0, 15.0, 15.0);
-    
-        let mut rt_triangles: Vec<Triangle> = vec![];
-
-        // Green wall (left)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 55.5, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            green_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Red wall (right)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            Vec3::new(0.0, 55.5, 0.0),
-            red_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Light (on ceiling)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(36.3, 35.2, 55.4),
-            Vec3::new(0.0, -14.5, 0.0),
-            Vec3::new(-17.0, 0.0, 0.0),
-            light_color,
-            &DiffuseLight::default(),
-        );
-        rt_triangles.push(t1.clone());
-        rt_triangles.push(t2.clone());
-        self.rt_lights.push(Box::new(t1.clone()));
-        self.rt_lights.push(Box::new(t2));
-        let lights = Light::new_omnidirectional(
-            t1.origin + 0.5*t1.u + 0.5*t1.v, 
-            50.0 * Vec3::white(), 
-            0.1,
-            1000);
-        self.lights.extend(lights);
-    
-        // Floor
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 55.5, 0.0),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Ceiling
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(55.5, 55.5, 55.5),
-            Vec3::new(0.0, -55.5, 0.0),
-            Vec3::new(-55.5, 0.0, 0.0),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Back wall
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 55.5, 0.0),
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-
-        // Left box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
-        Vec3::new(10.6, 46.0, 33.0), 
-        white_color, 
-        PhongProperties::default());
-        mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
-
-        // Right box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
-        Vec3::new(28.6, 23.0, 16.5), 
-        white_color, 
-        PhongProperties::default());
-        mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
-        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
-    
-        // Convert to rasterization meshes
-        for tri in rt_triangles.iter() {
-            self.add_mesh(tri.to_mesh(PhongProperties::default()));
-        }
-        let rt_objects: Vec<Box<dyn Hittable>> = rt_triangles
-            .iter()
-            .map(|t| Box::new(t.clone()) as Box<dyn Hittable>)
-            .collect();
-    
-        self.bvh = Some(BVHNode::new(rt_objects));
-    
-        self.camera.set_fov(degrees_to_radians(40.0));
-        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
-        self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
-        self.defocus_angle = 0.0;
-
-        // add to shadow maps
-        for light in self.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_meshes_to_shadow_map(&self.meshes.borrow());
-        }
-    }
-
-    pub fn create_rt_test_scene_cornell_2(&mut self) {
-        self.ray_samples = 50; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 10; // 50
-        // self.max_sky_color = Vec3::zero();
-        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
-        self.min_sky_color = Vec3::zero();
-    
-        let red_color = Vec3::new(0.65, 0.05, 0.05);
-        let green_color = Vec3::new(0.12, 0.45, 0.15);
-        let white_color = Vec3::new(0.73, 0.73, 0.73);
-        let light_color = Vec3::new(15.0, 15.0, 15.0);
-        
-        let lambert_mat = SceneObject::new_diffuse_mat();
-        let green_wall = SceneObject::new_from_mesh(
-            Mesh::build_rectangle(
-            Vec3::new(0.0, 0.0, 0.0), 
-            Vec3::new(0.0, 55.5, 0.0),
-            Vec3::new(0.0, 0.0, 55.5), 
-            green_color, 
-            lambert_mat.0.clone(), true),
-            lambert_mat.1.clone_box());
-        self.scene_objects.push(green_wall);
-
-        let red_wall = SceneObject::new_from_mesh(
-            Mesh::build_rectangle(
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            Vec3::new(0.0, 55.5, 0.0), 
-            red_color, 
-            lambert_mat.0.clone(), true),
-            lambert_mat.1.clone_box());
-        self.scene_objects.push(red_wall);
-
-        let light_mat = SceneObject::new_light_mat();
-        let light_rec = SceneObject::new_from_mesh_with_omni_light(
-            Mesh::build_rectangle(
-            Vec3::new(36.3, 35.2, 55.4),
-            Vec3::new(0.0, -14.5, 0.0),
-            Vec3::new(-17.0, 0.0, 0.0), 
-            light_color, light_mat.0, true), 
-            light_color, Some(0.1), 2000);
-        self.scene_objects.push(light_rec);
-    
-
-        let floor = SceneObject::new_from_mesh(Mesh::build_rectangle(Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(55.5, 0.0, 0.0),
-        Vec3::new(0.0, 55.5, 0.0), white_color, lambert_mat.0.clone(), true), lambert_mat.1.clone_box());
-        self.scene_objects.push(floor);
-
-        let ceiling = SceneObject::new_from_mesh(Mesh::build_rectangle(Vec3::new(55.5, 55.5, 55.5),
-        Vec3::new(0.0, -55.5, 0.0),
-        Vec3::new(-55.5, 0.0, 0.0), white_color, lambert_mat.0.clone(), true), lambert_mat.1.clone_box());
-        self.scene_objects.push(ceiling);
-
-        let back_wall = SceneObject::new_from_mesh(Mesh::build_rectangle(Vec3::new(0.0, 55.5, 0.0),
-        Vec3::new(55.5, 0.0, 0.0),
-        Vec3::new(0.0, 0.0, 55.5), white_color, lambert_mat.0.clone(), true), lambert_mat.1.clone_box());
-        self.scene_objects.push(back_wall);
-                
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
-        Vec3::new(10.6, 46.0, 33.0), 
-        white_color, 
-        lambert_mat.0.clone());
-        mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        let left_box = SceneObject::new_from_mesh(mesh, lambert_mat.1.clone_box());
-        self.scene_objects.push(left_box);
-
-        // Right box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
-        Vec3::new(28.6, 23.0, 16.5), 
-        white_color, 
-        lambert_mat.0.clone());
-        mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
-        let right_box = SceneObject::new_from_mesh(mesh, lambert_mat.1.clone_box());
-        self.scene_objects.push(right_box);
-    
-
-        let rt_objects: Vec<Box<dyn Hittable>> = self.scene_objects
-            .iter()
-            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
-            .collect();
-
-        self.rt_lights = self.scene_objects
-            .iter()
-            .filter(|s| s.lights.len() > 0)
-            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
-            .collect();
-
-        self.lights = self.scene_objects.iter().flat_map(|s| s.lights.clone()).collect();
-
-        self.meshes = RefCell::new(self.scene_objects
-            .iter()
-            .map(|s| s.mesh.clone())
-            .collect());
-    
-        self.bvh = Some(BVHNode::new(rt_objects));
-    
-        self.camera.set_fov(degrees_to_radians(40.0));
-        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
-        self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
-        self.defocus_angle = 0.0;
-
-        // add to shadow maps
-        for light in self.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_meshes_to_shadow_map(&self.meshes.borrow());
-        }
-    }
-
-    pub fn create_rt_test_scene_cornell_3(&mut self) {
         self.ray_samples = 50;
         self.ray_max_depth = 10;
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
@@ -762,9 +532,8 @@ impl Game {
         let light_color = Vec3::new(15.0, 15.0, 15.0);
     
         let lambert_mat = SceneObject::new_diffuse_mat();
-        let light_mat = SceneObject::new_light_mat();
     
-        self.scene_objects = vec![
+        self.scene_objects = RefCell::new(vec![
             SceneObject::new_rectangle(
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(0.0, 55.5, 0.0),
@@ -813,7 +582,7 @@ impl Game {
                 lambert_mat.clone(),
                 true,
             ),
-        ];
+        ]);
     
         // Left box
         let mut left_box = SceneObject::new_box_from_corners(
@@ -823,7 +592,7 @@ impl Game {
             lambert_mat.clone(),
         );
         left_box.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        self.scene_objects.push(left_box);
+        self.add_scene_object(left_box);
     
         // Right box
         let mut right_box = SceneObject::new_box_from_corners(
@@ -833,31 +602,13 @@ impl Game {
             lambert_mat.clone(),
         );
         right_box.rotate_around_center(degrees_to_radians(-18.0), 0.0);
-        self.scene_objects.push(right_box);
+        self.add_scene_object(right_box);
     
         // RT Hittables
-        let rt_objects: Vec<Box<dyn Hittable>> = self
-            .scene_objects
-            .iter()
-            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
-            .collect();
-        self.bvh = Some(BVHNode::new(rt_objects));
+        self.create_bvh_from_scene_objs();
     
         // Lights for RT and rasterization
-        self.rt_lights = self
-            .scene_objects
-            .iter()
-            .filter(|s| !s.lights.is_empty())
-            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
-            .collect();
-        self.lights = self
-            .scene_objects
-            .iter()
-            .flat_map(|s| s.lights.clone())
-            .collect();
-    
-        // Meshes (for raster/shadow)
-        self.meshes = RefCell::new(self.scene_objects.iter().map(|s| s.mesh.clone()).collect());
+        self.extract_lights_from_scene_objects();
     
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
@@ -866,18 +617,14 @@ impl Game {
         self.defocus_angle = 0.0;
     
         // Shadow maps
-        for light in self.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_meshes_to_shadow_map(&self.meshes.borrow());
-        }
+        self.recalculate_shadow_maps();
     }
 
 
     pub fn create_rt_test_scene_cornell_metal(&mut self) {
-        self.ray_samples = 500; // 200 (tested at 1000 samples, 50 depth)
-        self.ray_max_depth = 50; // 50
-        self.max_sky_color = Vec3::zero();
-        // self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.ray_samples = 50;
+        self.ray_max_depth = 10;
+        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
         let red_color = Vec3::new(0.65, 0.05, 0.05);
@@ -885,106 +632,94 @@ impl Game {
         let white_color = Vec3::new(0.73, 0.73, 0.73);
         let light_color = Vec3::new(15.0, 15.0, 15.0);
     
-        let mut rt_triangles: Vec<Triangle> = vec![];
-
-        // Green wall (left)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 55.5, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            green_color,
-            &Metal::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
+        let lambert_mat = SceneObject::new_diffuse_mat();
+        let metal_mat = SceneObject::new_metal_mat(0.0);
     
-        // Red wall (right)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            Vec3::new(0.0, 55.5, 0.0),
-            red_color,
-            &Metal::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
+        self.scene_objects = RefCell::new(vec![
+            SceneObject::new_rectangle(
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(0.0, 55.5, 0.0),
+                Vec3::new(0.0, 0.0, 55.5),
+                green_color,
+                metal_mat.clone(),
+                true,
+            ),
+            SceneObject::new_rectangle(
+                Vec3::new(55.5, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 55.5),
+                Vec3::new(0.0, 55.5, 0.0),
+                red_color,
+                metal_mat.clone(),
+                true,
+            ),
+            SceneObject::new_rectangle_light(
+                Vec3::new(36.3, 35.2, 55.4),
+                Vec3::new(0.0, -14.5, 0.0),
+                Vec3::new(-17.0, 0.0, 0.0),
+                light_color,
+                0.1,
+                2000,
+            ),
+            SceneObject::new_rectangle(
+                Vec3::new(0.0, 0.0, 0.0),
+                Vec3::new(55.5, 0.0, 0.0),
+                Vec3::new(0.0, 55.5, 0.0),
+                white_color,
+                lambert_mat.clone(),
+                true,
+            ),
+            SceneObject::new_rectangle(
+                Vec3::new(55.5, 55.5, 55.5),
+                Vec3::new(0.0, -55.5, 0.0),
+                Vec3::new(-55.5, 0.0, 0.0),
+                white_color,
+                lambert_mat.clone(),
+                true,
+            ),
+            SceneObject::new_rectangle(
+                Vec3::new(0.0, 55.5, 0.0),
+                Vec3::new(55.5, 0.0, 0.0),
+                Vec3::new(0.0, 0.0, 55.5),
+                white_color,
+                lambert_mat.clone(),
+                true,
+            ),
+        ]);
     
-        // Light (on ceiling)
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(36.3, 35.2, 55.4),
-            Vec3::new(0.0, -14.5, 0.0),
-            Vec3::new(-17.0, 0.0, 0.0),
-            light_color,
-            &DiffuseLight::default(),
-        );
-        rt_triangles.push(t1.clone());
-        rt_triangles.push(t2.clone());
-        self.rt_lights.push(Box::new(t1));
-        self.rt_lights.push(Box::new(t2));
-    
-        // Floor
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 55.5, 0.0),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Ceiling
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(55.5, 55.5, 55.5),
-            Vec3::new(0.0, -55.5, 0.0),
-            Vec3::new(-55.5, 0.0, 0.0),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-    
-        // Back wall
-        let (t1, t2) = Triangle::new_quad(
-            Vec3::new(0.0, 55.5, 0.0),
-            Vec3::new(55.5, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 55.5),
-            white_color,
-            &Lambertian::default(),
-        );
-        rt_triangles.push(t1);
-        rt_triangles.push(t2);
-
         // Left box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(27.1, 29.5, 0.0), 
-        Vec3::new(10.6, 46.0, 33.0), 
-        white_color, 
-        PhongProperties::default());
-        mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        rt_triangles.append(&mut mesh.to_rt_triangles(&Lambertian::default()));
-
+        let mut left_box = SceneObject::new_box_from_corners(
+            Vec3::new(27.1, 29.5, 0.0),
+            Vec3::new(10.6, 46.0, 33.0),
+            white_color,
+            metal_mat.clone(),
+        );
+        left_box.rotate_around_center(degrees_to_radians(15.0), 0.0);
+        self.add_scene_object(left_box);
+    
         // Right box
-        let mut mesh = Mesh::build_box_from_corners(Vec3::new(45.1, 6.5, 0.0), 
-        Vec3::new(28.6, 23.0, 16.5), 
-        white_color, 
-        PhongProperties::default());
-        mesh.rotate_around_center(degrees_to_radians(-18.0), 0.0);
-        rt_triangles.append(&mut mesh.to_rt_triangles(&Dielectric::new(1.5)));
+        let glass_mat = SceneObject::new_glass_mat(0.5);
+        let mut right_box = SceneObject::new_box_from_corners(
+            Vec3::new(45.1, 6.5, 0.0),
+            Vec3::new(28.6, 23.0, 16.5),
+            white_color,
+            glass_mat.clone(),
+        );
+        right_box.rotate_around_center(degrees_to_radians(-18.0), 0.0);
+        self.add_scene_object(right_box);
     
-        // Convert to rasterization meshes
-        for tri in rt_triangles.iter() {
-            self.add_mesh(tri.to_mesh(PhongProperties::default()));
-        }
-        let rt_objects: Vec<Box<dyn Hittable>> = rt_triangles
-            .iter()
-            .map(|t| Box::new(t.clone()) as Box<dyn Hittable>)
-            .collect();
+        // RT Hittables
+        self.create_bvh_from_scene_objs();
     
-        self.bvh = Some(BVHNode::new(rt_objects));
+        // Lights for RT and rasterization
+        self.extract_lights_from_scene_objects();
     
+        // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
-        self.camera.pos = Vec3::new(27.8, -80.0, 27.8); // looking along +y now
+        self.camera.pos = Vec3::new(27.8, -80.0, 27.8);
         self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
+    
+        // Shadow maps
+        self.recalculate_shadow_maps();
     }
 }

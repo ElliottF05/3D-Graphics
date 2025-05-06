@@ -1,7 +1,7 @@
 use core::panic;
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
 
-use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time, sort_meshes_by_distance_to_camera}}};
+use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -13,9 +13,10 @@ pub enum GameStatus {
 }
 
 pub struct Game {
+    pub scene_objects: RefCell<Vec<SceneObject>>,
+    lights: Vec<Light>,
+
     pub camera: Camera,
-    pub meshes: RefCell<Vec<Mesh>>,
-    pub lights: Vec<Light>,
 
     pub max_sky_color: Vec3,
     pub min_sky_color: Vec3,
@@ -32,9 +33,9 @@ pub struct Game {
 
     // ray-tracing variables
     pub bvh: Option<BVHNode>,
+    rt_lights: Vec<Box<dyn Hittable>>,
     pub ray_samples: usize,
     pub ray_max_depth: usize,
-    pub rt_lights: Vec<Box<dyn Hittable>>,
 
     pub defocus_angle: f32,
     pub focus_dist: f32,
@@ -43,17 +44,16 @@ pub struct Game {
     pub rt_start_time: f64,
 
     // testing
-    pub scene_objects: Vec<SceneObject>,
 }
 
 impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
+            scene_objects: RefCell::new(Vec::new()),
+            lights: Vec::new(),
 
             camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/2.0, 500, 500),
-            meshes: RefCell::new(Vec::new()),
-            lights: Vec::new(),
 
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
             min_sky_color: Vec3::new(1.0, 1.0, 1.0),
@@ -70,9 +70,10 @@ impl Game {
 
             // ray tracing variables
             bvh: None,
+            rt_lights: Vec::new(),
             ray_samples: 10,
             ray_max_depth: 10,
-            rt_lights: Vec::new(),
+
             defocus_angle: 0.0,
             focus_dist: 10.0,
 
@@ -80,15 +81,12 @@ impl Game {
             rt_start_time: 0.0,
 
             // testing
-            scene_objects: Vec::new(),
         };
 
         // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
-        // game.create_rt_test_scene_cornell_2();
-        game.create_rt_test_scene_cornell_3();
-        // game.create_rt_test_scene_cornell_metal();
+        game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -249,29 +247,17 @@ impl Game {
         self.clear_pixel_buf_to_sky();
         self.zbuf.clear();
 
-        // let mut objects = self.objects.take();
-        // sort_objects_by_distance_to_camera(&mut objects, &self.camera.pos);
-
-        // sort_objects_by_distance_to_camera(&mut self.spheres, &self.camera.pos);
-
-
-        // Notes to myself for implementing this:
-        // The time has come to forego the concrete type (Sphere or VertexObject) and 
-        // instead use the underlying indexed triangle system instead. 
-        // This is because at this level, everything is a VertexObject so treat it that way.
-        // This also makes sorting by distance easy enough.
-
         // Also, for fixing the alpha blending sorting not applying within an
         // object's triangles (since only objects are sorted, not invidivual triangles),
         // could try a hybrid approach of sorting the triangles within only each transparent object,
-        // not within the whole scene.
+        // not within the whole scene.;
 
-        let mut meshes = self.meshes.take();
-
-        sort_meshes_by_distance_to_camera(&mut meshes, &self.camera.pos);
+        self.sort_meshes_by_distance_to_camera();
+        let scene_objects = self.scene_objects.take();
 
         // opaque objects
-        for mesh in meshes.iter() {
+        for scene_obj in scene_objects.iter() {
+            let mesh = &scene_obj.mesh;
             if mesh.properties.alpha < 1.0 {
                 continue;
             }
@@ -291,7 +277,8 @@ impl Game {
         }
 
         // transparent objects
-        for mesh in meshes.iter().rev() {
+        for scene_obj in scene_objects.iter().rev() {
+            let mesh = &scene_obj.mesh;
             if mesh.properties.alpha == 1.0 {
                 continue;
             }
@@ -310,7 +297,7 @@ impl Game {
             }
         }
 
-        self.meshes.replace(meshes);
+        self.scene_objects.replace(scene_objects);
 
         let t2 = get_time();
         // console_log!("Frame time: {}", t2 - t1);
@@ -443,6 +430,7 @@ impl Game {
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
                         if properties.is_light {
+                            self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {
                             let mut world_pos = Vec3::new(x as f32, y as f32, depth);
@@ -514,6 +502,7 @@ impl Game {
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
                         if properties.is_light {
+                            self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {
                             let mut world_pos = Vec3::new(x as f32, y as f32, depth);
@@ -569,7 +558,52 @@ impl Game {
         }
     }
 
-    pub fn add_mesh(&mut self, mesh: Mesh) {
-        self.meshes.borrow_mut().push(mesh);
+    pub fn sort_meshes_by_distance_to_camera(&mut self) {
+        let camera_pos = self.camera.pos;
+        self.scene_objects.borrow_mut().sort_by(|a, b| {
+            let d1 = (a.mesh.center - camera_pos).len_squared();
+            let d2 = (b.mesh.center - camera_pos).len_squared();
+            return d1.total_cmp(&d2);
+        });
+    }
+
+    pub fn add_scene_objs_to_shadow_maps(&mut self, scene_objs: &Vec<SceneObject>) {
+        for light in self.lights.iter_mut() {
+            light.add_scene_objects_to_shadow_map(scene_objs);
+        }
+    }
+
+    pub fn recalculate_shadow_maps(&mut self) {
+        for light in self.lights.iter_mut() {
+            light.clear_shadow_map();
+            light.add_scene_objects_to_shadow_map(&self.scene_objects.borrow());
+        }
+    }
+
+    pub fn add_scene_object(&mut self, scene_obj: SceneObject) {
+        self.scene_objects.borrow_mut().push(scene_obj);
+    }
+
+    pub fn extract_lights_from_scene_objects(&mut self) {
+        self.lights = self
+            .scene_objects
+            .borrow()
+            .iter()
+            .flat_map(|s| s.lights.clone())
+            .collect();
+        self.rt_lights = self
+            .scene_objects
+            .borrow()
+            .iter()
+            .filter(|s| s.is_light())
+            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
+            .collect();
+    }
+
+    pub fn get_lights(&self) -> &Vec<Light> {
+        return &self.lights;
+    }
+    pub fn get_rt_lights(&self) -> &Vec<Box<dyn Hittable>> {
+        return &self.rt_lights;
     }
 }

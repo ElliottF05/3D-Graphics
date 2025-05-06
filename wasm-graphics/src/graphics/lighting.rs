@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::{console_log, utils::{math::Vec3}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{PhongProperties, Mesh}};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{Mesh, PhongProperties}, scene_object::SceneObject};
 
 #[derive(Clone)]
 pub struct Light {
@@ -67,12 +67,15 @@ impl Light {
         self.color_buf.clear_to_white();
     }
 
-    // pub fn add_objects_to_shadow_map(&mut self, objects: &mut Vec<Box<dyn SceneObject>>) {
-    //     sort_objects_by_distance_to_camera(objects, &self.camera.pos);
-    //     for obj in objects {
-    //         self.add_object_to_shadow_map(obj);
-    //     }
-    // }
+    pub fn add_scene_object_to_shadow_map(&mut self, scene_obj: &SceneObject) {
+        let mesh = &scene_obj.mesh;
+        self.add_mesh_to_shadow_map(mesh);
+    }
+    pub fn add_scene_objects_to_shadow_map(&mut self, scene_objs: &Vec<SceneObject>) {
+        for scene_obj in scene_objs {
+            self.add_scene_object_to_shadow_map(scene_obj);
+        }
+    }
 
     pub fn add_mesh_to_shadow_map(&mut self, mesh: &Mesh) {
         // TODO: don't recalculate the shared vertices, take advantage of indexed data structure
