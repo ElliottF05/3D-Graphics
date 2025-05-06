@@ -1,0 +1,40 @@
+{
+    "compilerOptions": {
+      /* Language and Environment */
+      "target": "ESNext",
+      "lib": ["DOM", "DOM.Iterable", "ESNext"],
+      "jsx": "react-jsx",
+      "useDefineForClassFields": true,
+  
+      /* Modules */
+      "module": "ESNext",
+      "moduleResolution": "bundler", // Or "NodeNext" if "bundler" gives issues, but "bundler" is preferred for Vite
+      "resolveJsonModule": true,
+      "allowImportingTsExtensions": true, // Important for .ts/.tsx imports if you use them
+  
+      /* Emit */
+      "noEmit": true, // Vite handles the emitting of files
+  
+      /* Interop Constraints */
+      "isolatedModules": true, // Ensures files can be transpiled independently
+      "esModuleInterop": true,
+      "forceConsistentCasingInFileNames": true,
+  
+      /* Type Checking */
+      "strict": true,
+    //   "noUnusedLocals": true,
+    //   "noUnusedParameters": true,
+    //   "noFallthroughCasesInSwitch": true,
+  
+      /* Path Aliases */
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["./src/*"]
+      },
+  
+      /* Completeness */
+      "skipLibCheck": true // Skips type checking of declaration files
+    },
+    "include": ["src", ".vite/client.d.ts"], // Include src directory and Vite's client types
+    "references": [{ "path": "./tsconfig.node.json" }] // Common for Vite projects to separate Node-specific TS config
+  }
