@@ -234,4 +234,21 @@ impl Hittable for BVHNode {
             BVHNode::Internal { bounding_box, .. } => &bounding_box
         }
     }
+    fn set_material(&mut self, material: Box<dyn super::material::Material>) {
+        console_log!("BVHNode::set_material() should NEVER be called, this is a mistake");
+        unreachable!();
+    }
+    fn translate_by(&mut self, offset: Vec3) {
+        console_log!("BVHNode::translate_by() should NEVER be called, this is a mistake");
+    }
+    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
+        console_log!("BVHNode::rotate_around() should NEVER be called, this is a mistake");
+    }
+    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
+        console_log!("BVHNode::scale_around() should NEVER be called, this is a mistake");
+    }
+    fn clone_box(&self) -> Box<dyn Hittable> {
+        console_log!("BVHNode::clone_box() should NEVER be called, this is a mistake");
+        unreachable!();
+    }
 }

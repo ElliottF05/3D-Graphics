@@ -5,7 +5,7 @@ use std::{collections::HashMap, fmt::Debug, io::Cursor, sync::atomic::{AtomicUsi
 
 use super::ray_tracing::{bvh::AABoundingBox, hittable::{Hittable, Triangle}, material::Material, rt::HitRecord};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct PhongProperties {
     pub alpha: f32,
     pub ambient: f32,
@@ -28,6 +28,11 @@ impl PhongProperties {
             cull_faces
         }
     }
+    pub fn new_light() -> PhongProperties {
+        let mut phong_properties = PhongProperties::default();
+        phong_properties.is_light = true;
+        return phong_properties;
+    }
 }
 
 impl Default for PhongProperties {
@@ -36,7 +41,7 @@ impl Default for PhongProperties {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub indices: Vec<usize>,
@@ -163,14 +168,14 @@ impl Mesh {
         return Mesh::build_box_from_side_lengths(center, side_length, side_length, side_length, color, properties)
     }
 
-    pub fn build_rectangle(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, properties: PhongProperties) -> Mesh {
-        let vertices = vec![origin, origin+u, origin+v, origin+u+v];
+    pub fn build_rectangle(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, properties: PhongProperties, cull_faces: bool) -> Mesh {
+        let vertices = vec![origin, origin+v, origin+u, origin+u+v];
         let indices = vec![0,1,2,2,1,3];
         let mut new_props = properties.clone();
-        new_props.cull_faces = false;
+        new_props.cull_faces = cull_faces;
         return Mesh::new_with_color(vertices, indices, color, new_props);
     }
-    pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: PhongProperties) -> Mesh {
+    pub fn build_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, properties: PhongProperties, cull_faces: bool) -> Mesh {
         let mut vertices = Vec::new();
         for x in -radius..=radius {
             for y in -radius..=radius {
@@ -196,7 +201,7 @@ impl Mesh {
         }
         
         let mut new_props = properties.clone();
-        new_props.cull_faces = false;
+        new_props.cull_faces = cull_faces;
         let mut mesh = Mesh::new(vertices, indices, colors, new_props);
         mesh.center = center;
         return mesh;
@@ -315,7 +320,7 @@ impl Mesh {
             *v += center_of_scale;
         }
     }
-    pub fn scale(&mut self, scale_factor: f32) {
+    pub fn scale_by(&mut self, scale_factor: f32) {
         self.scale_around(self.center, scale_factor);
     }
 }
