@@ -67,14 +67,6 @@ pub fn gamma_correct_color(color: &Vec3) -> Vec3 {
     )
 }
 
-pub fn sort_meshes_by_distance_to_camera(meshes: &mut Vec<Mesh>, camera_pos: &Vec3) {
-    meshes.sort_by(|a, b| {
-        let d1 = (a.center - *camera_pos).len_squared();
-        let d2 = (b.center - *camera_pos).len_squared();
-        return d1.total_cmp(&d2);
-    });
-}
-
 pub fn flip_indices_winding(indices: &mut Vec<usize>) {
     for i in (0..indices.len()).step_by(3) {
         (indices[i], indices[i + 2]) = (indices[i + 2], indices[i]);
