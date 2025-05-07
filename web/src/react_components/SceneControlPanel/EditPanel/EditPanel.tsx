@@ -10,6 +10,7 @@ import MaterialEditorControls from './MaterialEditorControls';
 const wasmDeleteSelectedObject = () => {
     console.log("JS: wasmDeleteSelectedObject() - Calling wasm backend to delete selected object");
     wasm.delete_selected_object();
+    wasm.set_follow_cursor(false);
 };
 
 const wasmConfirmObjectEdits = () => {

@@ -51,6 +51,13 @@ pub fn delete_selected_object() {
         game_instance.borrow_mut().delete_selected_object();
     });
 }
+#[wasm_bindgen]
+pub fn set_follow_cursor(follow_cursor: bool) {
+    GAME_INSTANCE.with(|game_instance| {
+        console_log!("Setting follow camera to {}", follow_cursor);
+        game_instance.borrow_mut().follow_camera = follow_cursor
+    });
+}
 
 
 // MAIN GAME INSTANCE
