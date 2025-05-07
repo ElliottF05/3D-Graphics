@@ -1,7 +1,6 @@
-use core::panic;
-use std::{cell::RefCell, collections::HashSet, f32::consts::PI, sync::atomic::AtomicU32, vec};
+use std::{cell::RefCell, collections::HashSet, f32::consts::PI};
 
-use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}};
+use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::js_set_is_object_selected};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -27,6 +26,10 @@ pub struct Game {
     pub keys_currently_pressed: HashSet<String>,
     pub keys_pressed_last_frame: HashSet<String>,
     pub mouse_move: Vec3,
+    pub mouse_clicked_last_frame: bool,
+
+    pub looking_at: Option<(usize, f32)>,
+    pub selected_id: Option<usize>,
 
     pub status: GameStatus,
     pub rt_row: usize,
@@ -64,6 +67,10 @@ impl Game {
             keys_currently_pressed: HashSet::new(),
             keys_pressed_last_frame: HashSet::new(),
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
+            mouse_clicked_last_frame: false,
+
+            looking_at: None,
+            selected_id: None,
 
             status: GameStatus::Rasterizing,
             rt_row: 0,
@@ -151,7 +158,7 @@ impl Game {
     fn process_all_input(&mut self) {
 
         if self.status == GameStatus::Rasterizing {
-            self.process_movement_input();
+            self.process_rasterization_input();
         }
 
         if self.keys_pressed_last_frame.contains("p") {
@@ -169,6 +176,31 @@ impl Game {
         }
 
         self.keys_pressed_last_frame.clear();
+        self.mouse_clicked_last_frame = false;
+        self.looking_at = None;
+    }
+
+    fn process_rasterization_input(&mut self) {
+        self.process_movement_input();
+        if self.mouse_clicked_last_frame {
+            if let Some((looking_at_id, looking_at_depth)) = self.looking_at {
+                self.select_object(looking_at_id);
+            } else {
+                self.deselect_object();
+            }
+        }
+    }
+
+    fn select_object(&mut self, id: usize) {
+        console_log!("Selected object with id: {}", id);
+        self.selected_id = Some(id);
+        js_set_is_object_selected(true);
+    }
+
+    pub fn deselect_object(&mut self) {
+        console_log!("Deselected object");
+        self.selected_id = None;
+        js_set_is_object_selected(false);
     }
 
     fn process_movement_input(&mut self) {
@@ -272,7 +304,7 @@ impl Game {
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &mesh);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj);
             }
         }
 
@@ -293,7 +325,7 @@ impl Game {
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &mesh);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj);
             }
         }
 
@@ -303,22 +335,22 @@ impl Game {
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, mesh: &Mesh) {
+    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject) {
         // render triangle from transformed vertices
         let normal = (v3 - v1).cross(v2 - v1).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
-        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, mesh);
+        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, mesh: &Mesh) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &SceneObject) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
-        if mesh.properties.alpha == 1.0 {
+        if scene_obj.mesh.properties.alpha == 1.0 {
             let cam_normal = (v3 - v1).cross(v2 - v1);
             let cam_to_tri = v1;
             if cam_to_tri.dot(cam_normal) > 0.0 {
-                if mesh.properties.cull_faces {
+                if scene_obj.mesh.properties.cull_faces {
                     return; // cull triangle
                 } else {
                     normal *= -1.0; // ensure normal points towards cam if not culling faces
@@ -342,7 +374,7 @@ impl Game {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, color, mesh);
+            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -351,8 +383,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, color, mesh);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, mesh);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -360,17 +392,17 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, color, mesh);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, mesh: &Mesh) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &SceneObject) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
-        let properties = &mesh.properties;
+        let properties = &scene_obj.mesh.properties;
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -428,6 +460,10 @@ impl Game {
                     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
+
+                        if x == self.camera.width / 2 && y == self.camera.height / 2 {
+                            self.looking_at = Some((scene_obj.get_id(), depth));
+                        }
 
                         if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);
@@ -500,6 +536,10 @@ impl Game {
                     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
+
+                        if x == self.camera.width / 2 && y == self.camera.height / 2 {
+                            self.looking_at = Some((scene_obj.get_id(), depth));
+                        }
 
                         if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);

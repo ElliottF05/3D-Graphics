@@ -10,6 +10,7 @@ pub struct SceneObject {
     pub mesh: Mesh,
     pub hittables: Vec<Box<dyn Hittable>>,
     pub lights: Vec<Light>,
+    pub is_selected: bool,
     id: usize,
 }
 
@@ -24,7 +25,7 @@ impl SceneObject {
     }
     pub fn new(mesh: Mesh, hittables: Vec<Box<dyn Hittable>>, lights: Vec<Light>) -> SceneObject {
         let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        return SceneObject { mesh, hittables, lights, id };
+        return SceneObject { mesh, hittables, lights, is_selected: false, id };
     }
     pub fn new_from_mesh(mesh: Mesh, material: Box<dyn Material>) -> SceneObject {
         let hittables = mesh.to_rt_hittables(material.as_ref());
@@ -196,6 +197,7 @@ impl Clone for SceneObject {
             mesh: self.mesh.clone(),
             hittables: self.hittables.iter().map(|h| h.clone_box()).collect(),
             lights: self.lights.clone(),
+            is_selected: self.is_selected,
             id: NEXT_ID.fetch_add(1, Ordering::Relaxed),
         }
     }

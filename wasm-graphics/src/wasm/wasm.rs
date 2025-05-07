@@ -28,6 +28,16 @@ macro_rules! console_error {
     ($($t:tt)*) => (web_sys::console::error_1(&format_args!($($t)*).to_string().into()))
 }
 
+// CONNECTING TO JS FUNCTIONS
+#[wasm_bindgen]
+extern "C" {
+    // This declares the JS function that Rust can call.
+    // `js_namespace` points to the object on `window` (or global scope).
+    // `js_name` is the actual function name on that object.
+    #[wasm_bindgen(js_namespace = ["wasmBridge"], js_name = jsSetIsObjectSelected)]
+    pub fn js_set_is_object_selected(is_selected: bool);
+}
+
 // MAIN GAME INSTANCE
 thread_local! {
     pub static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
@@ -87,10 +97,17 @@ pub fn init_and_begin_game_loop() {
     });
 
     let canvas_clone = canvas.clone();
+    let doc_clone = document.clone();
     add_event_listener(&canvas, "click",  move |event: Event| {
         let event = event.dyn_ref::<MouseEvent>().expect("Failed to cast click to MouseEvent");
         if event.button() == 0 {
-            canvas_clone.request_pointer_lock();
+            if doc_clone.pointer_lock_element().is_none() {
+                canvas_clone.request_pointer_lock();
+            } else {
+                GAME_INSTANCE.with(|game_instance| {
+                    game_instance.borrow_mut().mouse_clicked_last_frame = true;
+                });
+            }
         }
     });
 
