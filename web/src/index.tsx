@@ -2,7 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as wasm from '../wasm/wasm_graphics'
 
-import App from './App'
+import App from './react_components/App'
+
+import './index.css'
 
 // Create a root and render the App component
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
