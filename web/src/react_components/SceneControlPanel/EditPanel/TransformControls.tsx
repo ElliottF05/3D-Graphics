@@ -1,3 +1,5 @@
+import * as wasm from "../../../../wasm/wasm_graphics";
+
 import React, { useState } from 'react';
 import {
     AccordionContent,
@@ -86,8 +88,9 @@ const TransformControls: React.FC<TransformControlsProps> = () => {
     };
 
     const handleToggleFollowCursor = (checked: boolean) => {
+        console.log("JS: Follow cursor toggled:", checked);
         setFollowCursorEnabled(checked);
-        console.log(`Follow cursor: ${checked}`);
+        wasm.set_follow_cursor(checked);
     }
 
     return (
