@@ -288,6 +288,7 @@ impl Mesh {
         for v in self.vertices.iter_mut() {
             *v += offset;
         }
+        self.center += offset;
     }
     pub fn translate_to(&mut self, destination: Vec3) {
         let offset = destination - self.center;
@@ -299,14 +300,18 @@ impl Mesh {
     
     /// Rotates in the z direction first, then y direction
     pub fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
+        let (sin_z, cos_z) = theta_z.sin_cos();
+        let (sin_y, cos_y) = theta_y.sin_cos();
         for v in self.vertices.iter_mut() {
             *v -= center_of_rotation;
-            let (sin_z, cos_z) = theta_z.sin_cos();
-            let (sin_y, cos_y) = theta_y.sin_cos();
             v.rotate_z_fast(sin_z, cos_z);
             v.rotate_y_fast(sin_y, cos_y);
             *v += center_of_rotation;
         }
+        self.center -= center_of_rotation;
+        self.center.rotate_z_fast(sin_z, cos_z);
+        self.center.rotate_y_fast(sin_y, cos_y);
+        self.center += center_of_rotation;
     }
     /// Rotates in the z direction first, then y direction
     pub fn rotate_around_center(&mut self, theta_z: f32, theta_y: f32) {
