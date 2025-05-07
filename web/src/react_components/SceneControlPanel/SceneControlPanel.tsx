@@ -1,3 +1,5 @@
+import * as wasm from '../../../wasm/wasm_graphics'
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,7 +42,13 @@ const wasmConfirmObjectEditsWasm = () => { // Renamed to avoid conflict with han
 
 
 const SceneControlPanel: React.FC = () => {
+
+    // --- BE EXTREMELY CAREFUL WITH THIS, ENSURE WASM STATE IS IN SYNC ---
+    // DESELECTION IN JS MUST BE COMMUNICATED TO WASM
+    // USE wasm.wasm_deselect_object()
+    
     const [isObjectSelected, setIsObjectSelected] = useState<boolean>(false);
+
     const [activeMainAccordionItems, setActiveMainAccordionItems] = useState<string[]>(['add-object-panel']);
     const [editPanelOpenSubSections, setEditPanelOpenSubSections] = useState<string[]>(['transform']);
     const [editPanelAccordionKey, setEditPanelAccordionKey] = useState<string>('editPanelKey-initial');
@@ -69,7 +77,10 @@ const SceneControlPanel: React.FC = () => {
 
     const handleConfirmEditFromPanel = () => {
         wasmConfirmObjectEditsWasm();
+
         setIsObjectSelected(false);
+        wasm.wasm_deselect_object();
+        
         setActiveMainAccordionItems(prev => prev.filter(item => item !== 'edit-panel-wrapper')); // Close the EditPanel
         console.log("Edits confirmed, panel closed, object deselected.");
     };

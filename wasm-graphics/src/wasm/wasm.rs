@@ -28,7 +28,7 @@ macro_rules! console_error {
     ($($t:tt)*) => (web_sys::console::error_1(&format_args!($($t)*).to_string().into()))
 }
 
-// CONNECTING TO JS FUNCTIONS
+// EXPOSING JS FUNCTIONS TO RUST
 #[wasm_bindgen]
 extern "C" {
     // This declares the JS function that Rust can call.
@@ -38,16 +38,21 @@ extern "C" {
     pub fn js_set_is_object_selected(is_selected: bool);
 }
 
+// EXPOSING RUST FUNCTIONS TO JS
+#[wasm_bindgen]
+pub fn wasm_deselect_object() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().deselect_object();
+    });
+}
+
+
 // MAIN GAME INSTANCE
 thread_local! {
     pub static GAME_INSTANCE: RefCell<Game> = RefCell::new(Game::new());
 }
 
-#[wasm_bindgen]
-pub fn init_panic_hook() {
-    console_error_panic_hook::set_once();
-}
-
+// MAIN GAME LOOP
 #[wasm_bindgen]
 pub fn init_and_begin_game_loop() {
 
@@ -148,6 +153,10 @@ pub fn init_and_begin_game_loop() {
     });
     
 
+}
+
+pub fn init_panic_hook() {
+    console_error_panic_hook::set_once();
 }
 
 // A helper function to run a game loop, calling `update_fn` each frame.
