@@ -28,8 +28,9 @@ pub struct Game {
     pub mouse_move: Vec3,
     pub mouse_clicked_last_frame: bool,
 
-    pub looking_at: Option<(usize, f32)>,
+    pub looking_at: Option<(usize, Vec3)>,
     pub selected_id: Option<usize>,
+    pub follow_camera: bool,
 
     pub status: GameStatus,
     pub rt_row: usize,
@@ -71,6 +72,7 @@ impl Game {
 
             looking_at: None,
             selected_id: None,
+            follow_camera: true,
 
             status: GameStatus::Rasterizing,
             rt_row: 0,
@@ -143,6 +145,7 @@ impl Game {
         self.process_all_input();
         match self.status {
             GameStatus::Rasterizing => {
+                self.pre_raster_render_logic();
                 self.render_frame();
                 self.apply_post_processing_effects();
             },
@@ -170,20 +173,18 @@ impl Game {
             }
         }
         if self.keys_pressed_last_frame.contains("r") {
-            // TODO: make this input robust, including cancelling raytracing
             self.status = GameStatus::RayTracing;
             self.rt_start_time = get_time();
         }
 
         self.keys_pressed_last_frame.clear();
         self.mouse_clicked_last_frame = false;
-        self.looking_at = None;
     }
 
     fn process_rasterization_input(&mut self) {
         self.process_movement_input();
         if self.mouse_clicked_last_frame {
-            if let Some((looking_at_id, looking_at_depth)) = self.looking_at {
+            if let Some((looking_at_id, looking_at_pos)) = self.looking_at {
                 self.select_object(looking_at_id);
             } else {
                 self.deselect_object();
@@ -250,6 +251,28 @@ impl Game {
 
         self.camera.set_theta_y(self.camera.get_theta_y() + d_theta_y);
         self.camera.set_theta_z(self.camera.get_theta_z() + d_theta_z);
+    }
+
+    fn pre_raster_render_logic(&mut self) {
+        if self.follow_camera {
+            if let Some(selected_id) = self.selected_id {
+                if let Some(selected_obj) = self.scene_objects.borrow_mut().iter_mut().find(|o| o.get_id() == selected_id) {
+                    let mut looking_at_pos = if let Some(looking_at) = self.looking_at {
+                        console_log!("looking at object, translating to {:?}", looking_at.1);
+                        looking_at.1
+                    } else {
+                        let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
+                        self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                        console_log!("not looking at anything, translating to {:?}", looking_at_pos);
+                        looking_at_pos
+                    };
+                    // let cam_to_pos_dir = (looking_at_pos - self.camera.pos).normalized();
+                    // looking_at_pos -= cam_to_pos_dir * selected_obj.mesh.radius;
+                    selected_obj.translate_to(looking_at_pos);
+                }
+            }
+        }
+        self.looking_at = None;
     }
 
     pub fn apply_post_processing_effects(&mut self) {
@@ -427,6 +450,12 @@ impl Game {
             return;
         }
 
+        let looking_at_selected = if let Some(selected_id) = self.selected_id {
+            selected_id == scene_obj.get_id()
+        } else {
+            false
+        };
+
         // calculate starting and ending x values
         let top = v1.y.ceil().max(0.0);
         let mut x1 = slope1 * (top - v1.y) + v1.x;
@@ -461,18 +490,18 @@ impl Game {
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        if x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj.get_id(), depth));
+                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                        if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                            self.looking_at = Some((scene_obj.get_id(), world_pos));
                         }
 
                         if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {
-                            let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                            self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                            self.camera.vertex_camera_to_world_space(&mut world_pos);
-
                             let sky_color = self.get_sky_color(normal);
 
                             // start as ambient light
@@ -537,18 +566,18 @@ impl Game {
 
                     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        if x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj.get_id(), depth));
+                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                        if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                            self.looking_at = Some((scene_obj.get_id(), world_pos));
                         }
 
                         if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {
-                            let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                            self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                            self.camera.vertex_camera_to_world_space(&mut world_pos);
-
                             let sky_color = self.get_sky_color(normal);
 
                             // start as ambient light
