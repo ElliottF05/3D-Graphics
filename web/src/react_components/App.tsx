@@ -11,7 +11,7 @@ const App = () => {
             </div>
 
             {/* Main Canvas Area */}
-            <div className="flex-grow flex items-center justify-center h-full p-4 bg-muted/20"> {/* Added padding and a slightly different bg for canvas area */}
+            <div className="flex-grow flex justify-center h-full p-4 bg-muted/20"> {/* Added padding and a slightly different bg for canvas area */}
                 <MainCanvas />
             </div>
         </div>
