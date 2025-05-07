@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
@@ -11,17 +11,32 @@ import {
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 
+
 // --- Mock WASM Interaction ---
-// In a real app, these would call your actual WASM functions.
-// You might also have WASM call JS functions to update 'isObjectSelectedFromWasm'
-let isObjectSelectedInWasm = false; // Mock global state for WASM selection
+let isObjectSelectedInWasm = false; 
+
+const wasmIsAnythingSelected = (): boolean => {
+    console.log("JS: Checking WASM if object is selected");
+    return isObjectSelectedInWasm;
+};
+
+const wasmSelectObjectById = (id: string) => { 
+    console.log(`JS: Telling WASM to select object ${id}`);
+    isObjectSelectedInWasm = true;
+};
 
 const wasmDeselectCurrentObject = () => {
     console.log("JS: Telling WASM to deselect current object");
     isObjectSelectedInWasm = false;
-    // Potentially, WASM could then call a JS callback to confirm/update React state
 };
-// --- End of Mock WASM Interaction ---
+
+const wasmConfirmObjectEditsWasm = () => { // Renamed to avoid conflict with handler
+    console.log("JS: Telling WASM edits are confirmed for selected object");
+    // Here WASM might finalize or apply pending changes
+    // For this UI flow, we'll deselect after confirming.
+    isObjectSelectedInWasm = false; 
+};
+// --- End Mock WASM Interaction ---
 
 
 const SceneControlPanel: React.FC = () => {
@@ -30,30 +45,44 @@ const SceneControlPanel: React.FC = () => {
     const [editPanelOpenSubSections, setEditPanelOpenSubSections] = useState<string[]>(['transform']);
     const [editPanelAccordionKey, setEditPanelAccordionKey] = useState<string>('editPanelKey-initial');
 
+    // Effect to register the React state setter to the global bridge
+    useEffect(() => {
+        (window as any).wasmBridge.jsSetIsObjectSelected = (isSelected: boolean) => {
+            console.log(`JS: updateIsObjectSelectedFromWasm called by WASM with: ${isSelected}`);
+            setIsObjectSelected(isSelected);
+        };
+
+        // Cleanup function when the component unmounts
+        return () => {
+            (window as any).wasmBridge.jsSetIsObjectSelected = (isSelected: boolean) => {
+                console.warn("WASM tried to update selection, but React component (SceneControlPanel) was unmounted.");
+            };
+        };
+    }, [setIsObjectSelected]); // Dependency: re-run if setIsObjectSelected changes (though unlikely for setters)
+
+
     const handleObjectAddedFromPanel = () => {
-        // When an object is added from AddObjectPanel:
+        setIsObjectSelected(true); 
         setActiveMainAccordionItems(['edit-panel-wrapper']);
         setEditPanelOpenSubSections(['transform', 'materialEditor']);
-        setEditPanelAccordionKey(`editPanelKey-${Date.now()}`);
+    };
+
+    const handleConfirmEditFromPanel = () => {
+        wasmConfirmObjectEditsWasm();
+        setIsObjectSelected(false);
+        setActiveMainAccordionItems(prev => prev.filter(item => item !== 'edit-panel-wrapper')); // Close the EditPanel
+        console.log("Edits confirmed, panel closed, object deselected.");
+    };
+
+    const handleDeleteObjectFromPanel = () => {
+        // WASM's delete function should handle its internal selection state.
+        // We just update React's view of selection.
+        setIsObjectSelected(false);
+        setActiveMainAccordionItems(prev => prev.filter(item => item !== 'edit-panel-wrapper')); // Close the EditPanel
+        console.log("Object deleted, panel closed, object deselected in UI.");
     };
 
     const handleActiveMainAccordionChange = (newActiveItems: string[]) => {
-        const editPanelWasOpen = activeMainAccordionItems.includes('edit-panel-wrapper');
-        const editPanelIsNowOpen = newActiveItems.includes('edit-panel-wrapper');
-
-        if (editPanelWasOpen && !editPanelIsNowOpen && isObjectSelected) {
-            // Edit panel was closed by the user
-            wasmDeselectCurrentObject();
-            setIsObjectSelected(false);
-            console.log("Edit panel closed, object deselected.");
-        }
-        
-        // If trying to open edit panel but no object is selected, prevent it.
-        // (The disabled prop on AccordionItem should also handle this, but this is an extra check)
-        if (!editPanelWasOpen && editPanelIsNowOpen && !isObjectSelected) {
-            return; // Don't update state to open it
-        }
-
         setActiveMainAccordionItems(newActiveItems);
     };
 
@@ -87,6 +116,8 @@ const SceneControlPanel: React.FC = () => {
                                 <EditPanel 
                                     initialOpenSections={editPanelOpenSubSections}
                                     accordionKey={editPanelAccordionKey}
+                                    onConfirmEdit={handleConfirmEditFromPanel}
+                                    onDeleteObject={handleDeleteObjectFromPanel}
                                 />
                             ) : (
                                 <p className="text-sm text-muted-foreground p-4 text-center">
