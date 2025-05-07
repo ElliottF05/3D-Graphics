@@ -1,3 +1,5 @@
+import * as wasm from "../../../../wasm/wasm_graphics"
+
 import React from 'react';
 import { Accordion } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
@@ -6,7 +8,8 @@ import TransformControls from './TransformControls';
 import MaterialEditorControls from './MaterialEditorControls';
 
 const wasmDeleteSelectedObject = () => {
-    console.log("WASM: Delete selected object");
+    console.log("JS: wasmDeleteSelectedObject() - Calling wasm backend to delete selected object");
+    wasm.delete_selected_object();
 };
 
 const wasmConfirmObjectEdits = () => {
@@ -40,22 +43,22 @@ const EditPanel: React.FC<EditPanelProps> = ({
 
     return (
         <div className="space-y-3">
-            <div className="flex space-x-2"> {/* Flex container for buttons */}
-                <Button 
-                    variant="default" // Default variant is often blue/primary, can be customized
-                    className="w-1/2 bg-green-600 hover:bg-green-700 text-white" // Green button, half width
+            <div className="flex w-full gap-2">
+                <Button
+                    variant="default"
+                    className="flex-1 min-w-0 bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleConfirmClick}
                 >
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Confirm Edit
+                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                    Confirm
                 </Button>
-                <Button 
-                    variant="destructive" 
-                    className="w-1/2" // Half width
+                <Button
+                    variant="destructive"
+                    className="flex-1 min-w-0"
                     onClick={handleDeleteClick}
                 >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Object
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Delete
                 </Button>
             </div>
             

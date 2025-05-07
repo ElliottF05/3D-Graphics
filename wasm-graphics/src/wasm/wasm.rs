@@ -45,6 +45,12 @@ pub fn wasm_deselect_object() {
         game_instance.borrow_mut().deselect_object();
     });
 }
+#[wasm_bindgen]
+pub fn delete_selected_object() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().delete_selected_object();
+    });
+}
 
 
 // MAIN GAME INSTANCE

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI};
 
-use crate::{console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::js_set_is_object_selected};
+use crate::{console_error, console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::js_set_is_object_selected};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -72,7 +72,7 @@ impl Game {
 
             looking_at: None,
             selected_id: None,
-            follow_camera: true,
+            follow_camera: false,
 
             status: GameStatus::Rasterizing,
             rt_row: 0,
@@ -202,6 +202,19 @@ impl Game {
         console_log!("Deselected object");
         self.selected_id = None;
         js_set_is_object_selected(false);
+    }
+
+    pub fn delete_selected_object(&mut self) {
+        if let Some(selected_id) = self.selected_id {
+            console_log!("Deleting object with id: {}", selected_id);
+            self.scene_objects.borrow_mut().retain(|obj| obj.get_id() != selected_id);
+            self.deselect_object();
+            self.bvh = None; // invalidate bvh if obj is deleted
+            self.extract_lights_from_scene_objects();
+            self.recalculate_shadow_maps();
+        } else {
+            console_error!("Game::delete_selected_object() called but no object is selected");
+        }
     }
 
     fn process_movement_input(&mut self) {
