@@ -1,17 +1,19 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
-
-use crate::utils::math::Vec3;
+use crate::{console_error, utils::math::Vec3};
 
 use super::{lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{hittable::{self, Hittable, Sphere}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}}};
 
-static NEXT_ID: AtomicUsize = AtomicUsize::new(0);
+pub enum MaterialType {
+    Diffuse,
+    Glossy,
+    Metal,
+    Glass,
+    Light,
+}
 
 pub struct SceneObject {
     pub mesh: Mesh,
     pub hittables: Vec<Box<dyn Hittable>>,
-    pub lights: Vec<Light>,
-    pub is_selected: bool,
-    id: usize,
+    pub lights: Vec<Light>
 }
 
 impl SceneObject {
@@ -24,8 +26,7 @@ impl SceneObject {
         return self;
     }
     pub fn new(mesh: Mesh, hittables: Vec<Box<dyn Hittable>>, lights: Vec<Light>) -> SceneObject {
-        let id = NEXT_ID.fetch_add(1, Ordering::Relaxed);
-        return SceneObject { mesh, hittables, lights, is_selected: false, id };
+        return SceneObject { mesh, hittables, lights };
     }
     pub fn new_from_mesh(mesh: Mesh, material: Box<dyn Material>) -> SceneObject {
         let hittables = mesh.to_rt_hittables(material.as_ref());
@@ -158,12 +159,15 @@ impl SceneObject {
     pub fn set_center(&mut self, new_center: Vec3) {
         self.translate_to(new_center);
     }
-
-    pub fn get_id(&self) -> usize {
-        return self.id;
-    }
     pub fn is_light(&self) -> bool {
         return !self.lights.is_empty();
+    }
+    pub fn get_material_number(&self) -> u32 {
+        if self.hittables.is_empty() {
+            console_error!("SceneObject::get_material_number() called on empty object");
+            return 100;
+        }
+        return self.hittables[0].get_material().get_material_number();
     }
 
     /// Rotates in the z direction first, then y direction
@@ -197,8 +201,6 @@ impl Clone for SceneObject {
             mesh: self.mesh.clone(),
             hittables: self.hittables.iter().map(|h| h.clone_box()).collect(),
             lights: self.lights.clone(),
-            is_selected: self.is_selected,
-            id: NEXT_ID.fetch_add(1, Ordering::Relaxed),
         }
     }
 }
