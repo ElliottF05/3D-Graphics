@@ -1,6 +1,6 @@
 use crate::{console_log, graphics::mesh::Mesh, utils::{math::Vec3, utils::random_int}};
 
-use super::{hittable::Hittable, rt::{HitRecord, Ray}};
+use super::{hittable::Hittable, material::Material, rt::{HitRecord, Ray}};
 
 /// Axis-Aligned Bounding Box (AABB)
 /// A bounding box defined by two points: the minimum and maximum corners.
@@ -234,7 +234,11 @@ impl Hittable for BVHNode {
             BVHNode::Internal { bounding_box, .. } => &bounding_box
         }
     }
-    fn set_material(&mut self, material: Box<dyn super::material::Material>) {
+    fn get_material(&self) -> &dyn Material {
+        console_log!("BVHNode::get_material() should NEVER be called, this is a mistake");
+        unreachable!();
+    }
+    fn set_material(&mut self, material: Box<dyn Material>) {
         console_log!("BVHNode::set_material() should NEVER be called, this is a mistake");
         unreachable!();
     }

@@ -22,13 +22,15 @@ interface EditPanelProps {
     accordionKey?: string;
     onConfirmEdit: () => void;
     onDeleteObject: () => void;
+    selectionVersion: number;
 }
 
 const EditPanel: React.FC<EditPanelProps> = ({ 
     initialOpenSections = ['transform', 'materialEditor'],
     accordionKey,
     onConfirmEdit,
-    onDeleteObject
+    onDeleteObject,
+    selectionVersion
 }) => {
     const handleDeleteClick = () => {
         if (window.confirm("Are you sure you want to delete this object?")) {
@@ -70,7 +72,7 @@ const EditPanel: React.FC<EditPanelProps> = ({
                 key={accordionKey} // Use the key here
             >
                 <TransformControls />
-                <MaterialEditorControls />
+                <MaterialEditorControls selectionVersion={selectionVersion} />
             </Accordion>
         </div>
     );

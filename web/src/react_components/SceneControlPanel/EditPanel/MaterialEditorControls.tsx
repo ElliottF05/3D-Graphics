@@ -1,3 +1,5 @@
+import * as wasm from "@/../../wasm"
+
 import React, { useState, useEffect } from 'react';
 import {
     AccordionContent,
@@ -14,7 +16,14 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-type MaterialType = 'Diffuse' | 'Glass' | 'Metal' | 'Light';
+export type MaterialType = 'Diffuse' | 'Glass' | 'Metal' | 'Light';
+export interface MaterialProperties {
+    color: number;
+    type: MaterialType;
+    ior?: number;
+    roughness?: number;
+    brightness?: number;
+}
 
 // Mock WASM function calls
 const wasmSetMaterialColor = (color: string) => {
@@ -33,10 +42,27 @@ const wasmSetMaterialBrightness = (brightness: number) => {
     console.log(`WASM: Set material brightness to ${brightness}`);
 };
 
+const wasmGetSelectedObjectMaterial = (): MaterialProperties | null => {
+    console.log("JS MaterialEditorControls: Querying WASM for selected object material");
 
-interface MaterialEditorControlsProps { }
+    // if (wasm.is_object_selected()) { // You'll need such a function in WASM
+    //      return {
+    //         color: wasm.get_selected_color() || "#00FF00", // Example
+    //         type: (wasm.get_selected_material_type() as MaterialType) || 'Diffuse', // Example
+    //         ior: wasm.get_selected_ior() || 1.5, // Example
+    //         roughness: wasm.get_selected_roughness() || 0.1, // Example
+    //         brightness: wasm.get_selected_brightness() || 10, // Example
+    //     };
+    // }
+    return null;
+};
 
-const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = () => {
+
+interface MaterialEditorControlsProps {
+    selectionVersion: number; // New prop
+}
+
+const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ selectionVersion }) => {
     const [color, setColor] = useState<string>("#FFFFFF");
     const [materialType, setMaterialType] = useState<MaterialType>('Diffuse');
     

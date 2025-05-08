@@ -12,6 +12,7 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 
 use crate::graphics::game::Game;
 use crate::utils::math::Vec3;
+use crate::utils::utils::color_to_u32;
 
 
 // WASM UTIL EXPORTS
@@ -57,6 +58,25 @@ pub fn set_follow_cursor(follow_cursor: bool) {
         console_log!("Setting follow camera to {}", follow_cursor);
         game_instance.borrow_mut().follow_camera = follow_cursor
     });
+}
+#[wasm_bindgen]
+pub fn is_object_selected() -> bool {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow().selected_index.is_some()
+    })
+}
+#[wasm_bindgen]
+pub fn get_selected_color() -> u32 {
+    GAME_INSTANCE.with(|game_instance| {
+        if let Some(selected_index) = game_instance.borrow().selected_index {
+            let selected_color = game_instance.borrow().scene_objects.borrow()[selected_index].mesh.colors[0];
+            let color_u32 = color_to_u32(&selected_color);
+            return color_u32
+        } else {
+            console_error!("get_selected_color() called when no object is selected");
+            0
+        }
+    })
 }
 
 

@@ -13,30 +13,10 @@ import {
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 
-
 // --- Mock WASM Interaction ---
-let isObjectSelectedInWasm = false; 
-
-const wasmIsAnythingSelected = (): boolean => {
-    console.log("JS: Checking WASM if object is selected");
-    return isObjectSelectedInWasm;
-};
-
-const wasmSelectObjectById = (id: string) => { 
-    console.log(`JS: Telling WASM to select object ${id}`);
-    isObjectSelectedInWasm = true;
-};
-
-const wasmDeselectCurrentObject = () => {
-    console.log("JS: Telling WASM to deselect current object");
-    isObjectSelectedInWasm = false;
-};
 
 const wasmConfirmObjectEditsWasm = () => { // Renamed to avoid conflict with handler
     console.log("JS: Telling WASM edits are confirmed for selected object");
-    // Here WASM might finalize or apply pending changes
-    // For this UI flow, we'll deselect after confirming.
-    isObjectSelectedInWasm = false; 
 };
 // --- End Mock WASM Interaction ---
 
@@ -46,9 +26,9 @@ const SceneControlPanel: React.FC = () => {
     // --- BE EXTREMELY CAREFUL WITH THIS, ENSURE WASM STATE IS IN SYNC ---
     // DESELECTION IN JS MUST BE COMMUNICATED TO WASM
     // USE wasm.wasm_deselect_object()
-    
     const [isObjectSelected, setIsObjectSelected] = useState<boolean>(false);
 
+    const [selectionVersion, setSelectionVersion] = useState<number>(0);
     const [activeMainAccordionItems, setActiveMainAccordionItems] = useState<string[]>(['add-object-panel']);
     const [editPanelOpenSubSections, setEditPanelOpenSubSections] = useState<string[]>(['transform']);
     const [editPanelAccordionKey, setEditPanelAccordionKey] = useState<string>('editPanelKey-initial');
@@ -58,6 +38,11 @@ const SceneControlPanel: React.FC = () => {
         (window as any).wasmBridge.jsSetIsObjectSelected = (isSelected: boolean) => {
             console.log(`JS: updateIsObjectSelectedFromWasm called by WASM with: ${isSelected}`);
             setIsObjectSelected(isSelected);
+
+            if (isSelected) {
+                // Query wasm backend for material properties
+                setSelectionVersion(selectionVersion + 1); // Increment version to force re-render
+            }
         };
 
         // Cleanup function when the component unmounts
@@ -70,7 +55,6 @@ const SceneControlPanel: React.FC = () => {
 
 
     const handleObjectAddedFromPanel = () => {
-        setIsObjectSelected(true); 
         setActiveMainAccordionItems(['edit-panel-wrapper']);
         setEditPanelOpenSubSections(['transform', 'materialEditor']);
     };
@@ -129,6 +113,7 @@ const SceneControlPanel: React.FC = () => {
                                     accordionKey={editPanelAccordionKey}
                                     onConfirmEdit={handleConfirmEditFromPanel}
                                     onDeleteObject={handleDeleteObjectFromPanel}
+                                    selectionVersion={selectionVersion}
                                 />
                             ) : (
                                 <p className="text-sm text-muted-foreground p-4 text-center">

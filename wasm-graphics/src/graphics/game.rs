@@ -29,7 +29,7 @@ pub struct Game {
     pub mouse_clicked_last_frame: bool,
 
     pub looking_at: Option<(usize, Vec3)>,
-    pub selected_id: Option<usize>,
+    pub selected_index: Option<usize>,
     pub follow_camera: bool,
 
     pub status: GameStatus,
@@ -71,7 +71,7 @@ impl Game {
             mouse_clicked_last_frame: false,
 
             looking_at: None,
-            selected_id: None,
+            selected_index: None,
             follow_camera: false,
 
             status: GameStatus::Rasterizing,
@@ -192,22 +192,22 @@ impl Game {
         }
     }
 
-    fn select_object(&mut self, id: usize) {
-        console_log!("Selected object with id: {}", id);
-        self.selected_id = Some(id);
+    fn select_object(&mut self, index: usize) {
+        console_log!("Selected object with index: {}", index);
+        self.selected_index = Some(index);
         js_set_is_object_selected(true);
     }
 
     pub fn deselect_object(&mut self) {
         console_log!("Deselected object");
-        self.selected_id = None;
+        self.selected_index = None;
         js_set_is_object_selected(false);
     }
 
     pub fn delete_selected_object(&mut self) {
-        if let Some(selected_id) = self.selected_id {
-            console_log!("Deleting object with id: {}", selected_id);
-            self.scene_objects.borrow_mut().retain(|obj| obj.get_id() != selected_id);
+        if let Some(selected_index) = self.selected_index {
+            console_log!("Deleting object with index: {}", selected_index);
+            self.scene_objects.borrow_mut().remove(selected_index);
             self.deselect_object();
             self.bvh = None; // invalidate bvh if obj is deleted
             self.extract_lights_from_scene_objects();
@@ -268,21 +268,20 @@ impl Game {
 
     fn pre_raster_render_logic(&mut self) {
         if self.follow_camera {
-            if let Some(selected_id) = self.selected_id {
-                if let Some(selected_obj) = self.scene_objects.borrow_mut().iter_mut().find(|o| o.get_id() == selected_id) {
-                    let mut looking_at_pos = if let Some(looking_at) = self.looking_at {
-                        console_log!("looking at object, translating to {:?}", looking_at.1);
-                        looking_at.1
-                    } else {
-                        let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
-                        self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
-                        console_log!("not looking at anything, translating to {:?}", looking_at_pos);
-                        looking_at_pos
-                    };
-                    // let cam_to_pos_dir = (looking_at_pos - self.camera.pos).normalized();
-                    // looking_at_pos -= cam_to_pos_dir * selected_obj.mesh.radius;
-                    selected_obj.translate_to(looking_at_pos);
-                }
+            if let Some(selected_index) = self.selected_index {
+                let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                let mut looking_at_pos = if let Some(looking_at) = self.looking_at {
+                    console_log!("looking at object, translating to {:?}", looking_at.1);
+                    looking_at.1
+                } else {
+                    let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
+                    self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                    console_log!("not looking at anything, translating to {:?}", looking_at_pos);
+                    looking_at_pos
+                };
+                // let cam_to_pos_dir = (looking_at_pos - self.camera.pos).normalized();
+                // looking_at_pos -= cam_to_pos_dir * selected_obj.mesh.radius;
+                selected_obj.translate_to(looking_at_pos);
             }
         }
         self.looking_at = None;
@@ -324,7 +323,7 @@ impl Game {
         let scene_objects = self.scene_objects.take();
 
         // opaque objects
-        for scene_obj in scene_objects.iter() {
+        for (scene_obj_index, scene_obj) in scene_objects.iter().enumerate() {
             let mesh = &scene_obj.mesh;
             if mesh.properties.alpha < 1.0 {
                 continue;
@@ -340,12 +339,13 @@ impl Game {
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
             }
         }
 
         // transparent objects
-        for scene_obj in scene_objects.iter().rev() {
+        for (idx, scene_obj) in scene_objects.iter().rev().enumerate() {
+            let scene_obj_index = scene_objects.len() - 1 - idx;
             let mesh = &scene_obj.mesh;
             if mesh.properties.alpha == 1.0 {
                 continue;
@@ -361,7 +361,7 @@ impl Game {
                 let v3 = transformed_vertices[indices[i*3+2]];
                 let color = colors[i];
                 let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj);
+                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
             }
         }
 
@@ -371,14 +371,14 @@ impl Game {
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject) {
+    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
         // render triangle from transformed vertices
         let normal = (v3 - v1).cross(v2 - v1).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
-        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj);
+        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj, scene_obj_index);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &SceneObject) {
+    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
@@ -410,7 +410,7 @@ impl Game {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj, scene_obj_index);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -419,8 +419,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj, scene_obj_index);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj, scene_obj_index);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -428,14 +428,14 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj);
+            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj, scene_obj_index);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &SceneObject) {
+    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
         let properties = &scene_obj.mesh.properties;
@@ -463,8 +463,8 @@ impl Game {
             return;
         }
 
-        let looking_at_selected = if let Some(selected_id) = self.selected_id {
-            selected_id == scene_obj.get_id()
+        let looking_at_selected = if let Some(selected_index) = self.selected_index {
+            selected_index == scene_obj_index
         } else {
             false
         };
@@ -508,7 +508,7 @@ impl Game {
                         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
                         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj.get_id(), world_pos));
+                            self.looking_at = Some((scene_obj_index, world_pos));
                         }
 
                         if properties.is_light {
@@ -584,7 +584,7 @@ impl Game {
                         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
                         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj.get_id(), world_pos));
+                            self.looking_at = Some((scene_obj_index, world_pos));
                         }
 
                         if properties.is_light {

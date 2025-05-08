@@ -58,6 +58,10 @@ pub fn color_to_u8(color: &Vec3) -> (u8, u8, u8) {
         (color.z.clamp(0.0, 1.0) * 255.0) as u8,
     )
 }
+pub fn color_to_u32(color: &Vec3) -> u32 {
+    let (r, g, b) = color_to_u8(color);
+    return ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
+}
 
 pub fn gamma_correct_color(color: &Vec3) -> Vec3 {
     Vec3::new(

@@ -111,6 +111,7 @@ pub trait Hittable: Debug {
     fn get_normal(&self, p: Vec3) -> Vec3;
     fn get_color(&self) -> Vec3;
     fn get_bounding_box(&self) -> &AABoundingBox;
+    fn get_material(&self) -> &dyn Material;
     fn set_material(&mut self, material: Box<dyn Material>);
     fn translate_by(&mut self, offset: Vec3);
     fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32);
@@ -169,6 +170,9 @@ impl Hittable for Sphere {
     }
     fn get_bounding_box(&self) -> &AABoundingBox {
         return &self.bounding_box;
+    }
+    fn get_material(&self) -> &dyn Material {
+        return self.material.as_ref();
     }
     fn set_material(&mut self, material: Box<dyn Material>) {
         self.material = material;
@@ -255,6 +259,9 @@ impl Hittable for Triangle {
     }
     fn get_bounding_box(&self) -> &AABoundingBox {
         &self.bounding_box
+    }
+    fn get_material(&self) -> &dyn Material {
+        self.material.as_ref()
     }
     fn set_material(&mut self, material: Box<dyn Material>) {
         self.material = material;

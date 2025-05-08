@@ -18,6 +18,10 @@ pub trait Material: Debug + Send + Sync {
 
     fn emitted(&self, hit_record: &HitRecord) -> Vec3;
     fn clone_box(&self) -> Box<dyn Material>;
+
+    /// returns the material number for this material. Used for communicating with JS.
+    /// 0 = Lambertian, 1 = Metal, 2 = Dielectric, 3 = DiffuseLight
+    fn get_material_number(&self) -> u32;
 }
 
 impl Clone for Box<dyn Material> {
@@ -114,6 +118,9 @@ impl Material for Lambertian {
     fn clone_box(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
+    fn get_material_number(&self) -> u32 {
+        return 0;
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -151,6 +158,9 @@ impl Material for Metal {
 
     fn clone_box(&self) -> Box<dyn Material> {
         Box::new(self.clone())
+    }
+    fn get_material_number(&self) -> u32 {
+        return 1;
     }
 }
 
@@ -224,6 +234,9 @@ impl Material for Dielectric {
     fn clone_box(&self) -> Box<dyn Material> {
         Box::new(self.clone())
     }
+    fn get_material_number(&self) -> u32 {
+        return 2;
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -243,6 +256,9 @@ impl Material for DiffuseLight {
 
     fn clone_box(&self) -> Box<dyn Material> {
         return Box::new(self.clone());
+    }
+    fn get_material_number(&self) -> u32 {
+        return 3;
     }
 }
 
