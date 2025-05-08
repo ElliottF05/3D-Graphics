@@ -29,7 +29,7 @@ pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
 
                     let scene_objects: Vec<SceneObject> = meshes
                         .into_iter()
-                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box()))
+                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
                         .collect();
 
                     GAME_INSTANCE.with(|game_instance| {
@@ -364,7 +364,7 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                     // add meshes to rt as triangles
                     let scene_objects: Vec<SceneObject> = meshes
                         .into_iter()
-                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box()))
+                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
                         .collect();
 
                     GAME_INSTANCE.with(|game_instance| {

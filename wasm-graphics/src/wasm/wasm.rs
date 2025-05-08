@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use gltf::json::extensions::scene;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::Event;
@@ -13,6 +14,7 @@ use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 use crate::graphics::game::Game;
 use crate::utils::math::Vec3;
 use crate::utils::utils::color_to_u32;
+use crate::utils::utils::color_to_u8;
 
 
 // WASM UTIL EXPORTS
@@ -65,16 +67,47 @@ pub fn is_object_selected() -> bool {
         game_instance.borrow().selected_index.is_some()
     })
 }
+
 #[wasm_bindgen]
-pub fn get_selected_color() -> u32 {
+#[derive(Debug, Clone)]
+struct MaterialProperties {
+    pub mat_is_editable: bool,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub material_type: u32,
+    pub extra_prop: f32,
+}
+
+#[wasm_bindgen]
+pub fn get_selected_material_properties() -> MaterialProperties {
     GAME_INSTANCE.with(|game_instance| {
         if let Some(selected_index) = game_instance.borrow().selected_index {
-            let selected_color = game_instance.borrow().scene_objects.borrow()[selected_index].mesh.colors[0];
-            let color_u32 = color_to_u32(&selected_color);
-            return color_u32
+            let game_instance_ref = game_instance.borrow();
+            let scene_objects_ref = game_instance_ref.scene_objects.borrow();
+            let scene_obj = &scene_objects_ref[selected_index];
+            let color = scene_obj.mesh.colors[0];
+            let material = scene_obj.hittables[0].get_material();
+            let material_type = scene_obj.get_material_number();
+            let extra_prop = material.get_material_prop();
+            return MaterialProperties {
+                mat_is_editable: scene_obj.mat_is_editable,
+                r: color.x,
+                g: color.y,
+                b: color.z,
+                material_type,
+                extra_prop,
+            };
         } else {
-            console_error!("get_selected_color() called when no object is selected");
-            0
+            console_error!("get_selected_material_properties() called when no object is selected");
+            MaterialProperties {
+                mat_is_editable: false,
+                r: 0.0,
+                g: 0.0,
+                b: 0.0,
+                material_type: 5,
+                extra_prop: 0.0,
+            }
         }
     })
 }
