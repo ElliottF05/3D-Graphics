@@ -451,7 +451,7 @@ impl Game {
         }
 
         let mesh = Mesh::new_from_non_indexed(mesh_vertices, mesh_colors, PhongProperties::default());
-        let scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box());
+        let scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), true);
         self.add_scene_object(scene_obj);
 
         self.create_bvh_from_scene_objs();

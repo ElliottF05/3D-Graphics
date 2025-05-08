@@ -41,7 +41,10 @@ const SceneControlPanel: React.FC = () => {
 
             if (isSelected) {
                 // Query wasm backend for material properties
-                setSelectionVersion(selectionVersion + 1); // Increment version to force re-render
+                setSelectionVersion(prevVersion => {
+                    console.log("increasing selection version to force re-render:", prevVersion + 1);
+                    return prevVersion + 1; // Increment version using the latest previous value
+                });
             }
         };
 

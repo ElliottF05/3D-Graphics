@@ -22,6 +22,7 @@ pub trait Material: Debug + Send + Sync {
     /// returns the material number for this material. Used for communicating with JS.
     /// 0 = Lambertian, 1 = Metal, 2 = Dielectric, 3 = DiffuseLight
     fn get_material_number(&self) -> u32;
+    fn get_material_prop(&self) -> f32;
 }
 
 impl Clone for Box<dyn Material> {
@@ -121,6 +122,9 @@ impl Material for Lambertian {
     fn get_material_number(&self) -> u32 {
         return 0;
     }
+    fn get_material_prop(&self) -> f32 {
+        return 0.0;
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -161,6 +165,9 @@ impl Material for Metal {
     }
     fn get_material_number(&self) -> u32 {
         return 1;
+    }
+    fn get_material_prop(&self) -> f32 {
+        return self.fuzz;
     }
 }
 
@@ -237,6 +244,9 @@ impl Material for Dielectric {
     fn get_material_number(&self) -> u32 {
         return 2;
     }
+    fn get_material_prop(&self) -> f32 {
+        return self.index_of_refrac;
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -259,6 +269,9 @@ impl Material for DiffuseLight {
     }
     fn get_material_number(&self) -> u32 {
         return 3;
+    }
+    fn get_material_prop(&self) -> f32 {
+        return 0.0;
     }
 }
 

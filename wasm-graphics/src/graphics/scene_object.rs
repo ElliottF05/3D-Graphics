@@ -2,18 +2,11 @@ use crate::{console_error, utils::math::Vec3};
 
 use super::{lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{hittable::{self, Hittable, Sphere}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}}};
 
-pub enum MaterialType {
-    Diffuse,
-    Glossy,
-    Metal,
-    Glass,
-    Light,
-}
-
 pub struct SceneObject {
     pub mesh: Mesh,
     pub hittables: Vec<Box<dyn Hittable>>,
-    pub lights: Vec<Light>
+    pub lights: Vec<Light>,
+    pub mat_is_editable: bool,
 }
 
 impl SceneObject {
@@ -25,18 +18,18 @@ impl SceneObject {
         self.mesh.properties = unified_mat.0;
         return self;
     }
-    pub fn new(mesh: Mesh, hittables: Vec<Box<dyn Hittable>>, lights: Vec<Light>) -> SceneObject {
-        return SceneObject { mesh, hittables, lights };
+    pub fn new(mesh: Mesh, hittables: Vec<Box<dyn Hittable>>, lights: Vec<Light>, mat_is_editable: bool) -> SceneObject {
+        return SceneObject { mesh, hittables, lights, mat_is_editable };
     }
-    pub fn new_from_mesh(mesh: Mesh, material: Box<dyn Material>) -> SceneObject {
+    pub fn new_from_mesh(mesh: Mesh, material: Box<dyn Material>, mat_is_editable: bool) -> SceneObject {
         let hittables = mesh.to_rt_hittables(material.as_ref());
-        return SceneObject::new(mesh, hittables, Vec::new());
+        return SceneObject::new(mesh, hittables, Vec::new(), mat_is_editable);
     }
 
     /// Converts the mesh to a list of hittables, each with a DiffuseLight material.
     /// Creates an omnidirectional light at the center of the mesh, input min_dist as
     /// None for the default (radius of mesh).
-    pub fn new_from_mesh_with_omni_light(mesh: Mesh, color: Vec3, min_dist: Option<f32>, buf_width: usize) -> SceneObject {
+    pub fn new_from_mesh_with_omni_light(mesh: Mesh, color: Vec3, min_dist: Option<f32>, buf_width: usize, mat_is_editable: bool) -> SceneObject {
         let min_d = if let Some(min_d) = min_dist {
             min_d
         } else {
@@ -44,13 +37,13 @@ impl SceneObject {
         };
         let lights = Light::new_omnidirectional(mesh.center, color, min_d, buf_width);
         let hittables = mesh.to_rt_hittables(&DiffuseLight::default());
-        return SceneObject::new(mesh, hittables, lights);
+        return SceneObject::new(mesh, hittables, lights, mat_is_editable);
     }
 
     pub fn new_sphere_custom(center: Vec3, radius: f32, color: Vec3, subdivisions: u32, properties: PhongProperties, material: Box<dyn Material>) -> SceneObject {
         let sphere = Sphere::new(center, radius, color, material.clone_box());
         let mesh = Mesh::build_sphere(center, radius, subdivisions, color, properties);
-        return SceneObject::new(mesh, vec![Box::new(sphere)], vec![]);
+        return SceneObject::new(mesh, vec![Box::new(sphere)], vec![], true);
     }
     pub fn new_sphere(center: Vec3, radius: f32, color: Vec3, subdivisions: u32, unified_mat: (PhongProperties, Box<dyn Material>)) -> SceneObject {
         return SceneObject::new_sphere_custom(center, radius, color, subdivisions, unified_mat.0, unified_mat.1);
@@ -61,41 +54,41 @@ impl SceneObject {
         properties.is_light = true;
         let mesh = Mesh::build_sphere(center, radius, subdivisions, color, properties);
         let lights = Light::new_omnidirectional(center, color, radius + 0.01, buf_width);
-        return SceneObject::new(mesh, vec![Box::new(sphere)], lights);
+        return SceneObject::new(mesh, vec![Box::new(sphere)], lights, true);
     }
 
     pub fn new_rectangle(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, unified_mat: (PhongProperties, Box<dyn Material>), cull_faces: bool) -> SceneObject {
         let mesh = Mesh::build_rectangle(origin, u, v, color, unified_mat.0, cull_faces);
-        return SceneObject::new_from_mesh(mesh, unified_mat.1);
+        return SceneObject::new_from_mesh(mesh, unified_mat.1, true);
     }
     pub fn new_rectangle_light(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, min_dist: f32, buf_width: usize) -> SceneObject {
         let phong = PhongProperties::new_light();
         let mesh = Mesh::build_rectangle(origin, u, v, color, phong, false);
-        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width);
+        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width, true);
     }
 
     pub fn new_box_from_side_lengths(center: Vec3, x_length: f32, y_length: f32, z_length: f32, color: Vec3, unified_mat: (PhongProperties, Box<dyn Material>)) -> SceneObject {
         let mesh = Mesh::build_box_from_side_lengths(center, x_length, y_length, z_length, color, unified_mat.0);
-        return SceneObject::new_from_mesh(mesh, unified_mat.1);
+        return SceneObject::new_from_mesh(mesh, unified_mat.1, true);
     }
     pub fn new_box_from_corners(corner1: Vec3, corner2: Vec3, color: Vec3, unified_mat: (PhongProperties, Box<dyn Material>)) -> SceneObject {
         let mesh = Mesh::build_box_from_corners(corner1, corner2, color, unified_mat.0);
-        return SceneObject::new_from_mesh(mesh, unified_mat.1);
+        return SceneObject::new_from_mesh(mesh, unified_mat.1, true);
     }
     pub fn new_box_light_from_side_lengths(center: Vec3, x_length: f32, y_length: f32, z_length: f32, color: Vec3, min_dist: f32, buf_width: usize) -> SceneObject {
         let phong = PhongProperties::new_light();
         let mesh = Mesh::build_box_from_side_lengths(center, x_length, y_length, z_length, color, phong);
-        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width);
+        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width, true);
     }
     pub fn new_box_light_from_corners(corner1: Vec3, corner2: Vec3, color: Vec3, min_dist: f32, buf_width: usize) -> SceneObject {
         let phong = PhongProperties::new_light();
         let mesh = Mesh::build_box_from_corners(corner1, corner2, color, phong);
-        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width);
+        return SceneObject::new_from_mesh_with_omni_light(mesh, color, Some(min_dist), buf_width, true);
     }
 
     pub fn new_checkerboard(center: Vec3, radius: i32, color1: Vec3, color2: Vec3, unified_mat: (PhongProperties, Box<dyn Material>), cull_faces: bool) -> SceneObject {
         let mesh = Mesh::build_checkerboard(center, radius, color1, color2, unified_mat.0, cull_faces);
-        return SceneObject::new_from_mesh(mesh, unified_mat.1);
+        return SceneObject::new_from_mesh(mesh, unified_mat.1, true);
     }
 
     pub fn new_diffuse_mat() -> (PhongProperties, Box<dyn Material>) {
@@ -162,10 +155,12 @@ impl SceneObject {
     pub fn is_light(&self) -> bool {
         return !self.lights.is_empty();
     }
+    
+    /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ERROR = 5
     pub fn get_material_number(&self) -> u32 {
         if self.hittables.is_empty() {
             console_error!("SceneObject::get_material_number() called on empty object");
-            return 100;
+            return 5;
         }
         return self.hittables[0].get_material().get_material_number();
     }
@@ -201,6 +196,7 @@ impl Clone for SceneObject {
             mesh: self.mesh.clone(),
             hittables: self.hittables.iter().map(|h| h.clone_box()).collect(),
             lights: self.lights.clone(),
+            mat_is_editable: self.mat_is_editable,
         }
     }
 }
