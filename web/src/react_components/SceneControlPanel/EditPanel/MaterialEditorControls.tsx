@@ -21,7 +21,7 @@ const wasmSetMaterialColor = (color: string) => {
     console.log(`JS: Setting material color to ${color}`);
     const [r, g, b] = hexToFloatColor(color);
     console.log(`JS: Converted color to RGB: ${r}, ${g}, ${b}`);
-    // wasm.set_material_color(r, g, b);
+    wasm.set_material_color(r, g, b);
 }
 const wasmSetMaterialType = (materialType: number) => {
     console.log(`JS: Setting material type to ${materialType}`);
@@ -40,7 +40,7 @@ const wasmSetMaterialBrightness = (brightness: number) => {
     // wasm.set_material_brightness(brightness);
 }
 
-const wasmGetSelectedObjectMaterial = (): wasm.MaterialProperties | null => {
+const wasmGetSelectedObjectMaterial = (): wasm.MaterialProperties | null | undefined => {
     console.log("JS MaterialEditorControls: Querying WASM for selected object material");
 
     if (wasm.is_object_selected()) { // You'll need such a function in WASM
@@ -108,6 +108,7 @@ const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ selecti
                 setBrightness(materialType === 3 ? brightness ?? 5.0 : 5.0);
             } else {
                 // No properties returned (e.g., no object selected or error), reset to defaults
+                setMatIsEditable(false);
                 setColor("#000000");
                 setMaterialType(0);
                 setIor(1.5);
@@ -116,6 +117,7 @@ const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ selecti
             }
         } else {
             // selectionVersion indicates no selection or initial state, reset to defaults
+            setMatIsEditable(false);
             setColor("#000000");
             setMaterialType(0);
             setIor(1.5);

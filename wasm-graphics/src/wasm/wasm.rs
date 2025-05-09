@@ -30,6 +30,12 @@ macro_rules! console_error {
     // `bare_bones`
     ($($t:tt)*) => (web_sys::console::error_1(&format_args!($($t)*).to_string().into()))
 }
+#[macro_export]
+macro_rules! console_warn {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (web_sys::console::warn_1(&format_args!($($t)*).to_string().into()))
+}
 
 // EXPOSING JS FUNCTIONS TO RUST
 #[wasm_bindgen]
@@ -80,7 +86,7 @@ struct MaterialProperties {
 }
 
 #[wasm_bindgen]
-pub fn get_selected_material_properties() -> MaterialProperties {
+pub fn get_selected_material_properties() -> Option<MaterialProperties> { // Changed return type
     GAME_INSTANCE.with(|game_instance| {
         if let Some(selected_index) = game_instance.borrow().selected_index {
             let game_instance_ref = game_instance.borrow();
@@ -90,26 +96,46 @@ pub fn get_selected_material_properties() -> MaterialProperties {
             let material = scene_obj.hittables[0].get_material();
             let material_type = scene_obj.get_material_number();
             let extra_prop = material.get_material_prop();
-            return MaterialProperties {
+            Some(MaterialProperties {
                 mat_is_editable: scene_obj.mat_is_editable,
                 r: color.x,
                 g: color.y,
                 b: color.z,
                 material_type,
                 extra_prop,
-            };
+            })
         } else {
-            console_error!("get_selected_material_properties() called when no object is selected");
-            MaterialProperties {
-                mat_is_editable: false,
-                r: 0.0,
-                g: 0.0,
-                b: 0.0,
-                material_type: 5,
-                extra_prop: 0.0,
-            }
+            console_warn!("get_selected_material_properties() called when no object is selected"); // Optional: JS will see null
+            None
         }
     })
+}
+
+#[wasm_bindgen]
+pub fn set_material_color(r: f32, g: f32, b: f32) {
+    UI_COMMAND_QUEUE.with(|queue_cell| {
+        queue_cell.borrow_mut().push(GameCommand::SetMaterialColor { r, g, b });
+    });
+}
+
+#[wasm_bindgen]
+pub fn confirm_edits() {
+    console_log!("In WASM: Confirming edits");
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().extract_lights_from_scene_objects();
+        game_instance.borrow_mut().recalculate_shadow_maps();
+        game_instance.borrow_mut().bvh = None;
+    })
+}
+
+pub enum GameCommand {
+    SetMaterialColor { r: f32, g: f32, b: f32 },
+    // Add other commands here as needed, e.g., SetMaterialType, SetIOR, etc.
+}
+
+// COMMAND QUEUE
+thread_local! {
+    pub static UI_COMMAND_QUEUE: RefCell<Vec<GameCommand>> = RefCell::new(Vec::new());
 }
 
 

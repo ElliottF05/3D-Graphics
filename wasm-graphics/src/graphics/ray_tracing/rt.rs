@@ -79,6 +79,10 @@ impl Game {
         // 2) Multi-threading (duh)
 
         if self.bvh.is_none() {
+            self.rebuild_bvh();
+        }
+
+        if self.bvh.is_none() {
             console_log!("No RT objects in the scene, can't raytrace!");
             return;
         }
@@ -630,7 +634,7 @@ impl Game {
         let red_color = Vec3::new(0.65, 0.05, 0.05);
         let green_color = Vec3::new(0.12, 0.45, 0.15);
         let white_color = Vec3::new(0.73, 0.73, 0.73);
-        let light_color = Vec3::new(15.0, 15.0, 15.0);
+        let light_color = Vec3::new(25.0,  25.0, 25.0);
     
         let lambert_mat = SceneObject::new_diffuse_mat();
         let metal_mat = SceneObject::new_metal_mat(0.0);

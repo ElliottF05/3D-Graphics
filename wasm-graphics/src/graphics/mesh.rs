@@ -328,6 +328,12 @@ impl Mesh {
     pub fn scale_by(&mut self, scale_factor: f32) {
         self.scale_around(self.center, scale_factor);
     }
+
+    pub fn set_color(&mut self, color: Vec3) {
+        for c in self.colors.iter_mut() {
+            *c = color;
+        }
+    }
 }
 
 fn get_icosahedron_vertices_and_indices(t: f32) -> (Vec<Vec3>, Vec<usize>) {

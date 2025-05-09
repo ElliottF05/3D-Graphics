@@ -4,6 +4,23 @@ use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::{math::
 
 use super::{bvh::AABoundingBox, material::Material, rt::{HitRecord, Ray}};
 
+pub trait Hittable: Debug {
+    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
+    fn sample_random_point(&self) -> Vec3;
+    fn get_area(&self) -> f32;
+    fn get_normal(&self, p: Vec3) -> Vec3;
+    fn get_color(&self) -> Vec3;
+    fn set_color(&mut self, color: Vec3);
+    fn get_bounding_box(&self) -> &AABoundingBox;
+    fn get_material(&self) -> &dyn Material;
+    fn set_material(&mut self, material: Box<dyn Material>);
+    fn translate_by(&mut self, offset: Vec3);
+    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32);
+    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32);
+
+    fn clone_box(&self) -> Box<dyn Hittable>;
+}
+
 #[derive(Clone, Debug)]
 pub struct Sphere {
     pub center: Vec3,
@@ -104,22 +121,6 @@ impl Triangle {
     
 }
 
-pub trait Hittable: Debug {
-    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
-    fn sample_random_point(&self) -> Vec3;
-    fn get_area(&self) -> f32;
-    fn get_normal(&self, p: Vec3) -> Vec3;
-    fn get_color(&self) -> Vec3;
-    fn get_bounding_box(&self) -> &AABoundingBox;
-    fn get_material(&self) -> &dyn Material;
-    fn set_material(&mut self, material: Box<dyn Material>);
-    fn translate_by(&mut self, offset: Vec3);
-    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32);
-    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32);
-
-    fn clone_box(&self) -> Box<dyn Hittable>;
-}
-
 impl Hittable for Sphere {
     #[inline(always)]
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
@@ -167,6 +168,9 @@ impl Hittable for Sphere {
     }
     fn get_color(&self) -> Vec3 {
         return self.color;
+    }
+    fn set_color(&mut self, color: Vec3) {
+        self.color = color;
     }
     fn get_bounding_box(&self) -> &AABoundingBox {
         return &self.bounding_box;
@@ -256,6 +260,9 @@ impl Hittable for Triangle {
     }
     fn get_color(&self) -> Vec3 {
         return self.color;
+    }
+    fn set_color(&mut self, color: Vec3) {
+        self.color = color;
     }
     fn get_bounding_box(&self) -> &AABoundingBox {
         &self.bounding_box

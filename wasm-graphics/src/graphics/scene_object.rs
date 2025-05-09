@@ -152,18 +152,6 @@ impl SceneObject {
     pub fn set_center(&mut self, new_center: Vec3) {
         self.translate_to(new_center);
     }
-    pub fn is_light(&self) -> bool {
-        return !self.lights.is_empty();
-    }
-    
-    /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ERROR = 5
-    pub fn get_material_number(&self) -> u32 {
-        if self.hittables.is_empty() {
-            console_error!("SceneObject::get_material_number() called on empty object");
-            return 5;
-        }
-        return self.hittables[0].get_material().get_material_number();
-    }
 
     /// Rotates in the z direction first, then y direction
     pub fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
@@ -187,6 +175,25 @@ impl SceneObject {
     pub fn scale_by(&mut self, scale_factor: f32) {
         let center = self.mesh.center;
         self.scale_around(center, scale_factor);
+    }
+
+    pub fn set_color(&mut self, color: Vec3) {
+        self.mesh.set_color(color);
+        for h in self.hittables.iter_mut() {
+            h.set_color(color);
+        }
+    }
+
+    pub fn is_light(&self) -> bool {
+        return !self.lights.is_empty();
+    }
+    /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ERROR = 5
+    pub fn get_material_number(&self) -> u32 {
+        if self.hittables.is_empty() {
+            console_error!("SceneObject::get_material_number() called on empty object");
+            return 5;
+        }
+        return self.hittables[0].get_material().get_material_number();
     }
 }
 
