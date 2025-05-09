@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI};
 
-use crate::{console_error, console_log, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::js_set_is_object_selected};
+use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::{js_set_is_object_selected, GameCommand, UI_COMMAND_QUEUE}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -142,6 +142,7 @@ impl Game {
     }
 
     pub fn game_loop(&mut self) {
+        self.process_js_ui_commands();
         self.process_all_input();
         match self.status {
             GameStatus::Rasterizing => {
@@ -155,6 +156,40 @@ impl Game {
             GameStatus::Paused => {
 
             }
+        }
+    }
+
+    fn process_js_ui_commands(&mut self) { // Takes &mut self
+        // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
+        // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub
+        // or pass the commands in. For simplicity, let's assume it's accessible.
+        // If not, init_and_begin_game_loop would need to drain it and pass to game.game_loop().
+        // For now, let's assume direct access for clarity of the pattern:
+        UI_COMMAND_QUEUE.with(|queue_cell| { // Adjust path to UI_COMMAND_QUEUE as needed
+            let mut queue = queue_cell.borrow_mut();
+            for command in queue.drain(..) { // drain() consumes the commands
+                match command {
+                    GameCommand::SetMaterialColor { r, g, b } => {
+                        self.process_set_material_color(r, g, b);
+                    }
+                    // Handle other commands here
+                }
+            }
+        });
+    }
+
+    fn process_set_material_color(&mut self, r: f32, g: f32, b: f32) {
+        if let Some(selected_index) = self.selected_index {
+            let mut scene_objects_mut = self.scene_objects.borrow_mut();
+            if selected_index < scene_objects_mut.len() {
+                let scene_obj = &mut scene_objects_mut[selected_index];
+                let color_vec = Vec3::new(r, g, b);
+                scene_obj.set_color(color_vec);
+            } else {
+                console_warn!("set_material_color: selected_index out of bounds.");
+            }
+        } else {
+            console_warn!("set_material_color: No object selected.");
         }
     }
 
@@ -655,15 +690,15 @@ impl Game {
         }
     }
 
-    pub fn recalculate_shadow_maps(&mut self) {
-        for light in self.lights.iter_mut() {
-            light.clear_shadow_map();
-            light.add_scene_objects_to_shadow_map(&self.scene_objects.borrow());
-        }
-    }
-
     pub fn add_scene_object(&mut self, scene_obj: SceneObject) {
         self.scene_objects.borrow_mut().push(scene_obj);
+    }
+
+    pub fn get_lights(&self) -> &Vec<Light> {
+        return &self.lights;
+    }
+    pub fn get_rt_lights(&self) -> &Vec<Box<dyn Hittable>> {
+        return &self.rt_lights;
     }
 
     pub fn extract_lights_from_scene_objects(&mut self) {
@@ -682,10 +717,20 @@ impl Game {
             .collect();
     }
 
-    pub fn get_lights(&self) -> &Vec<Light> {
-        return &self.lights;
+    pub fn recalculate_shadow_maps(&mut self) {
+        for light in self.lights.iter_mut() {
+            light.clear_shadow_map();
+            light.add_scene_objects_to_shadow_map(&self.scene_objects.borrow());
+        }
     }
-    pub fn get_rt_lights(&self) -> &Vec<Box<dyn Hittable>> {
-        return &self.rt_lights;
+
+    pub fn rebuild_bvh(&mut self) {
+        let rt_objects = self
+            .scene_objects
+            .borrow()
+            .iter()
+            .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
+            .collect();
+        self.bvh = Some(BVHNode::new(rt_objects));
     }
 }

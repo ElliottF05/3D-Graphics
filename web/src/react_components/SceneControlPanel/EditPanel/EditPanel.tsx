@@ -15,6 +15,7 @@ const wasmDeleteSelectedObject = () => {
 
 const wasmConfirmObjectEdits = () => {
     console.log("WASM: Confirming edits for selected object");
+    wasm.confirm_edits();
 };
 
 interface EditPanelProps {

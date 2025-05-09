@@ -228,6 +228,9 @@ impl Hittable for BVHNode {
         console_log!("BVHNode::get_color() should NEVER be called, this is a mistake");
         return Vec3::zero();
     }
+    fn set_color(&mut self, color: Vec3) {
+        console_log!("BVHNode::set_color() should NEVER be called, this is a mistake");
+    }
     fn get_bounding_box(&self) -> &AABoundingBox {
         match self {
             BVHNode::Leaf { bounding_box, .. } => &bounding_box,
