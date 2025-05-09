@@ -72,7 +72,7 @@ const EditPanel: React.FC<EditPanelProps> = ({
                 className="w-full"
                 key={accordionKey} // Use the key here
             >
-                <TransformControls />
+                <TransformControls selectionVersion={selectionVersion} />
                 <MaterialEditorControls selectionVersion={selectionVersion} />
             </Accordion>
         </div>
