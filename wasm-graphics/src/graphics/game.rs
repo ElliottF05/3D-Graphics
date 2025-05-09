@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashSet, f32::consts::PI};
 
-use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{gamma_correct_color, get_time}}, wasm::wasm::{js_set_is_object_selected, GameCommand, UI_COMMAND_QUEUE}};
+use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_set_is_object_selected, GameCommand, UI_COMMAND_QUEUE}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -219,8 +219,12 @@ impl Game {
     fn process_rasterization_input(&mut self) {
         self.process_movement_input();
         if self.mouse_clicked_last_frame {
-            if let Some((looking_at_id, looking_at_pos)) = self.looking_at {
-                self.select_object(looking_at_id);
+            if let Some((looking_at_index, looking_at_pos)) = self.looking_at {
+                if self.selected_index.is_some() && self.selected_index.unwrap() == looking_at_index {
+                    self.deselect_object();
+                } else {
+                    self.select_object(looking_at_index);
+                }
             } else {
                 self.deselect_object();
             }
@@ -230,6 +234,7 @@ impl Game {
     fn select_object(&mut self, index: usize) {
         console_log!("Selected object with index: {}", index);
         self.selected_index = Some(index);
+        self.follow_camera = false;
         js_set_is_object_selected(true);
     }
 
@@ -354,7 +359,7 @@ impl Game {
         // could try a hybrid approach of sorting the triangles within only each transparent object,
         // not within the whole scene.;
 
-        self.sort_meshes_by_distance_to_camera();
+        // self.sort_meshes_by_distance_to_camera();
         let scene_objects = self.scene_objects.take();
 
         // opaque objects
@@ -546,7 +551,11 @@ impl Game {
                             self.looking_at = Some((scene_obj_index, world_pos));
                         }
 
-                        if properties.is_light {
+                        if looking_at_selected && (x == left || x == right || y == top as usize) {
+                            let edge_color = shift_color(color);
+                            self.zbuf.set_depth(x, y, depth);
+                            self.pixel_buf.set_pixel(x, y, edge_color);
+                        } else if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {
@@ -622,7 +631,11 @@ impl Game {
                             self.looking_at = Some((scene_obj_index, world_pos));
                         }
 
-                        if properties.is_light {
+                        if looking_at_selected && (x == left || x == right || y == bottom as usize) {
+                            let edge_color = shift_color(color);
+                            self.zbuf.set_depth(x, y, depth);
+                            self.pixel_buf.set_pixel(x, y, edge_color);
+                        } else if properties.is_light {
                             self.zbuf.set_depth(x, y, depth);
                             self.pixel_buf.set_pixel(x, y, color);
                         } else {

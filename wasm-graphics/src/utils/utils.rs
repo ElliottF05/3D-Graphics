@@ -62,6 +62,27 @@ pub fn color_to_u32(color: &Vec3) -> u32 {
     let (r, g, b) = color_to_u8(color);
     return ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
 }
+pub fn clamp_color(color: Vec3) -> Vec3 {
+    Vec3::new(
+        color.x.clamp(0.0, 1.0),
+        color.y.clamp(0.0, 1.0),
+        color.z.clamp(0.0, 1.0),
+    )
+}
+pub fn shift_color(color: Vec3) -> Vec3 {
+    let mut clamped_color = clamp_color(color);
+    clamped_color += Vec3::new(0.5, 0.5, 0.5);
+    if clamped_color.x > 1.0 {
+        clamped_color.x -= 1.0;
+    }
+    if clamped_color.y > 1.0 {
+        clamped_color.y -= 1.0;
+    }
+    if clamped_color.z > 1.0 {
+        clamped_color.z -= 1.0;
+    }
+    clamped_color
+}
 
 pub fn gamma_correct_color(color: &Vec3) -> Vec3 {
     Vec3::new(

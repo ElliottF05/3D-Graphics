@@ -1,6 +1,6 @@
 import * as wasm from "../../../../wasm/wasm_graphics";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     AccordionContent,
     AccordionItem,
@@ -13,7 +13,9 @@ import { Switch } from "@/components/ui/switch";
 import { Minus, Plus } from 'lucide-react';
 
 // No props needed if all state and handlers are local
-interface TransformControlsProps { }
+interface TransformControlsProps { 
+    selectionVersion: number;
+}
 
 // Mock WASM function calls (replace with your actual WASM calls)
 const wasmTranslateObject = (axis: 'x' | 'y' | 'z', delta: number) => {
@@ -43,6 +45,7 @@ const AxisControlRow: React.FC<{
     onIncrement: () => void;
     disabled?: boolean; // Added disabled prop
 }> = ({ axisLabel, onDecrement, onIncrement, disabled }) => (
+    
     <div className="flex items-center space-x-2 py-1">
         <Label htmlFor={`transform-${axisLabel.toLowerCase()}`} className={`w-5 text-xs uppercase ${disabled ? 'text-muted-foreground/50' : 'text-muted-foreground'}`}>{axisLabel}</Label>
         <Button 
@@ -68,12 +71,18 @@ const AxisControlRow: React.FC<{
     </div>
 );
 
-const TransformControls: React.FC<TransformControlsProps> = () => {
+const TransformControls: React.FC<TransformControlsProps> = ({ selectionVersion }) => {
     // Local state for increments
     const [positionIncrement, setPositionIncrement] = useState<number>(0.1);
     const [rotationIncrement, setRotationIncrement] = useState<number>(5); // Degrees
     const [scaleIncrement, setScaleIncrement] = useState<number>(0.05);
     const [followCursorEnabled, setFollowCursorEnabled] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (selectionVersion > 0) {
+            setFollowCursorEnabled(false); // Reset follow cursor when selection changes
+        }
+    }, [selectionVersion]);
 
     // Local event handlers that call WASM functions
     const handleTranslate = (axis: 'x' | 'y' | 'z', direction: 1 | -1) => {
