@@ -1,4 +1,4 @@
-import * as wasm from "../../../../wasm/wasm_graphics"
+import * as wasm from "@wasm/wasm_graphics"
 
 import React from 'react';
 import { Accordion } from "@/components/ui/accordion";

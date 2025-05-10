@@ -1,4 +1,4 @@
-import * as wasm from '../../../wasm/wasm_graphics'
+import * as wasm from "@wasm/wasm_graphics"
 
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";

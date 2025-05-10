@@ -6,9 +6,15 @@ use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh:
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameStatus {
-    Rasterizing,
+    Rasterizing(RasterStatus),
     RayTracing,
     Paused,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum RasterStatus {
+    Normal,
+    EditMode { selected_index: Option<usize> },
 }
 
 pub struct Game {
@@ -74,7 +80,7 @@ impl Game {
             selected_index: None,
             follow_camera: false,
 
-            status: GameStatus::Rasterizing,
+            status: GameStatus::Rasterizing(RasterStatus::Normal),
             rt_row: 0,
 
             // ray tracing variables
@@ -141,15 +147,30 @@ impl Game {
         return game;
     }
 
+
     pub fn game_loop(&mut self) {
+
+        // process these no matter the game state
         self.process_js_ui_commands();
         self.process_all_input();
+
         match self.status {
-            GameStatus::Rasterizing => {
-                self.pre_raster_render_logic();
-                self.render_frame();
-                self.apply_post_processing_effects();
+
+            GameStatus::Rasterizing(raster_status) => {
+                match raster_status {
+                    RasterStatus::Normal => {
+                        self.pre_raster_render_logic();
+                        self.render_frame();
+                        self.apply_post_processing_effects();
+                    },
+                    RasterStatus::EditMode { selected_index } => {
+                        self.pre_raster_render_logic();
+                        self.render_frame();
+                        self.apply_post_processing_effects();
+                    },
+                }
             },
+
             GameStatus::RayTracing => {
                 self.render_ray_tracing();
             },
@@ -195,14 +216,14 @@ impl Game {
 
     fn process_all_input(&mut self) {
 
-        if self.status == GameStatus::Rasterizing {
+        if let GameStatus::Rasterizing(_) = self.status {
             self.process_rasterization_input();
         }
 
         if self.keys_pressed_last_frame.contains("p") {
             console_log!("Pausing or unpausing");
             if self.status == GameStatus::Paused {
-                self.status = GameStatus::Rasterizing;
+                self.status = GameStatus::Rasterizing(RasterStatus::Normal);
             } else {
                 self.status = GameStatus::Paused;
             }
