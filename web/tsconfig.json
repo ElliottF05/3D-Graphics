@@ -29,7 +29,8 @@
       /* Path Aliases */
       "baseUrl": ".",
       "paths": {
-        "@/*": ["./src/*"]
+        "@/*": ["./src/*"],
+        "@wasm/*": ["./wasm/*"],
       },
   
       /* Completeness */
