@@ -6,6 +6,7 @@ interface IGameContext {
     // State variables
     selectedObjMatProps: wasm.MaterialProperties | null | undefined; 
     gameStatus: GameStatus;
+    followCamera: boolean;
     // Add other shared states here, e.g., selectedObjectProperties, rayTraceProgress
 
     // Actions callable from React components (which might then call WASM)
@@ -29,7 +30,8 @@ interface GameProviderProps {
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const [selectedObjMatProps, setSelectedObjMatProps] = useState<wasm.MaterialProperties | null | undefined>(null);
-    const [gameStatus, setGameStatus] = useState<GameStatus>('Rasterizing'); // Default mode
+    const [gameStatus, setGameStatus] = useState<GameStatus>('Rasterizing');
+    const [followCamera, setFollowCamera] = useState<boolean>(false);
 
     // Setup the WASM to JS bridge implementations
     useEffect(() => {
@@ -57,6 +59,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
                 console.log("GameProvider: Bridge updating game status to", newStatus, status);
                 setGameStatus(status);
                 // TODO: should I also update selectedObjMatProps here?
+            },
+            updateFollowCamera: (follow) => {
+                console.log("GameProvider: Bridge updating follow camera status", follow);
+                setFollowCamera(follow);
             },
             // Implement other bridge functions here to update context state
         };
@@ -107,6 +113,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const value: IGameContext = {
         selectedObjMatProps,
         gameStatus,
+        followCamera,
     };
 
     return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

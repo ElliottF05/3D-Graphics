@@ -83,6 +83,7 @@ const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ disable
     const {
         selectedObjMatProps,
         gameStatus,
+        followCamera,
     } = useGameContext();
 
     // local state for UI display, derived from context's selectedObjMatProps

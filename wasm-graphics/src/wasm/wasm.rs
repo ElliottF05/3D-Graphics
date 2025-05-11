@@ -64,6 +64,9 @@ extern "C" {
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateSelectedObjMatProps)]
     pub fn js_update_selected_obj_mat_props(selected_object_mat_props: Option<MaterialProperties>);
 
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateFollowCamera)]
+    pub fn js_update_follow_camera(follow_cursor: bool);
+
 }
 
 // EXPOSING RUST FUNCTIONS TO JS
@@ -92,17 +95,11 @@ pub fn delete_selected_object() {
     });
 }
 #[wasm_bindgen]
-pub fn set_follow_cursor(follow_cursor: bool) {
+pub fn set_follow_camera(follow_cursor: bool) {
     GAME_INSTANCE.with(|game_instance| {
         console_log!("Setting follow camera to {}", follow_cursor);
-        game_instance.borrow_mut().follow_camera = follow_cursor
+        game_instance.borrow_mut().set_follow_camera(follow_cursor);
     });
-}
-#[wasm_bindgen]
-pub fn is_object_selected() -> bool {
-    GAME_INSTANCE.with(|game_instance| {
-        game_instance.borrow().selected_index.is_some()
-    })
 }
 
 // #[wasm_bindgen]

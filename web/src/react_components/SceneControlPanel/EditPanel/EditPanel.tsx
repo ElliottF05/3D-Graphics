@@ -16,11 +16,12 @@ const EditPanel: React.FC<EditPanelProps> = ({}) => {
     const {
         selectedObjMatProps,
         gameStatus,
+        followCamera
     } = useGameContext();
 
     const handleDeleteClick = () => {
         if (window.confirm("Are you sure you want to delete this object?")) {
-            // wasmDeleteSelectedObject();
+            wasm.delete_selected_object();
         }
     };
 
