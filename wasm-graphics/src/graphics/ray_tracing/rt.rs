@@ -342,7 +342,7 @@ impl Game {
                         // glass
                         color = Vec3::new(1.0, 1.0, 1.0);
                         sphere_material = Dielectric::new(1.5).clone_box();
-                        unified_mat = SceneObject::new_glass_mat(0.5);
+                        unified_mat = SceneObject::new_glass_mat(0.5, 1.5);
                     }
                     
                     // let sphere = Sphere::new(center, 0.2, color, 2, sphere_material);
@@ -360,7 +360,7 @@ impl Game {
             1.0, 
             Vec3::new(1.0, 1.0, 1.0), 
             4,
-            SceneObject::new_glass_mat(0.5)
+            SceneObject::new_glass_mat(0.5, 1.5)
         );
         self.add_scene_object(sphere);
 
@@ -701,7 +701,7 @@ impl Game {
         self.add_scene_object(left_box);
     
         // Right box
-        let glass_mat = SceneObject::new_glass_mat(0.5);
+        let glass_mat = SceneObject::new_glass_mat(0.5, 1.5);
         let mut right_box = SceneObject::new_box_from_corners(
             Vec3::new(45.1, 6.5, 0.0),
             Vec3::new(28.6, 23.0, 16.5),

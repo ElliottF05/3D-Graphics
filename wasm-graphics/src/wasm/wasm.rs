@@ -50,6 +50,28 @@ pub struct MaterialProperties {
 }
 
 #[wasm_bindgen]
+impl MaterialProperties {
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        mat_is_editable: bool,
+        r: f32,
+        g: f32,
+        b: f32,
+        material_type: u32,
+        extra_prop: f32,
+    ) -> Self {
+        MaterialProperties {
+            mat_is_editable,
+            r,
+            g,
+            b,
+            material_type,
+            extra_prop,
+        }
+    }
+}
+
+#[wasm_bindgen]
 extern "C" {
     // This declares the JS function that Rust can call.
     // `js_namespace` points to the object on `window` (or global scope).
@@ -83,22 +105,22 @@ pub fn exit_edit_mode() {
     });
 }
 #[wasm_bindgen]
-pub fn wasm_deselect_object() {
-    GAME_INSTANCE.with(|game_instance| {
-        game_instance.borrow_mut().deselect_object();
-    });
-}
-#[wasm_bindgen]
 pub fn delete_selected_object() {
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().delete_selected_object();
     });
 }
 #[wasm_bindgen]
-pub fn set_follow_camera(follow_cursor: bool) {
+pub fn set_follow_camera(follow_camera: bool) {
     GAME_INSTANCE.with(|game_instance| {
-        console_log!("Setting follow camera to {}", follow_cursor);
-        game_instance.borrow_mut().set_follow_camera(follow_cursor);
+        console_log!("Setting follow camera to {}", follow_camera);
+        game_instance.borrow_mut().set_follow_camera(follow_camera);
+    });
+}
+#[wasm_bindgen]
+pub fn set_selected_object_material_properties(props: MaterialProperties) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().set_selected_object_material_properties(props);
     });
 }
 

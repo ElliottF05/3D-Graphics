@@ -212,12 +212,37 @@ impl Game {
     }
 
     pub fn exit_edit_mode(&mut self) {
+        self.extract_lights_from_scene_objects();
+        self.recalculate_shadow_maps();
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
     }
 
     pub fn set_follow_camera(&mut self, follow: bool) {
         self.follow_camera = follow;
         js_update_follow_camera(follow);
+    }
+
+    pub fn set_selected_object_material_properties(&mut self, props: MaterialProperties) {
+        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
+
+            console_log!("WASM: Set selected object material properties with props: {:?}", props);
+
+            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let color = Vec3::new(props.r, props.g, props.b);
+            let material_type = props.material_type;
+            let extra_prop = props.extra_prop;
+
+            selected_obj.set_color(color);
+            selected_obj.set_material_properties(material_type, extra_prop);
+
+            self.bvh = None; // invalidate bvh if obj is changed
+
+            let props = self.parse_selected_obj_mat_props(selected_obj);
+            js_update_selected_obj_mat_props(Some(props));
+
+        } else {
+            console_error!("Game::set_selected_object_material_properties() called but not in EditMode");
+        }
     }
 
     fn process_js_ui_commands(&mut self) { // Takes &mut self
@@ -231,16 +256,12 @@ impl Game {
             for command in queue.drain(..) { // drain() consumes the commands
                 match command {
                     GameCommand::SetMaterialColor { r, g, b } => {
-                        self.process_set_material_color(r, g, b);
+                        // self.process_set_material_color(r, g, b);
                     }
                     // Handle other commands here
                 }
             }
         });
-    }
-
-    fn process_set_material_color(&mut self, r: f32, g: f32, b: f32) {
-        unimplemented!();
     }
 
     fn process_all_input(&mut self) {
@@ -314,18 +335,23 @@ impl Game {
         let selected_obj = &self.scene_objects.borrow()[index];
 
         // notify JS of changes:
+        let props = self.parse_selected_obj_mat_props(selected_obj);
+
+        js_update_follow_camera(false);
+        js_update_selected_obj_mat_props(Some(props));
+        js_update_game_status(1); // this is just for redundancy
+    }
+
+    fn parse_selected_obj_mat_props(&self, selected_obj: &SceneObject) -> MaterialProperties {
         let props = MaterialProperties {
             mat_is_editable: selected_obj.mat_is_editable,
             r: selected_obj.mesh.colors[0].x,
             g: selected_obj.mesh.colors[0].y,
             b: selected_obj.mesh.colors[0].z,
             material_type: selected_obj.get_material_number(),
-            extra_prop: selected_obj.hittables[0].get_material().get_material_prop(),
+            extra_prop: selected_obj.get_material_extra_prop(),
         };
-
-        js_update_follow_camera(false);
-        js_update_selected_obj_mat_props(Some(props));
-        js_update_game_status(1); // this is just for redundancy
+        return props;
     }
 
     pub fn deselect_object(&mut self) {

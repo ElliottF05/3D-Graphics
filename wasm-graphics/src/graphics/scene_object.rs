@@ -1,3 +1,5 @@
+use rand::seq::index;
+
 use crate::{console_error, utils::math::Vec3};
 
 use super::{lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{hittable::{self, Hittable, Sphere}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}}};
@@ -120,7 +122,7 @@ impl SceneObject {
     pub fn new_metal_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
         return SceneObject::new_glossy_mat(fuzz);
     }
-    pub fn new_glass_mat(alpha: f32) -> (PhongProperties, Box<dyn Material>) {
+    pub fn new_glass_mat(alpha: f32, index_of_refrac: f32) -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new(
             alpha, 
             0.5, 
@@ -130,7 +132,7 @@ impl SceneObject {
             false,
             true
         );
-        let mat = Dielectric::new(1.5);
+        let mat = Dielectric::new(index_of_refrac);
         return (phong, Box::new(mat));
     }
     pub fn new_light_mat() -> (PhongProperties, Box<dyn Material>) {
@@ -182,11 +184,16 @@ impl SceneObject {
         for h in self.hittables.iter_mut() {
             h.set_color(color);
         }
+        for l in self.lights.iter_mut() {
+            l.color = color;
+        }
     }
 
     pub fn is_light(&self) -> bool {
         return !self.lights.is_empty();
     }
+
+    // Used for interactions with JS
     /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ERROR = 5
     pub fn get_material_number(&self) -> u32 {
         if self.hittables.is_empty() {
@@ -194,6 +201,45 @@ impl SceneObject {
             return 5;
         }
         return self.hittables[0].get_material().get_material_number();
+    }
+    pub fn get_material_extra_prop(&self) -> f32 {
+        match self.get_material_number() {
+            1 => 0.0,
+            2 => self.hittables[0].get_material().get_material_prop(),
+            3 => self.hittables[0].get_material().get_material_prop(),
+            4 => self.lights[0].color.max_component(),
+            _ => {
+                console_error!("SceneObject::get_material_extra_prop() called with invalid type");
+                return -1.0;
+            }
+        }
+    }
+    pub fn set_material_properties(&mut self, mat_type: u32, extra_prop: f32) {
+        let unified_mat = match mat_type {
+            1 => SceneObject::new_diffuse_mat(),
+            2 => SceneObject::new_metal_mat(extra_prop),
+            3 => SceneObject::new_glass_mat(0.5, extra_prop),
+            4 => SceneObject::new_light_mat(),
+            _ => {
+                console_error!("SceneObject::set_material_properties() called with invalid type");
+                return;
+            }
+        };
+
+        for h in self.hittables.iter_mut() {
+            // h.set_material_type(mat_type);
+            h.set_material(unified_mat.1.clone());
+        }
+        if self.get_material_number() == 4 {
+            for l in self.lights.iter_mut() {
+                l.color *= extra_prop;
+            }
+            for h in self.hittables.iter_mut() {
+                h.set_color(h.get_color() * extra_prop);
+            }
+        }
+        self.mesh.properties = unified_mat.0;
+        self.mesh.properties.is_light = mat_type == 4;
     }
 }
 

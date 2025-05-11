@@ -219,6 +219,10 @@ impl Vec3 {
             self.z.max(other.z)
         )
     }
+    #[inline(always)]
+    pub fn max_component(self) -> f32 {
+        return self.x.max(self.y).max(self.z);
+    }
 
     #[inline(always)]
     pub fn reflect(self, normal: Vec3) -> Vec3 {
