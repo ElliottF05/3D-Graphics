@@ -1,13 +1,16 @@
 import React from 'react';
 import MainCanvas from './MainCanvas';
 import SceneControlPanel from './SceneControlPanel/SceneControlPanel';
+import { GameProvider } from '@/gameContext';
 
 const App = () => {
     return (
         <div className="flex flex-row h-screen w-screen overflow-hidden bg-background text-foreground">
             {/* Sidebar */}
             <div className="w-[250px] flex-shrink-0 border-r border-border bg-card h-full">
-                <SceneControlPanel />
+                <GameProvider>
+                    <SceneControlPanel />
+                </GameProvider>
             </div>
 
             {/* Main Canvas Area */}

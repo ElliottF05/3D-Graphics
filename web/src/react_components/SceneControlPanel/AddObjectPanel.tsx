@@ -32,10 +32,9 @@ const wasmAddCustomObject = (file: File) => {
 };
 
 interface AddObjectPanelProps {
-    onObjectAdded: () => void; // Callback to notify parent to open EditPanel
 }
 
-const AddObjectPanel: React.FC<AddObjectPanelProps> = ({ onObjectAdded }) => {
+const AddObjectPanel: React.FC<AddObjectPanelProps> = () => {
     const [objectType, setObjectType] = useState<ObjectType>('Sphere');
     // Sphere state
     const [radius, setRadius] = useState<number>(1.0);
@@ -69,7 +68,7 @@ const AddObjectPanel: React.FC<AddObjectPanelProps> = ({ onObjectAdded }) => {
         }
 
         if (objectAddedSuccessfully) {
-            onObjectAdded(); // Notify parent to open EditPanel and its sections
+            // TODO: fix this
         }
     };
 
