@@ -70,18 +70,13 @@ pub fn clamp_color(color: Vec3) -> Vec3 {
     )
 }
 pub fn shift_color(color: Vec3) -> Vec3 {
-    let mut clamped_color = clamp_color(color);
-    clamped_color += Vec3::new(0.5, 0.5, 0.5);
-    if clamped_color.x > 1.0 {
-        clamped_color.x -= 1.0;
+    let clamped_color = clamp_color(color);
+    let mut avg_color = (clamped_color.x + clamped_color.y + clamped_color.z) / 3.0;
+    avg_color += 0.5;
+    if avg_color > 1.0 {
+        avg_color -= 1.0;
     }
-    if clamped_color.y > 1.0 {
-        clamped_color.y -= 1.0;
-    }
-    if clamped_color.z > 1.0 {
-        clamped_color.z -= 1.0;
-    }
-    clamped_color
+    return Vec3::new(avg_color, avg_color, avg_color);
 }
 
 pub fn gamma_correct_color(color: &Vec3) -> Vec3 {

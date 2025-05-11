@@ -293,6 +293,55 @@ impl Game {
         }
     }
 
+    pub fn add_sphere(&mut self, radius: f32) {
+        if let GameStatus::Rasterizing(_) = self.status {
+            let mut new_sphere = SceneObject::new_sphere(
+                Vec3::new(0.0, 0.0, 0.0),
+                radius,
+                Vec3::new(0.7, 0.7, 0.7),
+                3,
+                SceneObject::new_diffuse_mat(),
+            );
+
+            if let Some((_, looking_at_pos)) = self.looking_at {
+                new_sphere.translate_to(looking_at_pos);
+            } else {
+                let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * new_sphere.mesh.radius);
+                self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                new_sphere.translate_to(looking_at_pos);
+            }
+
+            self.scene_objects.borrow_mut().push(new_sphere);
+            self.bvh = None; // invalidate bvh if obj is added
+        } else {
+            console_error!("Game::add_sphere() called but not in Rasterizing state");
+        }
+    }
+
+    pub fn add_box(&mut self, x: f32, y: f32, z: f32) {
+        if let GameStatus::Rasterizing(_) = self.status {
+            let mut new_box = SceneObject::new_box_from_side_lengths(
+                Vec3::new(0.0, 0.0, 0.0),
+                x, y, z,
+                Vec3::new(0.7, 0.7, 0.7),
+                SceneObject::new_diffuse_mat(),
+            );
+
+            if let Some((_, looking_at_pos)) = self.looking_at {
+                new_box.translate_to(looking_at_pos);
+            } else {
+                let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * new_box.mesh.radius);
+                self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                new_box.translate_to(looking_at_pos);
+            }
+
+            self.scene_objects.borrow_mut().push(new_box);
+            self.bvh = None; // invalidate bvh if obj is added
+        } else {
+            console_error!("Game::add_sphere() called but not in Rasterizing state");
+        }
+    }
+
     fn process_js_ui_commands(&mut self) { // Takes &mut self
         // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
         // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub

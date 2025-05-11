@@ -153,6 +153,18 @@ pub fn scale_selected_obj(scale_factor: f32) {
         game_instance.borrow_mut().scale_selected_obj(scale_factor);
     });
 }
+#[wasm_bindgen]
+pub fn add_sphere(radius: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().add_sphere(radius);
+    });
+}
+#[wasm_bindgen]
+pub fn add_box(x: f32, y: f32, z: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().add_box(x, y, z);
+    });
+}
 
 pub enum GameCommand {
     SetMaterialColor { r: f32, g: f32, b: f32 },
