@@ -12,6 +12,7 @@ export interface IWasmToJsBridge {
      */
     updateGameStatus: (newStatus: number) => void;
     updateFollowCamera: (follow: boolean) => void;
+    updateFov: (fov: number) => void;
 }
 
 /**
@@ -27,6 +28,9 @@ class WasmToJsBridge implements IWasmToJsBridge {
     };
     public updateFollowCamera: (follow: boolean) => void = (follow) => {
         console.warn("WasmToJsBridge.updateFollowCamera called before React context initialized it.", follow);
+    };
+    public updateFov: (fov: number) => void = (fov) => {
+        console.warn("WasmToJsBridge.updateFov called before React context initialized it.", fov);
     };
 
     // Implement other methods with default warnings

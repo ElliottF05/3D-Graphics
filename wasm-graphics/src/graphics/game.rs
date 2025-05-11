@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}};
 
 use web_sys::console;
 
-use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
+use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -147,6 +147,9 @@ impl Game {
         
         // game.bvh = Some(BVHNode::new(rt_objects));
 
+        // Update JS initial states where needed
+        js_update_fov(radians_to_degrees(game.camera.get_fov()));
+
         return game;
     }
 
@@ -205,6 +208,12 @@ impl Game {
             GameStatus::Paused => 0, // TODO: check this
         };
         js_update_game_status(game_status_number);
+    }
+
+    pub fn set_fov(&mut self, fov: f32) {
+        self.camera.set_fov(fov);
+        let fov_degrees = radians_to_degrees(fov);
+        js_update_fov(fov_degrees);
     }
 
     pub fn enter_edit_mode(&mut self) {

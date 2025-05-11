@@ -7,6 +7,7 @@ interface IGameContext {
     selectedObjMatProps: wasm.MaterialProperties | null | undefined; 
     gameStatus: GameStatus;
     followCamera: boolean;
+    fov: number; 
     // Add other shared states here, e.g., selectedObjectProperties, rayTraceProgress
 
     // Actions callable from React components (which might then call WASM)
@@ -32,6 +33,7 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const [selectedObjMatProps, setSelectedObjMatProps] = useState<wasm.MaterialProperties | null | undefined>(null);
     const [gameStatus, setGameStatus] = useState<GameStatus>('Rasterizing');
     const [followCamera, setFollowCamera] = useState<boolean>(false);
+    const [fov, setFov] = useState<number>(90); // Default FOV, adjust as needed
 
     // Setup the WASM to JS bridge implementations
     useEffect(() => {
@@ -64,6 +66,10 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
                 console.log("GameProvider: Bridge updating follow camera status", follow);
                 setFollowCamera(follow);
             },
+            updateFov: (fov) => {
+                console.log("GameProvider: Bridge updating FOV", fov);
+                setFov(fov);
+            },
             // Implement other bridge functions here to update context state
         };
 
@@ -76,44 +82,11 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         // };
     }, []); // Empty dependency array: setup bridge once on mount
 
-    // Actions callable from UI components
-    const enterEditMode = useCallback(() => {
-        // wasm.enter_edit_mode(); // Call your WASM function
-        console.log("Context: Requesting WASM to enter edit mode");
-        // WASM should then call myAppWasmBridge.updateGameMode("Editing")
-        // and myAppWasmBridge.updateObjectSelectionStatus(false)
-        // For now, we can simulate the mode change if WASM isn't calling back yet
-        // setAppMode('Editing');
-        // setIsObjectSelected(false);
-        // Call actual WASM function here:
-        // wasm.enter_edit_mode(); // This function in wasm.rs should set game state
-                                // and then call js_update_game_mode("Editing")
-                                // and js_update_object_selection_status(false)
-    }, []);
-
-    const exitEditModeAndConfirm = useCallback(() => {
-        // wasm.confirm_edits_and_exit_mode(); // Call your WASM function
-        console.log("Context: Requesting WASM to confirm edits and exit edit mode");
-        // WASM should then call myAppWasmBridge.updateGameMode("Normal")
-        // and potentially update other states.
-        // For now, simulate:
-        // setAppMode('Normal');
-        // setIsObjectSelected(false); // Usually after confirming, nothing is selected
-        // wasm.confirm_edits(); // This is your existing function
-        // wasm.exit_edit_mode(); // You'll need a new WASM function for this
-    }, []);
-
-    const enterRayTraceMode = useCallback(() => {
-        // wasm.enter_ray_trace_mode(); // Call your WASM function
-        console.log("Context: Requesting WASM to enter ray trace mode");
-        // setAppMode('RayTracing');
-    }, []);
-
-
     const value: IGameContext = {
         selectedObjMatProps,
         gameStatus,
         followCamera,
+        fov,
     };
 
     return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

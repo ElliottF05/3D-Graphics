@@ -12,6 +12,7 @@ use web_sys::MouseEvent;
 use web_sys::{CanvasRenderingContext2d, HtmlCanvasElement, Window};
 
 use crate::graphics::game::Game;
+use crate::utils::math::radians_to_degrees;
 use crate::utils::math::Vec3;
 use crate::utils::utils::color_to_u32;
 use crate::utils::utils::color_to_u8;
@@ -89,6 +90,9 @@ extern "C" {
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateFollowCamera)]
     pub fn js_update_follow_camera(follow_cursor: bool);
 
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateFov)]
+    pub fn js_update_fov(fov: f32);
+
 }
 
 // EXPOSING RUST FUNCTIONS TO JS
@@ -163,6 +167,12 @@ pub fn add_sphere(radius: f32) {
 pub fn add_box(x: f32, y: f32, z: f32) {
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().add_box(x, y, z);
+    });
+}
+#[wasm_bindgen]
+pub fn set_fov(fov: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().set_fov(fov);
     });
 }
 

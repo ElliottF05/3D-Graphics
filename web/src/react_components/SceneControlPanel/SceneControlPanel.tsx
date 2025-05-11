@@ -15,14 +15,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 import { useGameContext } from "@/gameContext";
 
-// --- Mock WASM Interaction ---
-
-// --- End Mock WASM Interaction ---
 
 
 const SceneControlPanel: React.FC = () => {
@@ -30,7 +29,8 @@ const SceneControlPanel: React.FC = () => {
     const {
         selectedObjMatProps,
         gameStatus,
-        followCamera
+        followCamera,
+        fov,
     } = useGameContext();
 
     // state to control which accordion items are open
@@ -57,9 +57,16 @@ const SceneControlPanel: React.FC = () => {
         wasm.stop_ray_tracing();
     };
 
+    const handleFovChange = (value: number[]) => {
+        const newFov = value[0];
+        console.log(`Context: Setting FOV to ${newFov} via WASM`);
+
+        const fov_radians = (newFov * Math.PI) / 180; // Convert degrees to radians
+        wasm.set_fov(fov_radians); 
+    };
+
     const inEditMode = gameStatus === 'Editing';
     const inRayTracingMode = gameStatus === 'RayTracing';
-    const inNormalMode = !inEditMode && !inRayTracingMode;
 
     const showAddObjectTrigger = gameStatus === 'Editing';
     const canEditSelectedObject = gameStatus === 'Editing' && selectedObjMatProps;
@@ -90,6 +97,25 @@ const SceneControlPanel: React.FC = () => {
                 <CardDescription>Manage and edit your 3D scene.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pb-20">
+
+                {/* FOV Slider */}
+                <div className="space-y-2 pt-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="fov-slider" className="text-sm font-medium">Field of View</Label>
+                        {/* Display FOV from context, provide a fallback if fov might be undefined initially */}
+                        <span className="text-sm text-muted-foreground">{(fov ?? 90).toFixed(0)}°</span>
+                    </div>
+                    <Slider
+                        id="fov-slider"
+                        min={20}
+                        max={120}
+                        step={1}
+                        // Use fov from context, provide a fallback for initial render if needed
+                        value={[fov ?? 90]} 
+                        onValueChange={handleFovChange}
+                        className="w-full"
+                    />
+                </div>
 
                 {/* Top Level Mode Buttons */}
                 <div className="grid grid-cols-2 gap-2 mb-4">
