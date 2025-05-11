@@ -123,59 +123,17 @@ pub fn set_selected_object_material_properties(props: MaterialProperties) {
         game_instance.borrow_mut().set_selected_object_material_properties(props);
     });
 }
-
-// #[wasm_bindgen]
-// #[derive(Debug, Clone)]
-// pub struct MaterialProperties {
-//     pub mat_is_editable: bool,
-//     pub r: f32,
-//     pub g: f32,
-//     pub b: f32,
-//     pub material_type: u32,
-//     pub extra_prop: f32,
-// }
-
-// #[wasm_bindgen]
-// pub fn get_selected_material_properties() -> Option<MaterialProperties> { // Changed return type
-//     GAME_INSTANCE.with(|game_instance| {
-//         if let Some(selected_index) = game_instance.borrow().selected_index {
-//             let game_instance_ref = game_instance.borrow();
-//             let scene_objects_ref = game_instance_ref.scene_objects.borrow();
-//             let scene_obj = &scene_objects_ref[selected_index];
-//             let color = scene_obj.mesh.colors[0];
-//             let material = scene_obj.hittables[0].get_material();
-//             let material_type = scene_obj.get_material_number();
-//             let extra_prop = material.get_material_prop();
-//             Some(MaterialProperties {
-//                 mat_is_editable: scene_obj.mat_is_editable,
-//                 r: color.x,
-//                 g: color.y,
-//                 b: color.z,
-//                 material_type,
-//                 extra_prop,
-//             })
-//         } else {
-//             console_warn!("get_selected_material_properties() called when no object is selected"); // Optional: JS will see null
-//             None
-//         }
-//     })
-// }
-
 #[wasm_bindgen]
-pub fn set_material_color(r: f32, g: f32, b: f32) {
-    UI_COMMAND_QUEUE.with(|queue_cell| {
-        queue_cell.borrow_mut().push(GameCommand::SetMaterialColor { r, g, b });
+pub fn enter_ray_tracing_mode() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().enter_ray_tracing_mode();
     });
 }
-
 #[wasm_bindgen]
-pub fn confirm_edits() {
-    console_log!("In WASM: Confirming edits");
+pub fn stop_ray_tracing() {
     GAME_INSTANCE.with(|game_instance| {
-        game_instance.borrow_mut().extract_lights_from_scene_objects();
-        game_instance.borrow_mut().recalculate_shadow_maps();
-        game_instance.borrow_mut().bvh = None;
-    })
+        game_instance.borrow_mut().stop_ray_tracing();
+    });
 }
 
 pub enum GameCommand {

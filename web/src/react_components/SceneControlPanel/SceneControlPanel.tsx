@@ -9,6 +9,12 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
@@ -43,9 +49,18 @@ const SceneControlPanel: React.FC = () => {
 
     const handleEnterRayTraceMode = () => {
         console.log("Context: Requesting WASM to enter ray trace mode");
+        wasm.enter_ray_tracing_mode();
+    };
+
+    const handleStopRayTracing = () => {
+        console.log("Context: Requesting WASM to stop ray tracing");
+        wasm.stop_ray_tracing();
     };
 
     const inEditMode = gameStatus === 'Editing';
+    const inRayTracingMode = gameStatus === 'RayTracing';
+    const inNormalMode = !inEditMode && !inRayTracingMode;
+
     const showAddObjectTrigger = gameStatus === 'Editing';
     const canEditSelectedObject = gameStatus === 'Editing' && selectedObjMatProps;
 
@@ -77,32 +92,64 @@ const SceneControlPanel: React.FC = () => {
             <CardContent className="space-y-6 pb-20">
 
                 {/* Top Level Mode Buttons */}
-                <div className="flex mb-4 gap-2">
-                    <Button
-                        onClick={handleEnterEditMode}
-                        disabled={gameStatus === 'Editing'}
-                        hidden={gameStatus === 'Editing'}
-                        className="flex-1 min-w-0 whitespace-normal break-words h-14"
-                    >
-                        Enter Edit Mode
-                    </Button>
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                    {/* Enter Edit Mode / Exit Edit Mode Button Slot */}
+                    {inEditMode ? (
+                        <Button
+                            onClick={handleExitEditMode}
+                            className="w-full whitespace-normal break-words h-14"
+                        >
+                            Exit Edit Mode
+                        </Button>
+                    ) : (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="w-full"> {/* Wrapper for TooltipTrigger when button is disabled */}
+                                    <Button
+                                        onClick={handleEnterEditMode}
+                                        disabled={inRayTracingMode}
+                                        className="w-full whitespace-normal break-words h-14"
+                                    >
+                                        Enter Edit Mode
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+                            {inRayTracingMode && (
+                                <TooltipContent>
+                                    <p>Stop ray tracing to enter edit mode.</p>
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    )}
 
-                    <Button
-                        onClick={handleExitEditMode}
-                        disabled={gameStatus !== 'Editing'}
-                        hidden={gameStatus !== 'Editing'}
-                        className="flex-1 min-w-0 whitespace-normal break-words h-14"
-                    >
-                        Exit Edit Mode
-                    </Button>
-
-                    <Button
-                        onClick={handleEnterRayTraceMode}
-                        disabled={gameStatus === 'RayTracing'}
-                        className="flex-1 min-w-0 whitespace-normal break-words h-14"
-                    >
-                        Ray Trace
-                    </Button>
+                    {/* Ray Trace / Stop Ray Tracing Button Slot */}
+                    {inRayTracingMode ? (
+                        <Button
+                            onClick={handleStopRayTracing}
+                            className="w-full whitespace-normal break-words h-14"
+                        >
+                            Stop Ray Tracing
+                        </Button>
+                    ) : (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                    <div className="w-full"> {/* Wrapper for TooltipTrigger when button is disabled */}
+                                    <Button
+                                        onClick={handleEnterRayTraceMode}
+                                        disabled={inEditMode}
+                                        className="w-full whitespace-normal break-words h-14"
+                                    >
+                                        Ray Trace
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+                            {inEditMode && (
+                                <TooltipContent>
+                                    <p>Exit edit mode to ray trace.</p>
+                                </TooltipContent>
+                            )}
+                        </Tooltip>
+                    )}
                 </div>
 
                 <Accordion

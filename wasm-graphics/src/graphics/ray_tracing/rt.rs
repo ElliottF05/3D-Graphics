@@ -86,8 +86,7 @@ impl Game {
             console_log!("No RT objects in the scene, can't raytrace!");
             return;
         }
-
-        self.status = GameStatus::RayTracing;
+        
         console_log!("Rendering ray tracing");
 
         let start_time = get_time();
