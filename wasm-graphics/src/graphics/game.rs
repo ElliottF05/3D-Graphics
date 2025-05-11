@@ -211,6 +211,23 @@ impl Game {
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }));
     }
 
+    pub fn enter_ray_tracing_mode(&mut self) {
+        js_update_game_status(2);
+        self.rt_row = 0;
+        self.rt_start_time = get_time();
+        self.status = GameStatus::RayTracing;
+    }
+
+    pub fn stop_ray_tracing(&mut self) {
+        if self.status != GameStatus::RayTracing && self.status != GameStatus::Paused {
+            console_error!("Game::stop_ray_tracing() called but not in RayTracing or Paused state");
+            return;
+        }
+        self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
+        self.rt_row = 0;
+        js_update_game_status(0);
+    }
+
     pub fn exit_edit_mode(&mut self) {
         self.extract_lights_from_scene_objects();
         self.recalculate_shadow_maps();
@@ -279,8 +296,9 @@ impl Game {
             }
         }
         if self.keys_pressed_last_frame.contains("r") {
-            self.status = GameStatus::RayTracing;
-            self.rt_start_time = get_time();
+            // self.status = GameStatus::RayTracing;
+            // self.rt_start_time = get_time();
+            self.enter_ray_tracing_mode();
         }
 
         self.keys_pressed_last_frame.clear();
