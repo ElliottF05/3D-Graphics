@@ -4,7 +4,7 @@ use web_sys::console;
 
 use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameStatus {
@@ -44,7 +44,8 @@ pub struct Game {
     pub rt_row: usize,
 
     // ray-tracing variables
-    pub bvh: Option<BVHNode>,
+    // pub bvh: Option<BVHNode>,
+    pub bvh: Option<FlattenedBVH>,
     rt_lights: Vec<Box<dyn Hittable>>,
     pub ray_samples: usize,
     pub ray_max_depth: usize,
@@ -101,10 +102,10 @@ impl Game {
             // testing
         };
 
-        // game.create_rt_test_scene_spheres();
+        game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
-        game.create_rt_test_scene_cornell_metal();
+        // game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -985,6 +986,7 @@ impl Game {
             .iter()
             .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
             .collect();
-        self.bvh = Some(BVHNode::new(rt_objects));
+        // self.bvh = Some(BVHNode::new(rt_objects));
+        self.bvh = Some(FlattenedBVH::new(rt_objects));
     }
 }
