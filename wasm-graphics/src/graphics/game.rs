@@ -262,6 +262,27 @@ impl Game {
         }
     }
 
+    pub fn translate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
+        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
+            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let offset = Vec3::new(x,y,z);
+            selected_obj.translate_by(offset);
+            self.bvh = None; // invalidate bvh if obj is changed
+        } else {
+            console_error!("Game::translate_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
+        }
+    }
+
+    pub fn rotate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
+        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
+            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            selected_obj.rotate_around_center(z, y);
+            self.bvh = None; // invalidate bvh if obj is changed
+        } else {
+            console_error!("Game::rotate_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
+        }
+    }
+
     fn process_js_ui_commands(&mut self) { // Takes &mut self
         // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
         // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub
@@ -432,18 +453,18 @@ impl Game {
 
         let mut d_theta_z = 0.0;
         let mut d_theta_y = 0.0;
-        if self.keys_currently_pressed.contains("ArrowLeft") {
-            d_theta_z += KEY_ROTATE_SPEED;
-        }
-        if self.keys_currently_pressed.contains("ArrowRight") {
-            d_theta_z -= KEY_ROTATE_SPEED;
-        }
-        if self.keys_currently_pressed.contains("ArrowUp") {
-            d_theta_y += KEY_ROTATE_SPEED;
-        }
-        if self.keys_currently_pressed.contains("ArrowDown") {
-            d_theta_y -= KEY_ROTATE_SPEED;
-        }
+        // if self.keys_currently_pressed.contains("ArrowLeft") {
+        //     d_theta_z += KEY_ROTATE_SPEED;
+        // }
+        // if self.keys_currently_pressed.contains("ArrowRight") {
+        //     d_theta_z -= KEY_ROTATE_SPEED;
+        // }
+        // if self.keys_currently_pressed.contains("ArrowUp") {
+        //     d_theta_y += KEY_ROTATE_SPEED;
+        // }
+        // if self.keys_currently_pressed.contains("ArrowDown") {
+        //     d_theta_y -= KEY_ROTATE_SPEED;
+        // }
         d_theta_z -= self.mouse_move.x * ROTATE_SPEED;
         d_theta_y -= self.mouse_move.y * ROTATE_SPEED;
         self.mouse_move = Vec3::new(0.0, 0.0, 0.0);
@@ -466,6 +487,7 @@ impl Game {
                         console_log!("not looking at anything, translating to {:?}", looking_at_pos);
                         selected_obj.translate_to(looking_at_pos);
                     }
+                    self.bvh = None; // invalidate bvh if obj is moved
                 },
                 _ => {} // nowhere to move object otherwise
             }

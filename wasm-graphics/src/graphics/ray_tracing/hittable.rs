@@ -59,79 +59,6 @@ impl Sphere {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Triangle {
-    pub origin: Vec3,
-    pub u: Vec3,
-    pub v: Vec3,
-    pub w: Vec3,
-    pub normal: Vec3,
-    pub d: f32,
-    pub color: Vec3,
-    pub material: Box<dyn Material>,
-    pub bounding_box: AABoundingBox,
-}
-
-impl Triangle {
-    pub fn new_from_directions(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
-        let mut triangle = Triangle {
-            origin,
-            u,
-            v,
-            w: Vec3::zero(),
-            normal: Vec3::zero(),
-            d: 0.0,
-            color,
-            material: material.clone_box(),
-            bounding_box: AABoundingBox::empty(),
-        };
-        triangle.update_geometry();
-        return triangle;
-    }
-
-    /// Sets various geometry members given that origin,u,v is known.
-    /// Finds w, nomral, d, and bounding_box.
-    pub fn update_geometry(&mut self) {
-        let normal_unnormalized = self.u.cross(self.v);
-        let normal_normalized = normal_unnormalized.normalized();
-        let d = normal_normalized.dot(self.origin);
-        let w = normal_unnormalized / normal_unnormalized.len_squared();
-
-        let min = self.origin.min_elementwise(self.origin + self.u).min_elementwise(self.origin + self.v);
-        let max = self.origin.max_elementwise(self.origin + self.u).max_elementwise(self.origin + self.v);
-        let mut bounding_box = AABoundingBox::new_from_sorted(min, max);
-        bounding_box.pad_to_minimums();
-
-        self.w = w;
-        self.normal = normal_normalized;
-        self.d = d;
-        self.bounding_box = bounding_box;
-    }
-    pub fn new_from_vertices(v1: Vec3, v2: Vec3, v3: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
-        let u = v3 - v1;
-        let v = v2 - v1;
-        return Triangle::new_from_directions(v1, u, v, color, material);
-    }
-    pub fn new_quad(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> (Triangle, Triangle) {
-        let t1 = Triangle::new_from_directions(origin, u, v, color, material);
-        let t2 = Triangle::new_from_directions(origin+u+v, -u, -v, color, material);
-        return (t1, t2);
-    }
-
-    #[inline(always)]
-    fn intersection_is_interior(alpha: f32, beta: f32) -> bool {
-        return alpha > 0.0 && beta > 0.0 && alpha + beta < 1.0;
-    }
-
-    pub fn to_mesh(&self, properties: PhongProperties) -> Mesh {
-        let vertices = vec![self.origin, self.origin + self.v, self.origin + self.u];
-        let indices = vec![0, 1, 2];
-        let colors = vec![self.color];
-        return Mesh::new(vertices, indices, colors, properties);
-    }
-    
-}
-
 impl Hittable for Sphere {
     #[inline(always)]
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
@@ -219,6 +146,83 @@ impl Hittable for Sphere {
     }
 }
 
+
+#[derive(Clone, Debug)]
+pub struct Triangle {
+    pub origin: Vec3,
+    pub u: Vec3,
+    pub v: Vec3,
+    pub w: Vec3,
+    pub normal: Vec3,
+    pub d: f32,
+    pub color: Vec3,
+    pub material: Box<dyn Material>,
+    pub bounding_box: AABoundingBox,
+}
+
+impl Triangle {
+    pub fn new_from_directions(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
+        let mut triangle = Triangle {
+            origin,
+            u,
+            v,
+            w: Vec3::zero(),
+            normal: Vec3::zero(),
+            d: 0.0,
+            color,
+            material: material.clone_box(),
+            bounding_box: AABoundingBox::empty(),
+        };
+        triangle.update_geometry();
+        return triangle;
+    }
+
+    /// Sets various geometry members given that origin,u,v is known.
+    /// Finds w, nomral, d, and bounding_box.
+    pub fn update_geometry(&mut self) {
+        let normal_unnormalized = self.u.cross(self.v);
+        let normal_normalized = normal_unnormalized.normalized();
+        let d = normal_normalized.dot(self.origin);
+        let w = normal_unnormalized / normal_unnormalized.len_squared();
+
+        self.update_bounding_box();
+
+        self.w = w;
+        self.normal = normal_normalized;
+        self.d = d;
+    }
+    pub fn update_bounding_box(&mut self) {
+        let min = self.origin.min_elementwise(self.origin + self.u).min_elementwise(self.origin + self.v);
+        let max = self.origin.max_elementwise(self.origin + self.u).max_elementwise(self.origin + self.v);
+        let mut bounding_box = AABoundingBox::new_from_sorted(min, max);
+        bounding_box.pad_to_minimums();
+        self.bounding_box = bounding_box;
+    }
+    pub fn new_from_vertices(v1: Vec3, v2: Vec3, v3: Vec3, color: Vec3, material: &dyn Material) -> Triangle {
+        let u = v3 - v1;
+        let v = v2 - v1;
+        return Triangle::new_from_directions(v1, u, v, color, material);
+    }
+    pub fn new_quad(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, material: &dyn Material) -> (Triangle, Triangle) {
+        let t1 = Triangle::new_from_directions(origin, u, v, color, material);
+        let t2 = Triangle::new_from_directions(origin+u+v, -u, -v, color, material);
+        return (t1, t2);
+    }
+
+    #[inline(always)]
+    fn intersection_is_interior(alpha: f32, beta: f32) -> bool {
+        return alpha > 0.0 && beta > 0.0 && alpha + beta < 1.0;
+    }
+
+    pub fn to_mesh(&self, properties: PhongProperties) -> Mesh {
+        let vertices = vec![self.origin, self.origin + self.v, self.origin + self.u];
+        let indices = vec![0, 1, 2];
+        let colors = vec![self.color];
+        return Mesh::new(vertices, indices, colors, properties);
+    }
+    
+}
+
 impl Hittable for Triangle {
     #[inline(always)]
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
@@ -292,8 +296,9 @@ impl Hittable for Triangle {
     }
     fn translate_by(&mut self, offset: Vec3) {
         self.origin += offset;
-        self.u += offset;
-        self.v += offset;
+        self.update_geometry();
+        // self.bounding_box.max += offset;
+        // self.bounding_box.min += offset;
     }
     fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
         let (sin_z, cos_z) = theta_z.sin_cos();
@@ -314,16 +319,13 @@ impl Hittable for Triangle {
     }
     fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
         self.origin -= center_of_scale;
-        self.u -= center_of_scale;
-        self.v -= center_of_scale;
-
         self.origin *= scale_factor;
+        self.origin += center_of_scale;
+        
         self.u *= scale_factor;
         self.v *= scale_factor;
 
-        self.origin += center_of_scale;
-        self.u += center_of_scale;
-        self.v += center_of_scale;
+        self.update_geometry();
     }
 
     fn clone_box(&self) -> Box<dyn Hittable> {

@@ -135,6 +135,24 @@ pub fn stop_ray_tracing() {
         game_instance.borrow_mut().stop_ray_tracing();
     });
 }
+#[wasm_bindgen]
+pub fn translate_selected_obj(x: f32, y: f32, z: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().translate_selected_obj(x, y, z);
+    });
+}
+#[wasm_bindgen]
+pub fn rotate_selected_obj(x: f32, y: f32, z: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().rotate_selected_obj(x, y, z);
+    });
+}
+// #[wasm_bindgen]
+// pub fn scale_selected_obj(scale_factor: f32) {
+//     GAME_INSTANCE.with(|game_instance| {
+//         game_instance.borrow_mut().scale_selected_object(scale_factor);
+//     });
+// }
 
 pub enum GameCommand {
     SetMaterialColor { r: f32, g: f32, b: f32 },

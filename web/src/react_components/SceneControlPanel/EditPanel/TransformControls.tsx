@@ -13,27 +13,6 @@ import { Switch } from "@/components/ui/switch";
 import { Minus, Plus } from 'lucide-react';
 import { useGameContext } from "@/gameContext";
 
-// Mock WASM function calls (replace with your actual WASM calls)
-const wasmTranslateObject = (axis: 'x' | 'y' | 'z', delta: number) => {
-    console.log(`WASM: Translate object on axis ${axis} by ${delta}`);
-    // Example: Module.ccall('translate_selected_object', null, ['string', 'number'], [axis, delta]);
-};
-
-const wasmRotateObject = (axis: 'x' | 'y' | 'z', delta: number) => {
-    console.log(`WASM: Rotate object on axis ${axis} by ${delta}`);
-    // Example: Module.ccall('rotate_selected_object', null, ['string', 'number'], [axis, delta]);
-};
-
-const wasmScaleObjectUniformly = (delta: number) => {
-    console.log(`WASM: Scale object uniformly by ${delta}`);
-    // Example: Module.ccall('scale_selected_object_uniformly', null, ['number'], [delta]);
-};
-
-const wasmSetSnapToGrid = (enabled: boolean) => {
-    console.log(`WASM: Set snap to grid to ${enabled}`);
-    // Example: Module.ccall('set_snap_to_grid_enabled', null, ['boolean'], [enabled]);
-}
-
 // A small helper to render a row of controls (+/- buttons for an axis)
 const AxisControlRow: React.FC<{
     axisLabel: string;
@@ -85,11 +64,35 @@ const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
 
     // Local event handlers that call WASM functions
     const handleTranslate = (axis: 'x' | 'y' | 'z', direction: 1 | -1) => {
-        wasmTranslateObject(axis, positionIncrement * direction);
+        let x = 0, y = 0, z = 0;
+        switch (axis) {
+            case 'x':
+                x = positionIncrement * direction;
+                break;
+            case 'y':
+                y = positionIncrement * direction;
+                break;
+            case 'z':
+                z = positionIncrement * direction;
+                break;
+        }
+        wasm.translate_selected_obj(x, y, z);
     };
 
     const handleRotate = (axis: 'x' | 'y' | 'z', direction: 1 | -1) => {
-        wasmRotateObject(axis, rotationIncrement * direction);
+        let x = 0, y = 0, z = 0;
+        switch (axis) {
+            case 'x':
+                x = rotationIncrement * direction;
+                break;
+            case 'y':
+                y = rotationIncrement * direction;
+                break;
+            case 'z':
+                z = rotationIncrement * direction;
+                break;
+        }
+        wasm.rotate_selected_obj(x, y, z);
     };
 
     const handleScaleUniformly = (direction: 1 | -1) => {
