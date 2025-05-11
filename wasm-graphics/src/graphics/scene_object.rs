@@ -146,6 +146,9 @@ impl SceneObject {
         for h in self.hittables.iter_mut() {
             h.translate_by(offset);
         }
+        for l in self.lights.iter_mut() {
+            l.camera.pos += offset;
+        }
     }
     pub fn translate_to(&mut self, destination: Vec3) {
         let offset = destination - self.mesh.center;
@@ -160,6 +163,12 @@ impl SceneObject {
         self.mesh.rotate_around(center_of_rotation, theta_z, theta_y);
         for h in self.hittables.iter_mut() {
             h.rotate_around(center_of_rotation, theta_z, theta_y);
+        }
+        for l in self.lights.iter_mut() {
+            l.camera.pos -= center_of_rotation;
+            l.camera.pos.rotate_z(theta_z);
+            l.camera.pos.rotate_y(theta_y);
+            l.camera.pos += center_of_rotation;
         }
     }
     /// Rotates in the z direction first, then y direction
