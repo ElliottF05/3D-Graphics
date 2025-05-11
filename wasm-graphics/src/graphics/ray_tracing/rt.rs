@@ -78,6 +78,12 @@ impl Game {
         //      - this is called a flattened bvh tree
         // 2) Multi-threading (duh)
 
+        // New baseline (after adding MIS, russian roulette, and UI; still same test scene):
+        // 2.59 second avg
+
+        // After adding FlattenedBVH:
+        // 2.398 second avg
+
         if self.bvh.is_none() {
             self.rebuild_bvh();
         }
@@ -86,7 +92,7 @@ impl Game {
             console_log!("No RT objects in the scene, can't raytrace!");
             return;
         }
-        
+
         console_log!("Rendering ray tracing");
 
         let start_time = get_time();
@@ -289,14 +295,14 @@ impl Game {
         return Ray::new(point_on_defocus_disk, ray_dir);
     }
 
-    pub fn create_bvh_from_scene_objs(&mut self) {
-        let hittables = self.scene_objects
-            .borrow()
-            .iter()
-            .flat_map(|o| o.hittables.iter().map(|h| h.clone_box()))
-            .collect();
-        self.bvh = Some(BVHNode::new(hittables));
-    }
+    // pub fn create_bvh_from_scene_objs(&mut self) {
+    //     let hittables = self.scene_objects
+    //         .borrow()
+    //         .iter()
+    //         .flat_map(|o| o.hittables.iter().map(|h| h.clone_box()))
+    //         .collect();
+    //     self.bvh = Some(BVHNode::new(hittables));
+    // }
 
     pub fn create_rt_test_scene_spheres(&mut self) {
 
@@ -391,7 +397,8 @@ impl Game {
         self.focus_dist = 10.0;
 
         // set up bvh
-        self.create_bvh_from_scene_objs();
+        // self.create_bvh_from_scene_objs();
+        self.rebuild_bvh();
     
     }
 
@@ -457,7 +464,8 @@ impl Game {
         let scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), true);
         self.add_scene_object(scene_obj);
 
-        self.create_bvh_from_scene_objs();
+        // self.create_bvh_from_scene_objs();
+        self.rebuild_bvh();
 
         self.camera.set_fov(degrees_to_radians(80.0));
         self.camera.pos = Vec3::new(0.0, 9.0, 0.0);
@@ -511,7 +519,8 @@ impl Game {
         self.extract_lights_from_scene_objects();
         self.recalculate_shadow_maps();
 
-        self.create_bvh_from_scene_objs();
+        // self.create_bvh_from_scene_objs();
+        self.rebuild_bvh();
 
         self.max_sky_color = Vec3::new(0.01, 0.01, 0.01);
         self.min_sky_color = Vec3::zero();
@@ -608,7 +617,8 @@ impl Game {
         self.add_scene_object(right_box);
     
         // RT Hittables
-        self.create_bvh_from_scene_objs();
+        // self.create_bvh_from_scene_objs();
+        self.rebuild_bvh();
     
         // Lights for RT and rasterization
         self.extract_lights_from_scene_objects();
@@ -711,7 +721,8 @@ impl Game {
         self.add_scene_object(right_box);
     
         // RT Hittables
-        self.create_bvh_from_scene_objs();
+        // self.create_bvh_from_scene_objs();
+        self.rebuild_bvh();
     
         // Lights for RT and rasterization
         self.extract_lights_from_scene_objects();

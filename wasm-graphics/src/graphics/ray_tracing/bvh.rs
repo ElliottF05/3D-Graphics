@@ -1,6 +1,10 @@
+use std::usize::MAX;
+
+use web_sys::console;
+
 use crate::{console_log, graphics::mesh::Mesh, utils::{math::Vec3, utils::random_int}};
 
-use super::{hittable::Hittable, material::Material, rt::{HitRecord, Ray}};
+use super::{hittable::{self, Hittable}, material::Material, rt::{HitRecord, Ray}};
 
 /// Axis-Aligned Bounding Box (AABB)
 /// A bounding box defined by two points: the minimum and maximum corners.
@@ -125,7 +129,7 @@ impl AABoundingBox {
         (t_min, t_max) = (t_min.max(t0), t_max.min(t1));
         
 
-        return t_max > t_min;
+        return t_min <= t_max;
 
     }
 }
@@ -215,5 +219,124 @@ impl BVHNode {
             BVHNode::Leaf { bounding_box, .. } => &bounding_box,
             BVHNode::Internal { bounding_box, .. } => &bounding_box
         }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct FlattenedBVH {
+    nodes: Vec<FlattenedBVHNode>,
+    hittables: Vec<Box<dyn Hittable>>,
+}
+
+impl FlattenedBVH {
+    pub fn new(mut hittables: Vec<Box<dyn Hittable>>) -> Self {
+        let mut flattened_bvh = FlattenedBVH {
+            nodes: Vec::with_capacity(2 * hittables.len()),
+            hittables: Vec::with_capacity(hittables.len()),
+        };
+
+        flattened_bvh.build(&mut hittables, 0);
+        flattened_bvh.hittables = hittables;
+        console_log!("flattened bvh built with {} nodes, {} hittables", flattened_bvh.nodes.len(), flattened_bvh.hittables.len());
+        return flattened_bvh;
+    }
+
+    fn build(&mut self, hittables: &mut [Box<dyn Hittable>], base_index: usize) -> usize {
+
+        // empty node
+        if hittables.is_empty() {
+            return MAX;
+        }
+
+        // leaf node
+        if hittables.len() == 1 {
+            let mut bounding_box = hittables[0].get_bounding_box().clone();
+            bounding_box.pad_to_minimums();
+            // self.hittables.push(hittables[0].clone_box());
+            // let idx = self.hittables.len() - 1;
+            let node = FlattenedBVHNode::Leaf { 
+                bounding_box, 
+                hittable_index: base_index
+            };
+            self.nodes.push(node);
+            return self.nodes.len() - 1;
+        }
+
+        // internal node
+        let mut bounding_box = AABoundingBox::empty();
+        for hittable in hittables.iter() {
+            bounding_box = AABoundingBox::from_sub_boxes(&bounding_box, hittable.get_bounding_box());
+        }
+        bounding_box.pad_to_minimums();
+
+        let axis = bounding_box.get_longest_axis();
+        hittables.sort_by(|obj1, obj2| {
+            let c1 = obj1.get_bounding_box().get_center();
+            let c2 = obj2.get_bounding_box().get_center();
+            match axis {
+                0 => (c1.x).partial_cmp(&c2.x).unwrap(),
+                1 => (c1.y).partial_cmp(&c2.y).unwrap(),
+                2 => (c1.z).partial_cmp(&c2.z).unwrap(),
+                _ => unreachable!("invalid axis to sort by"),
+            }
+        });
+        
+        let mid = hittables.len() / 2;
+
+        let (left_vec, right_vec) = hittables.split_at_mut(mid);
+
+        let left_child_index = self.build(left_vec, base_index);
+        let right_child_index = self.build(right_vec, base_index + mid);
+
+        let node = FlattenedBVHNode::Internal { 
+            bounding_box, 
+            left_index: left_child_index, 
+            right_index: right_child_index 
+        };
+        self.nodes.push(node);
+        return self.nodes.len() - 1;
+    }
+
+    // #[inline(always)]
+    pub fn hit<'a>(&'a self, ray: &Ray, t_min: f32, mut t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
+        let mut stack = Vec::with_capacity(64);
+        stack.push(self.nodes.len() - 1); // start with the root node
+        let mut hit_anything = false;
+
+        while let Some(node_index) = stack.pop() {
+            if node_index >= self.nodes.len() {
+                continue;
+            }
+            let node = &self.nodes[node_index];
+            match node {
+                FlattenedBVHNode::Leaf { bounding_box, hittable_index } => {
+                    if self.hittables[*hittable_index].hit(ray, t_min, t_max, hit_record) {
+                        t_max = hit_record.t; // update closest hit so far
+                        hit_anything = true;
+                    }
+                },
+                FlattenedBVHNode::Internal { bounding_box, left_index, right_index } => {
+                    if bounding_box.hit(ray, t_min, t_max) {
+                        stack.push(*left_index);
+                        stack.push(*right_index);
+                    }
+                }
+            }
+        }
+        return hit_anything;
+    }
+}
+
+#[derive(Debug)]
+pub enum FlattenedBVHNode {
+    Leaf {
+        bounding_box: AABoundingBox,
+        hittable_index: usize,
+    },
+    Internal {
+        bounding_box: AABoundingBox,
+        left_index: usize,
+        right_index: usize,
     }
 }
