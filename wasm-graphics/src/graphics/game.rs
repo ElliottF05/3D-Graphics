@@ -283,6 +283,16 @@ impl Game {
         }
     }
 
+    pub fn scale_selected_obj(&mut self, scale_factor: f32) {
+        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
+            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            selected_obj.scale_by(scale_factor);
+            self.bvh = None; // invalidate bvh if obj is changed
+        } else {
+            console_error!("Game::scale_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
+        }
+    }
+
     fn process_js_ui_commands(&mut self) { // Takes &mut self
         // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
         // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub

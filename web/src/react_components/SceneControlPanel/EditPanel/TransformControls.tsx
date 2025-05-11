@@ -96,6 +96,8 @@ const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
     };
 
     const handleScaleUniformly = (direction: 1 | -1) => {
+        const scale = 1.0 + scaleIncrement * direction;
+        wasm.scale_selected_obj(scale);
     };
 
     const handleToggleFollowCursor = (checked: boolean) => {
