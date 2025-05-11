@@ -6,56 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Trash2, CheckCircle2 } from 'lucide-react';
 import TransformControls from './TransformControls';
 import MaterialEditorControls from './MaterialEditorControls';
-
-const wasmDeleteSelectedObject = () => {
-    console.log("JS: wasmDeleteSelectedObject() - Calling wasm backend to delete selected object");
-    wasm.delete_selected_object();
-    wasm.set_follow_cursor(false);
-};
-
-const wasmConfirmObjectEdits = () => {
-    console.log("WASM: Confirming edits for selected object");
-    wasm.confirm_edits();
-};
+import { useGameContext } from "@/gameContext";
 
 interface EditPanelProps {
-    initialOpenSections?: string[];
-    accordionKey?: string;
-    onConfirmEdit: () => void;
-    onDeleteObject: () => void;
-    selectionVersion: number;
 }
 
-const EditPanel: React.FC<EditPanelProps> = ({ 
-    initialOpenSections = ['transform', 'materialEditor'],
-    accordionKey,
-    onConfirmEdit,
-    onDeleteObject,
-    selectionVersion
-}) => {
+const EditPanel: React.FC<EditPanelProps> = ({}) => {
+
+    const {
+        selectedObjMatProps,
+        gameStatus,
+    } = useGameContext();
+
     const handleDeleteClick = () => {
         if (window.confirm("Are you sure you want to delete this object?")) {
-            wasmDeleteSelectedObject();
-            onDeleteObject(); // Notify parent
+            // wasmDeleteSelectedObject();
         }
-    };
-
-    const handleConfirmClick = () => {
-        wasmConfirmObjectEdits();
-        onConfirmEdit(); // Notify parent to close panel and deselect
     };
 
     return (
         <div className="space-y-3">
             <div className="flex w-full gap-2">
-                <Button
-                    variant="default"
-                    className="flex-1 min-w-0 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={handleConfirmClick}
-                >
-                    <CheckCircle2 className="mr-1 h-4 w-4" />
-                    Confirm
-                </Button>
                 <Button
                     variant="destructive"
                     className="flex-1 min-w-0"
@@ -68,12 +39,11 @@ const EditPanel: React.FC<EditPanelProps> = ({
             
             <Accordion 
                 type="multiple" 
-                defaultValue={initialOpenSections} 
+                defaultValue={['transform-controls', 'material-editor']} // Example: open both by default
                 className="w-full"
-                key={accordionKey} // Use the key here
             >
-                <TransformControls selectionVersion={selectionVersion} />
-                <MaterialEditorControls selectionVersion={selectionVersion} />
+                <TransformControls/> 
+                <MaterialEditorControls/>
             </Accordion>
         </div>
     );

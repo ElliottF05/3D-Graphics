@@ -1,19 +1,14 @@
+import * as wasm from '@wasm/wasm_graphics';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { IWasmToJsBridge, wasmToJsBridge } from '@/wasmToJsBridge'; // Adjust path
-
-export type GameStatus = 'Rasterizing' | 'Editing' | 'RayTracing';
+import { IWasmToJsBridge, wasmToJsBridge, GameStatus } from '@/wasmToJsBridge'; // Adjust path
 
 interface IGameContext {
     // State variables
-    isObjectSelected: boolean;
-    selectionVersion: number;
+    selectedObjMatProps: wasm.MaterialProperties | null | undefined; 
     gameStatus: GameStatus;
     // Add other shared states here, e.g., selectedObjectProperties, rayTraceProgress
 
     // Actions callable from React components (which might then call WASM)
-    enterEditMode: () => void;
-    exitEditModeAndConfirm: () => void; // Example: combines UI and WASM calls
-    enterRayTraceMode: () => void;
     // Add more actions as needed
 
 }
@@ -33,31 +28,35 @@ interface GameProviderProps {
 }
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
-    const [isObjectSelected, setIsObjectSelected] = useState<boolean>(false);
-    const [selectionVersion, setSelectionVersion] = useState<number>(0);
+    const [selectedObjMatProps, setSelectedObjMatProps] = useState<wasm.MaterialProperties | null | undefined>(null);
     const [gameStatus, setGameStatus] = useState<GameStatus>('Rasterizing'); // Default mode
 
     // Setup the WASM to JS bridge implementations
     useEffect(() => {
         const bridge: IWasmToJsBridge = {
-            updateObjectSelectionStatus: (isSelected) => {
-                console.log("GameProvider: Bridge updating object selection to", isSelected);
-                setIsObjectSelected(isSelected);
-                if (isSelected) {
-                    setSelectionVersion(prev => prev + 1);
-                } else {
-                    // Optionally, you could also increment version on deselect if some
-                    // components need to react specifically to deselection via version.
-                    // Or reset/clear other dependent states here.
-                }
+            updateSelectedObjMatProps: (props) => {
+                console.log("GameProvider: Bridge updating selected object material properties", props);
+                setSelectedObjMatProps(props);
             },
             updateGameStatus: (newStatus) => {
-                console.log("GameProvider: Bridge updating game status to", newStatus);
-                setGameStatus(newStatus);
-                // If entering edit mode, ensure no object is selected initially in UI
-                if (newStatus === 'Editing') {
-                    setIsObjectSelected(false); 
+                let status: GameStatus;
+                switch (newStatus) {
+                    case 0:
+                        status = 'Rasterizing';
+                        break;
+                    case 1:
+                        status = 'Editing';     
+                        break;
+                    case 2:
+                        status = 'RayTracing';
+                        break;
+                    default:
+                        console.warn("GameProvider: Bridge received unknown game status", newStatus);
+                        status = 'Rasterizing'; // Default fallback 
                 }
+                console.log("GameProvider: Bridge updating game status to", newStatus, status);
+                setGameStatus(status);
+                // TODO: should I also update selectedObjMatProps here?
             },
             // Implement other bridge functions here to update context state
         };
@@ -106,12 +105,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
 
 
     const value: IGameContext = {
-        isObjectSelected,
-        selectionVersion,
+        selectedObjMatProps,
         gameStatus,
-        enterEditMode,
-        exitEditModeAndConfirm,
-        enterRayTraceMode,
     };
 
     return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

@@ -15,54 +15,32 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-
-// Mock WASM function calls
-const wasmSetMaterialColor = (color: string) => {
-    console.log(`JS: Setting material color to ${color}`);
-    const [r, g, b] = hexToFloatColor(color);
-    console.log(`JS: Converted color to RGB: ${r}, ${g}, ${b}`);
-    wasm.set_material_color(r, g, b);
-}
-const wasmSetMaterialType = (materialType: number) => {
-    console.log(`JS: Setting material type to ${materialType}`);
-    // wasm.set_material_type(materialType);
-}
-const wasmSetMaterialIOR = (ior: number) => {
-    console.log(`JS: Setting material IOR to ${ior}`);
-    // wasm.set_material_ior(ior);
-}
-const wasmSetMaterialRoughness = (roughness: number) => {
-    console.log(`JS: Setting material roughness to ${roughness}`);
-    // wasm.set_material_roughness(roughness);
-}
-const wasmSetMaterialBrightness = (brightness: number) => {
-    console.log(`JS: Setting material brightness to ${brightness}`);
-    // wasm.set_material_brightness(brightness);
-}
-
-const wasmGetSelectedObjectMaterial = (): wasm.MaterialProperties | null | undefined => {
-    console.log("JS MaterialEditorControls: Querying WASM for selected object material");
-
-    if (wasm.is_object_selected()) { // You'll need such a function in WASM
-        return wasm.get_selected_material_properties();
-    }
-    return null;
-};
+import { useGameContext } from "@/gameContext";
 
 // Utility functions
 const floatColorToHex = (r: number, g: number, b: number): [string, number] => {
-    // r,g,b given as floats between 0 and 1.
-    // if any are above 1.0, this means the object is a light, so normalize color so max component
-    // is 1.0, and return the brightness as the amount the max component was divided by.
-    // If not light, return 1.0 as brightness.
     const maxComponent = Math.max(r, g, b);
-    const brightness = maxComponent > 1.0 ? maxComponent : 1.0;
-    r /= brightness;
-    g /= brightness;
-    b /= brightness;
-    const hexColor = `#${Math.round(r * 255).toString(16).padStart(2, '0')}${Math.round(g * 255).toString(16).padStart(2, '0')}${Math.round(b * 255).toString(16).padStart(2, '0')}`;
-    return [hexColor, brightness];
-}
+    let brightness = 1.0; // Default brightness
+    let outR = r;
+    let outG = g;
+    let outB = b;
+
+    if (maxComponent > 1.0) {
+        brightness = maxComponent; // This is the "emissive strength" or how much it was over 1.0
+        outR /= brightness; // Normalize color components to be within [0, 1]
+        outG /= brightness;
+        outB /= brightness;
+    }
+    
+    const toHex = (c: number) => Math.round(Math.min(1.0, Math.max(0.0, c)) * 255).toString(16).padStart(2, '0');
+    const hexColor = `#${toHex(outR)}${toHex(outG)}${toHex(outB)}`;
+    
+    // If the original r,g,b were all <= 1.0, brightness here will be 1.0.
+    // If any component was > 1.0, brightness will be that maxComponent value.
+    // This 'brightness' is more like an emission factor if the material is a light.
+    // The actual brightness state for the Light material type might be separate.
+    return [hexColor, brightness]; 
+};
 
 const hexToFloatColor = (hex: string): [number, number, number] => {
     // Convert hex color to float RGB values between 0 and 1
@@ -73,128 +51,156 @@ const hexToFloatColor = (hex: string): [number, number, number] => {
     return [r, g, b];
 }
 
+// WASM interaction functions (these will call actual WASM bindings)
+const wasmSetMaterialColor = (hexColor: string) => {
+    const [r, g, b] = hexToFloatColor(hexColor);
+    console.log(`JS: Setting material color to RGB: ${r}, ${g}, ${b}`);
+    // wasm.set_material_color(r, g, b); // Assumes wasm.set_material_color exists
+};
+const wasmSetMaterialType = (type: number) => {
+    console.log(`JS: Setting material type to ${type}`);
+    // wasm.set_material_type(type); // Assumes wasm.set_material_type exists
+};
+const wasmSetMaterialIOR = (ior: number) => {
+    console.log(`JS: Setting material IOR to ${ior}`);
+    // wasm.set_material_ior(ior); // Assumes wasm.set_material_ior exists
+};
+const wasmSetMaterialRoughness = (roughness: number) => {
+    console.log(`JS: Setting material roughness to ${roughness}`);
+    // wasm.set_material_roughness(roughness); // Assumes wasm.set_material_roughness exists
+};
+const wasmSetMaterialBrightness = (brightness: number) => {
+    console.log(`JS: Setting material brightness to ${brightness}`);
+    // wasm.set_material_brightness(brightness); // Assumes wasm.set_material_brightness exists
+};
+
+
 interface MaterialEditorControlsProps {
-    selectionVersion: number;
+    disabled?: boolean; // to disable from the parent if needed
 }
 
-const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ selectionVersion }) => {
+const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ disabled }) => {
+    const {
+        selectedObjMatProps,
+        gameStatus,
+    } = useGameContext();
 
-    const [matIsEditable, setMatIsEditable] = useState<boolean>(false);
-
-    const [color, setColor] = useState<string>("#FFFFFF");
-    const [materialType, setMaterialType] = useState<number>(0);
+    // local state for UI display, derived from context's selectedObjMatProps
+    const [displayColor, setDisplayColor] = useState<string>("#FFFFFF");
+    const [displayMaterialType, setDisplayMaterialType] = useState<number>(0); // 0: Diffuse, 1: Metal, 2: Glass, 3: Light
+    const [displayIor, setDisplayIor] = useState<number>(1.5); // for Glass
+    const [displayRoughness, setDisplayRoughness] = useState<number>(0.0); // for Metal
+    const [displayBrightness, setDisplayBrightness] = useState<number>(5.0); // for Light material
     
-    // Material-specific properties
-    const [ior, setIor] = useState<number>(1.5); // For Glass
-    const [roughness, setRoughness] = useState<number>(0.0); // For Metal
-    const [brightness, setBrightness] = useState<number>(5.0); // For Light
+    const isActuallyEditable = selectedObjMatProps?.mat_is_editable ?? false;
+    const overallDisabled = disabled || gameStatus !== 'Editing' || !selectedObjMatProps;
 
-    // useEffect to fetch material properties when selectionVersion changes
     useEffect(() => {
-        console.log(`MaterialEditorControls: selectionVersion changed to ${selectionVersion}. Fetching material properties.`);
-        if (selectionVersion > 0) {
-            const materialProps = wasmGetSelectedObjectMaterial();
-            if (materialProps) {
-                let [hexColor, brightness] = floatColorToHex(materialProps.r, materialProps.g, materialProps.b);
-                let materialType = materialProps.material_type;
-                let extraProp = materialProps.extra_prop;
-                setMatIsEditable(materialProps.mat_is_editable);
-                setColor(hexColor);
-                setMaterialType(materialType);
+        if (selectedObjMatProps) {
+            const [hexColor, lightBrightnessFactor] = floatColorToHex(selectedObjMatProps.r, selectedObjMatProps.g, selectedObjMatProps.b);
+            setDisplayColor(hexColor);
+            setDisplayMaterialType(selectedObjMatProps.material_type);
 
-                // Set specific properties based on type, with defaults if not present in props
-                setRoughness(materialType === 1 ? extraProp ?? 0.0 : 0.0);
-                setIor(materialType === 2 ? extraProp ?? 1.5 : 1.5);
-                setBrightness(materialType === 3 ? brightness ?? 5.0 : 5.0);
-            } else {
-                // No properties returned (e.g., no object selected or error), reset to defaults
-                setMatIsEditable(false);
-                setColor("#000000");
-                setMaterialType(0);
-                setIor(1.5);
-                setRoughness(0.0);
-                setBrightness(5.0);
+            // Update specific properties based on material type from WASM
+            switch (selectedObjMatProps.material_type) {
+                case 1: // Metal
+                    setDisplayRoughness(selectedObjMatProps.extra_prop);
+                    break;
+                case 2: // Glass
+                    setDisplayIor(selectedObjMatProps.extra_prop);
+                    break;
+                case 3: // Light
+                    // The `extra_prop` for Light in WASM is its emissive brightness.
+                    // The `lightBrightnessFactor` from floatColorToHex is how much the base color was scaled down if it was >1.
+                    // We should use the `extra_prop` as the source of truth for the Light's brightness slider.
+                    setDisplayBrightness(selectedObjMatProps.extra_prop);
+                    break;
+                default: // Diffuse or other
+                    // Reset non-applicable fields to defaults
+                    setDisplayRoughness(0.0);
+                    setDisplayIor(1.5);
+                    setDisplayBrightness(5.0); // Default brightness if not a light
+                    break;
             }
         } else {
-            // selectionVersion indicates no selection or initial state, reset to defaults
-            setMatIsEditable(false);
-            setColor("#000000");
-            setMaterialType(0);
-            setIor(1.5);
-            setRoughness(0.0);
-            setBrightness(5.0);
+            // No object selected or props unavailable, reset to defaults
+            setDisplayColor("#FFFFFF");
+            setDisplayMaterialType(0);
+            setDisplayIor(1.5);
+            setDisplayRoughness(0.0);
+            setDisplayBrightness(5.0);
         }
-    }, [selectionVersion]); // Dependency array: re-run effect when selectionVersion changes
+    }, [selectedObjMatProps]); // Re-run when selectedObjMatProps changes
 
-    // Handlers for property changes
+
+    // Handlers for property changes - they call WASM
+    // The UI will update reactively when selectedObjMatProps changes via the context
     const handleColorChange = (newColor: string) => {
-        setColor(newColor);
+        if (!isActuallyEditable) return;
+        setDisplayColor(newColor); // Optimistic UI update
         wasmSetMaterialColor(newColor);
     };
 
     const handleMaterialTypeChange = (newType: number) => {
-        setMaterialType(newType);
+        if (!isActuallyEditable) return;
+        setDisplayMaterialType(newType); // Optimistic UI update
         wasmSetMaterialType(newType);
     };
 
     const handleIorChange = (newIor: number) => {
-        if (materialType !== 2 || !matIsEditable) {
-            console.error("IOR change attempted on non-glass material type.");
-        }
-        const clampedIor = Math.max(0.1, Math.min(5.0, newIor));
-        setIor(clampedIor);
+        if (!isActuallyEditable || displayMaterialType !== 2) return;
+        const clampedIor = Math.max(0.1, Math.min(5.0, newIor || 0.1));
+        setDisplayIor(clampedIor); // Optimistic UI update
         wasmSetMaterialIOR(clampedIor);
     };
 
     const handleRoughnessChange = (newRoughness: number) => {
-        if (materialType !== 1 || !matIsEditable) {
-            console.error("Roughness change attempted on non-metal material type.");
-        }
-        const clampedRoughness = Math.max(0.0, Math.min(1.0, newRoughness));
-        setRoughness(clampedRoughness);
+        if (!isActuallyEditable || displayMaterialType !== 1) return;
+        const clampedRoughness = Math.max(0.0, Math.min(1.0, newRoughness || 0.0));
+        setDisplayRoughness(clampedRoughness); // Optimistic UI update
         wasmSetMaterialRoughness(clampedRoughness);
     };
 
     const handleBrightnessChange = (newBrightness: number) => {
-        if (materialType !== 3 || !matIsEditable) {
-            console.error("Brightness change attempted on non-light material type.");
-        }
-        const clampedBrightness = Math.max(0.1, Math.min(100.0, newBrightness));
-        setBrightness(clampedBrightness);
+        if (!isActuallyEditable || displayMaterialType !== 3) return;
+        const clampedBrightness = Math.max(0.1, Math.min(100.0, newBrightness || 0.1));
+        setDisplayBrightness(clampedBrightness); // Optimistic UI update
         wasmSetMaterialBrightness(clampedBrightness);
     };
 
 
+    
     return (
         <AccordionItem value="materialEditor">
-            <AccordionTrigger disabled={!matIsEditable} className={!matIsEditable ? "cursor-not-allowed text-muted-foreground/70" : ""}>
-                Material Editor {!matIsEditable && <span className="text-xs ml-2">(Not Editable)</span>}
+            <AccordionTrigger 
+                disabled={overallDisabled || !isActuallyEditable} 
+                className={(overallDisabled || !isActuallyEditable) ? "cursor-not-allowed text-muted-foreground/70" : ""}
+            >
+                Material Editor {!(isActuallyEditable && !overallDisabled) && <span className="text-xs ml-2">(Not Editable)</span>}
             </AccordionTrigger>
             <AccordionContent className="space-y-4 pt-2">
-                {/* Color Picker and Material Type Dropdown on the same row */}
+                {/* Color Picker */}
                 <div className="flex space-x-4">
-                    {/* Color Picker */}
-                    <div className="flex-1 space-y-1"> {/* Use flex-1 to take up available space */}
+                    <div className="flex-1 space-y-1">
                         <Label htmlFor="material-color" className="text-sm font-medium">Color</Label>
                         <Input
                             id="material-color"
                             type="color"
-                            value={color}
+                            value={displayColor}
                             onChange={(e) => handleColorChange(e.target.value)}
                             className="w-full h-10 p-1"
-                            disabled={!matIsEditable}
+                            disabled={overallDisabled || !isActuallyEditable}
                         />
                     </div>
-
                     {/* Material Type Dropdown */}
-                    <div className="flex-1 space-y-1"> {/* Use flex-1 to take up available space */}
+                    <div className="flex-1 space-y-1">
                         <Label htmlFor="material-type" className="text-sm font-medium">Material Type</Label>
-                        <Select 
-                            value={materialType.toString()} 
-                            onValueChange={(value: string) => {handleMaterialTypeChange(parseInt(value))}}
-                            disabled={!matIsEditable}
+                        <Select
+                            value={displayMaterialType.toString()}
+                            onValueChange={(value: string) => handleMaterialTypeChange(parseInt(value))}
+                            disabled={overallDisabled || !isActuallyEditable}
                         >
-                            <SelectTrigger id="material-type" className="h-10"> {/* Match height of color input */}
+                            <SelectTrigger id="material-type" className="h-10">
                                 <SelectValue placeholder="Select material type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -208,53 +214,36 @@ const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ selecti
                 </div>
 
                 {/* Conditional Inputs based on Material Type */}
-                {materialType === 1 && (
+                {displayMaterialType === 1 && ( // Metal
                     <div className="space-y-1">
                         <Label htmlFor="material-roughness" className="text-xs text-muted-foreground">Roughness</Label>
                         <Input
-                            id="material-roughness"
-                            type="number"
-                            value={roughness}
+                            id="material-roughness" type="number" value={displayRoughness}
                             onChange={(e) => handleRoughnessChange(parseFloat(e.target.value))}
-                            step="0.01"
-                            min="0.0"
-                            max="1.0"
-                            className="w-full h-8 text-xs"
-                            disabled={!matIsEditable || materialType !== 1}
+                            step="0.01" min="0.0" max="1.0" className="w-full h-8 text-xs"
+                            disabled={overallDisabled || !isActuallyEditable}
                         />
                     </div>
                 )}
-
-                {materialType === 2 && (
+                {displayMaterialType === 2 && ( // Glass
                     <div className="space-y-1">
                         <Label htmlFor="material-ior" className="text-xs text-muted-foreground">Index of Refraction (IOR)</Label>
                         <Input
-                            id="material-ior"
-                            type="number"
-                            value={ior}
+                            id="material-ior" type="number" value={displayIor}
                             onChange={(e) => handleIorChange(parseFloat(e.target.value))}
-                            step="0.01"
-                            min="0.1"
-                            max="5.0"
-                            className="w-full h-8 text-xs"
-                            disabled={!matIsEditable || materialType !== 2}
+                            step="0.01" min="0.1" max="5.0" className="w-full h-8 text-xs"
+                            disabled={overallDisabled || !isActuallyEditable}
                         />
                     </div>
                 )}
-
-                {materialType === 3 && (
+                {displayMaterialType === 3 && ( // Light
                     <div className="space-y-1">
                         <Label htmlFor="material-brightness" className="text-xs text-muted-foreground">Brightness</Label>
                         <Input
-                            id="material-brightness"
-                            type="number"
-                            value={brightness}
+                            id="material-brightness" type="number" value={displayBrightness}
                             onChange={(e) => handleBrightnessChange(parseFloat(e.target.value))}
-                            step="0.1"
-                            min="0.1"
-                            max="100.0"
-                            className="w-full h-8 text-xs"
-                            disabled={!matIsEditable || materialType !== 3}
+                            step="0.1" min="0.1" max="100.0" className="w-full h-8 text-xs"
+                            disabled={overallDisabled || !isActuallyEditable}
                         />
                     </div>
                 )}

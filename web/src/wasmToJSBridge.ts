@@ -1,10 +1,16 @@
+import * as wasm from '@wasm/wasm_graphics'
+
 /**
  * Defines the contract for functions that WASM can call on the JavaScript side.
  * These functions will typically update React state (e.g., via a Context).
  */
+export type GameStatus = 'Rasterizing' | 'Editing' | 'RayTracing';
 export interface IWasmToJsBridge {
-    updateObjectSelectionStatus: (isSelected: boolean) => void;
-    updateGameStatus: (newStatus: 'Rasterizing' | 'Editing' | 'RayTracing') => void;
+    updateSelectedObjMatProps: (props: wasm.MaterialProperties | null | undefined) => void;
+    /**
+     * @param newStatus 0 = Rasterizing, 1 = Editing, 2 = RayTracing
+     */
+    updateGameStatus: (newStatus: number) => void;
 }
 
 /**
@@ -12,10 +18,10 @@ export interface IWasmToJsBridge {
  * Its methods will be implemented by our React Context provider to update UI state.
  */
 class WasmToJsBridge implements IWasmToJsBridge {
-    public updateObjectSelectionStatus: (isSelected: boolean) => void = (isSelected) => {
-        console.warn("WasmToJsBridge.updateObjectSelectionStatus called before React context initialized it.", isSelected);
+    public updateSelectedObjMatProps: (props: wasm.MaterialProperties | null | undefined) => void = (props) => {
+        console.warn("WasmToJsBridge.updateSelectedObjMatProps called before React context initialized it.", props);
     };
-    public updateGameStatus: (newStatus: 'Rasterizing' | 'Editing' | 'RayTracing') => void = (newStatus) => {
+    public updateGameStatus: (newStatus: number) => void = (newStatus) => {
         console.warn("WasmToJsBridge.updateGameStatus called before React context initialized it.", newStatus);
     };
 

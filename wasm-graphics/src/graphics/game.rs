@@ -1,17 +1,17 @@
-use std::{cell::RefCell, collections::HashSet, f32::consts::PI};
+use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}};
 
-use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_set_is_object_selected, GameCommand, UI_COMMAND_QUEUE}};
+use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameStatus {
     Rasterizing(RasterStatus),
     RayTracing,
     Paused,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RasterStatus {
     Normal,
     EditMode { selected_index: Option<usize> },
@@ -37,6 +37,7 @@ pub struct Game {
     pub looking_at: Option<(usize, Vec3)>,
     pub selected_index: Option<usize>,
     pub follow_camera: bool,
+    pub enable_lighting: bool,
 
     pub status: GameStatus,
     pub rt_row: usize,
@@ -60,6 +61,7 @@ impl Game {
 
     pub fn new() -> Game {
         let mut game = Game {
+
             scene_objects: RefCell::new(Vec::new()),
             lights: Vec::new(),
 
@@ -79,6 +81,7 @@ impl Game {
             looking_at: None,
             selected_index: None,
             follow_camera: false,
+            enable_lighting: true,
 
             status: GameStatus::Rasterizing(RasterStatus::Normal),
             rt_row: 0,
@@ -180,6 +183,38 @@ impl Game {
         }
     }
 
+    fn set_game_status(&mut self, status: GameStatus) {
+        console_log!("WASM: Game status changed from {:?} to {:?}", self.status, status);
+        self.status = status;
+
+        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: _}) = self.status {
+            self.enable_lighting = false;
+        } else {
+            self.enable_lighting = true;
+        }
+
+        // 0 = Rasterizing, 1 = Editing, 2 = RayTracing
+        let game_status_number = match self.status {
+            GameStatus::Rasterizing(raster_status) => {
+                match raster_status {
+                    RasterStatus::Normal => 0,
+                    RasterStatus::EditMode { selected_index: _} => 1,
+                }
+            },
+            GameStatus::RayTracing => 2,
+            GameStatus::Paused => 0, // TODO: check this
+        };
+        js_update_game_status(game_status_number);
+    }
+
+    pub fn enter_edit_mode(&mut self) {
+        self.set_game_status(GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }));
+    }
+
+    pub fn exit_edit_mode(&mut self) {
+        self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
+    }
+
     fn process_js_ui_commands(&mut self) { // Takes &mut self
         // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
         // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub
@@ -253,16 +288,31 @@ impl Game {
     }
 
     fn select_object(&mut self, index: usize) {
-        console_log!("Selected object with index: {}", index);
+        console_log!("WASM: Selected object with index: {}", index);
         self.selected_index = Some(index);
         self.follow_camera = false;
-        js_set_is_object_selected(true);
+
+        let selected_obj = &self.scene_objects.borrow()[index];
+
+        // notify JS of changes:
+        let props = MaterialProperties {
+            mat_is_editable: selected_obj.mat_is_editable,
+            r: selected_obj.mesh.colors[0].x,
+            g: selected_obj.mesh.colors[0].y,
+            b: selected_obj.mesh.colors[0].z,
+            material_type: selected_obj.get_material_number(),
+            extra_prop: selected_obj.hittables[0].get_material().get_material_prop(),
+        };
+        js_update_selected_obj_mat_props(Some(props));
+        // TODO: update follow_camera in js
     }
 
     pub fn deselect_object(&mut self) {
-        console_log!("Deselected object");
+        console_log!("WASM: Deselected object");
         self.selected_index = None;
-        js_set_is_object_selected(false);
+        
+        // notify JS of changes:
+        js_update_selected_obj_mat_props(None);
     }
 
     pub fn delete_selected_object(&mut self) {
@@ -585,12 +635,14 @@ impl Game {
                             // start as ambient light
                             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
-                            for light in &self.lights {
-                                blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                            if self.enable_lighting {
+                                for light in &self.lights {
+                                    blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                                }
                             }
-                            blended_color.x = blended_color.x.min(1.0);
-                            blended_color.y = blended_color.y.min(1.0);
-                            blended_color.z = blended_color.z.min(1.0);
+                            // blended_color.x = blended_color.x.min(1.0);
+                            // blended_color.y = blended_color.y.min(1.0);
+                            // blended_color.z = blended_color.z.min(1.0);
 
                             if properties.alpha == 1.0 {
                                 self.zbuf.set_depth(x, y, depth);
@@ -665,12 +717,14 @@ impl Game {
                             // start as ambient light
                             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
-                            for light in &self.lights {
-                                blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                            }
-                            blended_color.x = blended_color.x.min(1.0);
-                            blended_color.y = blended_color.y.min(1.0);
-                            blended_color.z = blended_color.z.min(1.0);
+                            if self.enable_lighting {
+                                for light in &self.lights {
+                                    blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                                }
+                            }   
+                            // blended_color.x = blended_color.x.min(1.0);
+                            // blended_color.y = blended_color.y.min(1.0);
+                            // blended_color.z = blended_color.z.min(1.0);
 
                             if properties.alpha == 1.0 {
                                 self.zbuf.set_depth(x, y, depth);

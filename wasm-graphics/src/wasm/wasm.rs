@@ -39,15 +39,46 @@ macro_rules! console_warn {
 
 // EXPOSING JS FUNCTIONS TO RUST
 #[wasm_bindgen]
+#[derive(Debug, Clone)]
+pub struct MaterialProperties {
+    pub mat_is_editable: bool,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub material_type: u32,
+    pub extra_prop: f32,
+}
+
+#[wasm_bindgen]
 extern "C" {
     // This declares the JS function that Rust can call.
     // `js_namespace` points to the object on `window` (or global scope).
     // `js_name` is the actual function name on that object.
-    #[wasm_bindgen(js_namespace = ["wasmBridge"], js_name = jsSetIsObjectSelected)]
-    pub fn js_set_is_object_selected(is_selected: bool);
+    // #[wasm_bindgen(js_namespace = ["wasmBridge"], js_name = jsSetIsObjectSelected)]
+    // pub fn js_set_is_object_selected(is_selected: bool);
+
+    /// 0 = Rasterizing, 1 = Editing, 2 = RayTracing
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateGameStatus)]
+    pub fn js_update_game_status(new_status: u32);
+
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateSelectedObjMatProps)]
+    pub fn js_update_selected_obj_mat_props(selected_object_mat_props: Option<MaterialProperties>);
+
 }
 
 // EXPOSING RUST FUNCTIONS TO JS
+#[wasm_bindgen]
+pub fn enter_edit_mode() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().enter_edit_mode();
+    });
+}
+#[wasm_bindgen]
+pub fn exit_edit_mode() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().exit_edit_mode();
+    });
+}
 #[wasm_bindgen]
 pub fn wasm_deselect_object() {
     GAME_INSTANCE.with(|game_instance| {
@@ -74,42 +105,42 @@ pub fn is_object_selected() -> bool {
     })
 }
 
-#[wasm_bindgen]
-#[derive(Debug, Clone)]
-struct MaterialProperties {
-    pub mat_is_editable: bool,
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub material_type: u32,
-    pub extra_prop: f32,
-}
+// #[wasm_bindgen]
+// #[derive(Debug, Clone)]
+// pub struct MaterialProperties {
+//     pub mat_is_editable: bool,
+//     pub r: f32,
+//     pub g: f32,
+//     pub b: f32,
+//     pub material_type: u32,
+//     pub extra_prop: f32,
+// }
 
-#[wasm_bindgen]
-pub fn get_selected_material_properties() -> Option<MaterialProperties> { // Changed return type
-    GAME_INSTANCE.with(|game_instance| {
-        if let Some(selected_index) = game_instance.borrow().selected_index {
-            let game_instance_ref = game_instance.borrow();
-            let scene_objects_ref = game_instance_ref.scene_objects.borrow();
-            let scene_obj = &scene_objects_ref[selected_index];
-            let color = scene_obj.mesh.colors[0];
-            let material = scene_obj.hittables[0].get_material();
-            let material_type = scene_obj.get_material_number();
-            let extra_prop = material.get_material_prop();
-            Some(MaterialProperties {
-                mat_is_editable: scene_obj.mat_is_editable,
-                r: color.x,
-                g: color.y,
-                b: color.z,
-                material_type,
-                extra_prop,
-            })
-        } else {
-            console_warn!("get_selected_material_properties() called when no object is selected"); // Optional: JS will see null
-            None
-        }
-    })
-}
+// #[wasm_bindgen]
+// pub fn get_selected_material_properties() -> Option<MaterialProperties> { // Changed return type
+//     GAME_INSTANCE.with(|game_instance| {
+//         if let Some(selected_index) = game_instance.borrow().selected_index {
+//             let game_instance_ref = game_instance.borrow();
+//             let scene_objects_ref = game_instance_ref.scene_objects.borrow();
+//             let scene_obj = &scene_objects_ref[selected_index];
+//             let color = scene_obj.mesh.colors[0];
+//             let material = scene_obj.hittables[0].get_material();
+//             let material_type = scene_obj.get_material_number();
+//             let extra_prop = material.get_material_prop();
+//             Some(MaterialProperties {
+//                 mat_is_editable: scene_obj.mat_is_editable,
+//                 r: color.x,
+//                 g: color.y,
+//                 b: color.z,
+//                 material_type,
+//                 extra_prop,
+//             })
+//         } else {
+//             console_warn!("get_selected_material_properties() called when no object is selected"); // Optional: JS will see null
+//             None
+//         }
+//     })
+// }
 
 #[wasm_bindgen]
 pub fn set_material_color(r: f32, g: f32, b: f32) {
