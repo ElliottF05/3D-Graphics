@@ -11,6 +11,7 @@ export interface IWasmToJsBridge {
      * @param newStatus 0 = Rasterizing, 1 = Editing, 2 = RayTracing
      */
     updateGameStatus: (newStatus: number) => void;
+    updateFollowCamera: (follow: boolean) => void;
 }
 
 /**
@@ -23,6 +24,9 @@ class WasmToJsBridge implements IWasmToJsBridge {
     };
     public updateGameStatus: (newStatus: number) => void = (newStatus) => {
         console.warn("WasmToJsBridge.updateGameStatus called before React context initialized it.", newStatus);
+    };
+    public updateFollowCamera: (follow: boolean) => void = (follow) => {
+        console.warn("WasmToJsBridge.updateFollowCamera called before React context initialized it.", follow);
     };
 
     // Implement other methods with default warnings

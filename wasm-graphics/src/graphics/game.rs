@@ -1,6 +1,8 @@
 use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}};
 
-use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
+use web_sys::console;
+
+use crate::{console_error, console_log, console_warn, utils::{math::Vec3, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -35,7 +37,6 @@ pub struct Game {
     pub mouse_clicked_last_frame: bool,
 
     pub looking_at: Option<(usize, Vec3)>,
-    pub selected_index: Option<usize>,
     pub follow_camera: bool,
     pub enable_lighting: bool,
 
@@ -79,7 +80,6 @@ impl Game {
             mouse_clicked_last_frame: false,
 
             looking_at: None,
-            selected_index: None,
             follow_camera: false,
             enable_lighting: true,
 
@@ -215,6 +215,11 @@ impl Game {
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
     }
 
+    pub fn set_follow_camera(&mut self, follow: bool) {
+        self.follow_camera = follow;
+        js_update_follow_camera(follow);
+    }
+
     fn process_js_ui_commands(&mut self) { // Takes &mut self
         // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
         // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub
@@ -235,18 +240,7 @@ impl Game {
     }
 
     fn process_set_material_color(&mut self, r: f32, g: f32, b: f32) {
-        if let Some(selected_index) = self.selected_index {
-            let mut scene_objects_mut = self.scene_objects.borrow_mut();
-            if selected_index < scene_objects_mut.len() {
-                let scene_obj = &mut scene_objects_mut[selected_index];
-                let color_vec = Vec3::new(r, g, b);
-                scene_obj.set_color(color_vec);
-            } else {
-                console_warn!("set_material_color: selected_index out of bounds.");
-            }
-        } else {
-            console_warn!("set_material_color: No object selected.");
-        }
+        unimplemented!();
     }
 
     fn process_all_input(&mut self) {
@@ -273,23 +267,48 @@ impl Game {
     }
 
     fn process_rasterization_input(&mut self) {
+        
+        if let GameStatus::Rasterizing(_) = self.status {
+        } else {
+            console_error!("Game::process_rasterization_input() called but not in Rasterizing state");
+        }
+
         self.process_movement_input();
         if self.mouse_clicked_last_frame {
-            if let Some((looking_at_index, looking_at_pos)) = self.looking_at {
-                if self.selected_index.is_some() && self.selected_index.unwrap() == looking_at_index {
-                    self.deselect_object();
-                } else {
-                    self.select_object(looking_at_index);
+
+            match self.status {
+                GameStatus::Rasterizing(RasterStatus::Normal) => { // if NOT in edit mode
+                    console_warn!("Not in edit mode, so not selecting object")
+                },
+                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(idx) }) => {
+                    if let Some((looking_at_index, _)) = self.looking_at {
+                        if looking_at_index == idx { // if clicked on already-selected object
+                            self.deselect_object();
+                        } else { // if clicked on non-selected object
+                            self.select_object(looking_at_index);
+                        }
+                    } else { // if clicked on nothing
+                        self.deselect_object();
+                    }
+                },
+                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }) => {
+                    if let Some((looking_at_index, _)) = self.looking_at {
+                        self.select_object(looking_at_index);
+                    } else {
+                        console_warn!("Clicked on nothing, and not looking at anything, nothing to do");
+                    }
                 }
-            } else {
-                self.deselect_object();
+                _ => {
+                    console_error!("In process_rasterization_input, got unreachable game status {:?}", self.status);
+                    unreachable!();
+                }
             }
         }
     }
 
     fn select_object(&mut self, index: usize) {
         console_log!("WASM: Selected object with index: {}", index);
-        self.selected_index = Some(index);
+        self.status = GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(index) });
         self.follow_camera = false;
 
         let selected_obj = &self.scene_objects.borrow()[index];
@@ -303,28 +322,40 @@ impl Game {
             material_type: selected_obj.get_material_number(),
             extra_prop: selected_obj.hittables[0].get_material().get_material_prop(),
         };
+
+        js_update_follow_camera(false);
         js_update_selected_obj_mat_props(Some(props));
-        // TODO: update follow_camera in js
+        js_update_game_status(1); // this is just for redundancy
     }
 
     pub fn deselect_object(&mut self) {
         console_log!("WASM: Deselected object");
-        self.selected_index = None;
+        self.status = GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None });
+        self.follow_camera = false;
         
         // notify JS of changes:
+        js_update_follow_camera(false);
         js_update_selected_obj_mat_props(None);
     }
 
     pub fn delete_selected_object(&mut self) {
-        if let Some(selected_index) = self.selected_index {
-            console_log!("Deleting object with index: {}", selected_index);
-            self.scene_objects.borrow_mut().remove(selected_index);
-            self.deselect_object();
-            self.bvh = None; // invalidate bvh if obj is deleted
-            self.extract_lights_from_scene_objects();
-            self.recalculate_shadow_maps();
-        } else {
-            console_error!("Game::delete_selected_object() called but no object is selected");
+        // Only allow deletion if in EditMode and an object is selected
+        match self.status {
+            GameStatus::Rasterizing(RasterStatus::EditMode { selected_index }) => {
+                if let Some(selected_index) = selected_index {
+                    console_log!("Deleting object with index: {}", selected_index);
+                    self.scene_objects.borrow_mut().remove(selected_index);
+                    self.deselect_object();
+                    self.bvh = None; // invalidate bvh if obj is deleted
+                } else {
+                    console_error!("Game::delete_selected_object() called while in edit mode but no object is selected");
+                    return;
+                } 
+            },
+            _ => {
+                console_error!("Game::delete_selected_object() called but not in EditMode");
+                return;
+            }
         }
     }
 
@@ -379,20 +410,20 @@ impl Game {
 
     fn pre_raster_render_logic(&mut self) {
         if self.follow_camera {
-            if let Some(selected_index) = self.selected_index {
-                let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-                let mut looking_at_pos = if let Some(looking_at) = self.looking_at {
-                    console_log!("looking at object, translating to {:?}", looking_at.1);
-                    looking_at.1
-                } else {
-                    let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
-                    self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
-                    console_log!("not looking at anything, translating to {:?}", looking_at_pos);
-                    looking_at_pos
-                };
-                // let cam_to_pos_dir = (looking_at_pos - self.camera.pos).normalized();
-                // looking_at_pos -= cam_to_pos_dir * selected_obj.mesh.radius;
-                selected_obj.translate_to(looking_at_pos);
+            match self.status {
+                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
+                    let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                    if let Some((_, looking_at_pos)) = self.looking_at {
+                        console_log!("looking at object, translating to {:?}", looking_at_pos);
+                        selected_obj.translate_to(looking_at_pos);
+                    } else {
+                        let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
+                        self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                        console_log!("not looking at anything, translating to {:?}", looking_at_pos);
+                        selected_obj.translate_to(looking_at_pos);
+                    }
+                },
+                _ => {} // nowhere to move object otherwise
             }
         }
         self.looking_at = None;
@@ -562,8 +593,8 @@ impl Game {
             std::mem::swap(&mut v1, &mut v2);
         }
 
-        let width = 500.0; // TODO: replace hardcoded values
-        let height = 500.0;
+        let width = self.camera.width as f32;
+        let height = self.camera.height as f32;
 
         // calculate slopes
         let slope1 = (v2.x - v1.x) / (v2.y - v1.y); // slope of line from v1 to v2
@@ -574,10 +605,11 @@ impl Game {
             return;
         }
 
-        let looking_at_selected = if let Some(selected_index) = self.selected_index {
-            selected_index == scene_obj_index
-        } else {
-            false
+        let looking_at_selected = match self.status {
+            GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
+                selected_index == scene_obj_index
+            },
+            _ => false,
         };
 
         // calculate starting and ending x values

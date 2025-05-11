@@ -24,6 +24,7 @@ const SceneControlPanel: React.FC = () => {
     const {
         selectedObjMatProps,
         gameStatus,
+        followCamera
     } = useGameContext();
 
     // state to control which accordion items are open

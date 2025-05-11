@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Minus, Plus } from 'lucide-react';
+import { useGameContext } from "@/gameContext";
 
 // Mock WASM function calls (replace with your actual WASM calls)
 const wasmTranslateObject = (axis: 'x' | 'y' | 'z', delta: number) => {
@@ -71,11 +72,16 @@ interface TransformControlsProps {
 }
 
 const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
+    const {
+        selectedObjMatProps,
+        gameStatus,
+        followCamera,
+    } = useGameContext();
+
     // Local state for increments
     const [positionIncrement, setPositionIncrement] = useState<number>(0.1);
     const [rotationIncrement, setRotationIncrement] = useState<number>(5); // Degrees
     const [scaleIncrement, setScaleIncrement] = useState<number>(0.05);
-    const [followCursorEnabled, setFollowCursorEnabled] = useState<boolean>(false);
 
     // Local event handlers that call WASM functions
     const handleTranslate = (axis: 'x' | 'y' | 'z', direction: 1 | -1) => {
@@ -91,8 +97,7 @@ const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
 
     const handleToggleFollowCursor = (checked: boolean) => {
         console.log("JS: Follow cursor toggled:", checked);
-        setFollowCursorEnabled(checked);
-        wasm.set_follow_cursor(checked);
+        wasm.set_follow_camera(checked);
     }
 
     return (
@@ -108,7 +113,7 @@ const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
                         </Label>
                         <Switch
                             id="follow-cursor-switch"
-                            checked={followCursorEnabled}
+                            checked={followCamera}
                             onCheckedChange={handleToggleFollowCursor}
                         />
                     </div>
@@ -116,19 +121,19 @@ const TransformControls: React.FC<TransformControlsProps> = ({  }) => {
                         axisLabel="X"
                         onDecrement={() => handleTranslate('x', -1)}
                         onIncrement={() => handleTranslate('x', 1)}
-                        disabled={followCursorEnabled} // Pass disabled state
+                        disabled={followCamera} // Pass disabled state
                     />
                     <AxisControlRow
                         axisLabel="Y"
                         onDecrement={() => handleTranslate('y', -1)}
                         onIncrement={() => handleTranslate('y', 1)}
-                        disabled={followCursorEnabled} // Pass disabled state
+                        disabled={followCamera} // Pass disabled state
                     />
                     <AxisControlRow
                         axisLabel="Z"
                         onDecrement={() => handleTranslate('z', -1)}
                         onIncrement={() => handleTranslate('z', 1)}
-                        disabled={followCursorEnabled} // Pass disabled state
+                        disabled={followCamera} // Pass disabled state
                     />
                     <div className="flex items-center justify-between pt-1">
                         <Label htmlFor="pos-increment" className="text-xs text-muted-foreground">Increment</Label>
