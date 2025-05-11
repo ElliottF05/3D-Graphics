@@ -2,7 +2,7 @@ use std::{f32::consts::PI, fmt::Debug};
 
 use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::{math::Vec3, utils::random_float}};
 
-use super::{bvh::AABoundingBox, material::Material, rt::{HitRecord, Ray}};
+use super::{bvh::AABoundingBox, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}, rt::{HitRecord, Ray}};
 
 pub trait Hittable: Debug {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
@@ -13,7 +13,18 @@ pub trait Hittable: Debug {
     fn set_color(&mut self, color: Vec3);
     fn get_bounding_box(&self) -> &AABoundingBox;
     fn get_material(&self) -> &dyn Material;
+    fn get_mut_material(&mut self) -> &mut dyn Material;
     fn set_material(&mut self, material: Box<dyn Material>);
+    /// used ONLY for interaction with JS
+    fn set_material_type(&mut self, mat_type: u32) {
+        self.set_material(match mat_type {
+            0 => Box::new(Lambertian::default()),
+            1 => Box::new(Metal::default()),
+            2 => Box::new(Dielectric::new(1.5)),
+            3 => Box::new(DiffuseLight::default()),
+            _ => panic!("Invalid material type"),
+        });
+    }
     fn translate_by(&mut self, offset: Vec3);
     fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32);
     fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32);
@@ -178,6 +189,9 @@ impl Hittable for Sphere {
     fn get_material(&self) -> &dyn Material {
         return self.material.as_ref();
     }
+    fn get_mut_material(&mut self) -> &mut dyn Material {
+        return self.material.as_mut();
+    }
     fn set_material(&mut self, material: Box<dyn Material>) {
         self.material = material;
     }
@@ -269,6 +283,9 @@ impl Hittable for Triangle {
     }
     fn get_material(&self) -> &dyn Material {
         self.material.as_ref()
+    }
+    fn get_mut_material(&mut self) -> &mut dyn Material {
+        self.material.as_mut()
     }
     fn set_material(&mut self, material: Box<dyn Material>) {
         self.material = material;

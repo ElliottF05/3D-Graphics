@@ -192,11 +192,9 @@ impl BVHNode {
         };
 
     }
-}
 
-impl Hittable for BVHNode {
     #[inline(always)]
-    fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
+    pub fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
         match self {
             BVHNode::Leaf { object, .. } => {
                 return object.hit(ray, t_min, t_max, hit_record)
@@ -212,50 +210,10 @@ impl Hittable for BVHNode {
             }
         }
     }
-    fn sample_random_point(&self) -> Vec3 {
-        console_log!("BVHNode::sample_random_point() should NEVER be called, this is a mistake");
-        return Vec3::zero();
-    }
-    fn get_area(&self) -> f32 {
-        console_log!("BVHNode::get_area() should NEVER be called, this is a mistake");
-        return 1.0;
-    }
-    fn get_normal(&self, p: Vec3) -> Vec3 {
-        console_log!("BVHNode::get_normal() should NEVER be called, this is a mistake");
-        return Vec3::new(1.0, 0.0, 0.0);
-    }
-    fn get_color(&self) -> Vec3 {
-        console_log!("BVHNode::get_color() should NEVER be called, this is a mistake");
-        return Vec3::zero();
-    }
-    fn set_color(&mut self, color: Vec3) {
-        console_log!("BVHNode::set_color() should NEVER be called, this is a mistake");
-    }
     fn get_bounding_box(&self) -> &AABoundingBox {
         match self {
             BVHNode::Leaf { bounding_box, .. } => &bounding_box,
             BVHNode::Internal { bounding_box, .. } => &bounding_box
         }
-    }
-    fn get_material(&self) -> &dyn Material {
-        console_log!("BVHNode::get_material() should NEVER be called, this is a mistake");
-        unreachable!();
-    }
-    fn set_material(&mut self, material: Box<dyn Material>) {
-        console_log!("BVHNode::set_material() should NEVER be called, this is a mistake");
-        unreachable!();
-    }
-    fn translate_by(&mut self, offset: Vec3) {
-        console_log!("BVHNode::translate_by() should NEVER be called, this is a mistake");
-    }
-    fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
-        console_log!("BVHNode::rotate_around() should NEVER be called, this is a mistake");
-    }
-    fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
-        console_log!("BVHNode::scale_around() should NEVER be called, this is a mistake");
-    }
-    fn clone_box(&self) -> Box<dyn Hittable> {
-        console_log!("BVHNode::clone_box() should NEVER be called, this is a mistake");
-        unreachable!();
     }
 }

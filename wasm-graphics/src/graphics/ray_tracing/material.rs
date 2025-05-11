@@ -23,6 +23,7 @@ pub trait Material: Debug + Send + Sync {
     /// 0 = Lambertian, 1 = Metal, 2 = Dielectric, 3 = DiffuseLight
     fn get_material_number(&self) -> u32;
     fn get_material_prop(&self) -> f32;
+    fn set_material_prop(&mut self, prop: f32);
 }
 
 impl Clone for Box<dyn Material> {
@@ -120,10 +121,13 @@ impl Material for Lambertian {
         Box::new(self.clone())
     }
     fn get_material_number(&self) -> u32 {
-        return 0;
+        return 1;
     }
     fn get_material_prop(&self) -> f32 {
         return 0.0;
+    }
+    fn set_material_prop(&mut self, prop: f32) {
+        // do nothing
     }
 }
 
@@ -164,10 +168,13 @@ impl Material for Metal {
         Box::new(self.clone())
     }
     fn get_material_number(&self) -> u32 {
-        return 1;
+        return 2;
     }
     fn get_material_prop(&self) -> f32 {
         return self.fuzz;
+    }
+    fn set_material_prop(&mut self, prop: f32) {
+        self.fuzz = prop;
     }
 }
 
@@ -242,10 +249,13 @@ impl Material for Dielectric {
         Box::new(self.clone())
     }
     fn get_material_number(&self) -> u32 {
-        return 2;
+        return 3;
     }
     fn get_material_prop(&self) -> f32 {
         return self.index_of_refrac;
+    }
+    fn set_material_prop(&mut self, prop: f32) {
+        self.index_of_refrac = prop;
     }
 }
 
@@ -268,10 +278,13 @@ impl Material for DiffuseLight {
         return Box::new(self.clone());
     }
     fn get_material_number(&self) -> u32 {
-        return 3;
+        return 4;
     }
     fn get_material_prop(&self) -> f32 {
         return 0.0;
+    }
+    fn set_material_prop(&mut self, prop: f32) {
+        // do nothing
     }
 }
 
