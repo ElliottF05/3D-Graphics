@@ -4,6 +4,8 @@ use std::rc::Rc;
 use gltf::json::extensions::scene;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use web_sys::console;
+use web_sys::js_sys::Uint8ClampedArray;
 use web_sys::Event;
 use web_sys::EventTarget;
 use web_sys::ImageData;
@@ -77,8 +79,6 @@ extern "C" {
     // This declares the JS function that Rust can call.
     // `js_namespace` points to the object on `window` (or global scope).
     // `js_name` is the actual function name on that object.
-    // #[wasm_bindgen(js_namespace = ["wasmBridge"], js_name = jsSetIsObjectSelected)]
-    // pub fn js_set_is_object_selected(is_selected: bool);
 
     /// 0 = Rasterizing, 1 = Editing, 2 = RayTracing
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateGameStatus)]
@@ -92,6 +92,13 @@ extern "C" {
 
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateFov)]
     pub fn js_update_fov(fov: f32);
+
+    #[wasm_bindgen(js_name = drawWasmPixelsToCanvas)]
+    fn js_draw_wasm_pixels_to_canvas(
+        pixel_data: &[u8], // wasm-bindgen marshals Vec<u8> or &[u8] to Uint8Array
+        width: u32,
+        height: u32,
+    );
 
 }
 
@@ -272,12 +279,20 @@ pub fn init_and_begin_game_loop() {
 
             // draw the pixel buffer onto the canvas only if the game is running
             if true {
-                let pixel_bif = borrowed_game_instance.pixel_buf.get_buf_as_u8();
-                let clamped_buf = wasm_bindgen::Clamped(pixel_bif.as_slice());
-                let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)
-                    .expect("Failed to create ImageData");
-                ctx.put_image_data(&image_data, 0.0, 0.0)
-                    .expect("Failed to put image data on canvas");
+
+                // --- Pre-rayon code ---
+                // let pixel_buf = borrowed_game_instance.pixel_buf.get_buf_as_u8();
+                // let clamped_buf = wasm_bindgen::Clamped(pixel_buf.as_slice());
+                // let image_data = ImageData::new_with_u8_clamped_array(clamped_buf, width)
+                //     .expect("Failed to create ImageData");
+                // ctx.put_image_data(&image_data, 0.0, 0.0)
+                //     .expect("Failed to put image data on canvas");
+                // --- End pre-rayon code ---
+
+                let pixel_buf = borrowed_game_instance.pixel_buf.get_buf_as_u8();
+                js_draw_wasm_pixels_to_canvas(&pixel_buf, width, height);
+                // must call js here since rayon makes wasm memory SharedArrayBuffer
+                // and the JS ImageData constructor requires non-shared buffer
             }
         });
     });

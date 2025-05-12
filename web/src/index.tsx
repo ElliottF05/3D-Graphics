@@ -6,6 +6,12 @@ import App from './react_components/App'
 
 import './index.css'
 
+// Initialize wasm module
+await wasm.default();
+await wasm.initThreadPool(navigator.hardwareConcurrency);
+// Note: defer wasm.init_and_begin_game_loop() to MainCanvas, so 
+// we can ensure the canvas is ready and the context is set up.
+
 // Create a root and render the App component
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -13,16 +19,6 @@ root.render(
         <App />
     </React.StrictMode>
 );
-
-// WASM-JS Bridge
-if (!(window as any).wasmBridge) {
-    (window as any).wasmBridge = {};
-}
-
-(window as any).wasmBridge.jsSetIsObjectSelected = (isSelected: boolean) => {
-    console.warn("WASM tried to update selection, but React component bridge isn't fully set up yet or was unmounted.");
-};
-
 
 // Helper functions to interface with the WebAssembly module
 async function loadGlbModel(url: string) {
@@ -38,12 +34,7 @@ async function loadGlbModel(url: string) {
         console.error("Error loading GLB model:", error);
         return false;
     }
-}
-
-// Initialize and start the game loop
-await wasm.default();
-await wasm.initThreadPool(navigator.hardwareConcurrency);
-wasm.init_and_begin_game_loop();
+};
 
 // loadGltfModelFromBaseUrl("../static/goose_low_poly_gltf/scene");
 // loadGltfModelFromBaseUrl("../static/medieval_fantasy_book/scene");
