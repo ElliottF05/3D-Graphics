@@ -90,10 +90,6 @@ impl Game {
         // 0.720 second avg
 
         if self.bvh.is_none() {
-            self.rebuild_bvh();
-        }
-
-        if self.bvh.is_none() {
             console_log!("No RT objects in the scene, can't raytrace!");
             return;
         }
@@ -101,64 +97,39 @@ impl Game {
         console_log!("Rendering ray tracing");
 
         let start_time = get_time();
-        let start_row = self.rt_row;
+        let samples_per_pixel_per_pass = 1;
 
-        // for y in start_row..self.camera.height {
-        //     for x in 0..self.camera.width {
+        loop {
 
-        //         let mut pixel_color = Vec3::zero();
-        //         for _ in 0..self.ray_samples {
-        //             let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
-        //             // let ray_color = self.ray_trace(ray, self.ray_max_depth);
-        //             let ray_color = self.ray_trace_mis(ray, self.ray_max_depth);
-        //             pixel_color += ray_color;
-        //         }
-        //         pixel_color /= self.ray_samples as f32;
-        //         let gamma_color = gamma_correct_color(&pixel_color);
-        //         self.pixel_buf.set_pixel(x, y, gamma_color);
-        //     }
+            self.ray_samples_accumulated += samples_per_pixel_per_pass;
 
-        //     let curr_time = get_time();
-        //     let elapsed = curr_time - start_time;
-        //     if elapsed >= 1000.0 {
-        //         self.rt_row = y + 1;
-        //         return;
-        //     }
-        // }
+            (0..self.camera.height).into_par_iter().for_each(|y| {
+                let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+                for x in 0..pixel_row.len() {
 
-        (start_row..self.camera.height).into_par_iter().for_each(|y| {
-            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
-            for x in 0..pixel_row.len() {
+                    let mut new_color = Vec3::zero();
+                    for _ in 0..samples_per_pixel_per_pass {
+                        let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
+                        // let ray_color = self.ray_trace(ray, self.ray_max_depth);
+                        let ray_color = self.ray_trace_mis(ray, self.ray_max_depth);
+                        new_color += ray_color;
+                    }
 
-                let mut pixel_color = Vec3::zero();
-                for _ in 0..self.ray_samples {
-                    let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
-                    // let ray_color = self.ray_trace(ray, self.ray_max_depth);
-                    let ray_color = self.ray_trace_mis(ray, self.ray_max_depth);
-                    pixel_color += ray_color;
+                    let existing_color = pixel_row[x];
+                    let updated_color = (
+                        existing_color * (self.ray_samples_accumulated as f32 - samples_per_pixel_per_pass as f32)
+                        + new_color * samples_per_pixel_per_pass as f32)
+                        / self.ray_samples_accumulated as f32;
+
+                    pixel_row[x] = updated_color;
                 }
-                pixel_color /= self.ray_samples as f32;
-                let gamma_color = gamma_correct_color(&pixel_color);
-                // self.pixel_buf.set_pixel(x, y, gamma_color);
-                pixel_row[x] = gamma_color;
+            });
+
+            let curr_time = get_time();
+            if curr_time - start_time > 0.5 {
+                break;
             }
-
-            // let curr_time = get_time();
-            // let elapsed = curr_time - start_time;
-            // if elapsed >= 1000.0 {
-            //     self.rt_row = y + 1;
-            //     return;
-            // }
-        });
-
-        self.rt_row = 0;
-        self.status = GameStatus::Paused;
-
-        let curr_time = get_time();
-        let total_time = curr_time - self.rt_start_time;
-        console_log!("Finished ray tracing in {} seconds", 0.001 * total_time);
-
-        // self.apply_post_processing_effects();
+        }
     }
 
     fn ray_trace(&self, mut ray: Ray, mut depth: usize) -> Vec3 {
@@ -223,7 +194,7 @@ impl Game {
 
             // russian-roulette optimization
             if depth >= self.ray_max_depth - 3 {
-                // skip russian roullete on first bounces
+                // skip russian roulette on first bounces
             } else {
                 // use luminance
                 let lum = 0.2126*throughput.x + 0.7152*throughput.y + 0.0722*throughput.z;

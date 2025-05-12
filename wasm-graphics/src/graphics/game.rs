@@ -42,7 +42,7 @@ pub struct Game {
     pub enable_lighting: bool,
 
     pub status: GameStatus,
-    pub rt_row: usize,
+    pub ray_samples_accumulated: usize,
 
     // ray-tracing variables
     // pub bvh: Option<BVHNode>,
@@ -86,7 +86,7 @@ impl Game {
             enable_lighting: true,
 
             status: GameStatus::Rasterizing(RasterStatus::Normal),
-            rt_row: 0,
+            ray_samples_accumulated: 0,
 
             // ray tracing variables
             bvh: None,
@@ -224,8 +224,12 @@ impl Game {
     pub fn enter_ray_tracing_mode(&mut self) {
         js_update_game_status(2);
         self.status = GameStatus::RayTracing;
-        self.rt_row = 0;
+        self.ray_samples_accumulated = 0;
         self.rt_start_time = get_time();
+
+        if self.bvh.is_none() {
+            self.rebuild_bvh();
+        }
     }
 
     pub fn stop_ray_tracing(&mut self) {
@@ -234,7 +238,7 @@ impl Game {
             return;
         }
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
-        self.rt_row = 0;
+        self.ray_samples_accumulated = 0;
         js_update_game_status(0);
     }
 
@@ -561,14 +565,14 @@ impl Game {
     }
 
     pub fn apply_post_processing_effects(&mut self) {
-        for y in 0..self.pixel_buf.height {
-            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
-            for x in 0..pixel_row.len() {
-                let color = pixel_row[x];
-                let gamma_color = gamma_correct_color(&color);
-                pixel_row[x] = gamma_color;
-            }
-        }
+        // for y in 0..self.pixel_buf.height {
+        //     let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+        //     for x in 0..pixel_row.len() {
+        //         let color = pixel_row[x];
+        //         let gamma_color = gamma_correct_color(&color);
+        //         pixel_row[x] = gamma_color;
+        //     }
+        // }
     }
 
     fn render_frame(&mut self) {
