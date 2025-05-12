@@ -223,9 +223,9 @@ impl Game {
 
     pub fn enter_ray_tracing_mode(&mut self) {
         js_update_game_status(2);
+        self.status = GameStatus::RayTracing;
         self.rt_row = 0;
         self.rt_start_time = get_time();
-        self.status = GameStatus::RayTracing;
     }
 
     pub fn stop_ray_tracing(&mut self) {

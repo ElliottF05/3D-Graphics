@@ -1,4 +1,4 @@
-use std::usize::MAX;
+use std::{cell::RefCell, usize::MAX};
 
 use web_sys::console;
 
@@ -222,6 +222,9 @@ impl BVHNode {
     }
 }
 
+thread_local! {
+    static TRAVERSAL_STACK: RefCell<Vec<usize>> = RefCell::new(Vec::with_capacity(1024));
+}
 
 #[derive(Debug)]
 pub struct FlattenedBVH {
@@ -298,32 +301,39 @@ impl FlattenedBVH {
         return self.nodes.len() - 1;
     }
 
-    // #[inline(always)]
+    #[inline(always)]
     pub fn hit<'a>(&'a self, ray: &Ray, t_min: f32, mut t_max: f32, hit_record: &mut HitRecord<'a>) -> bool {
-        let mut stack = Vec::with_capacity(64);
-        stack.push(self.nodes.len() - 1); // start with the root node
+
         let mut hit_anything = false;
 
-        while let Some(node_index) = stack.pop() {
-            if node_index >= self.nodes.len() {
-                continue;
-            }
-            let node = &self.nodes[node_index];
-            match node {
-                FlattenedBVHNode::Leaf { bounding_box, hittable_index } => {
-                    if self.hittables[*hittable_index].hit(ray, t_min, t_max, hit_record) {
-                        t_max = hit_record.t; // update closest hit so far
-                        hit_anything = true;
-                    }
-                },
-                FlattenedBVHNode::Internal { bounding_box, left_index, right_index } => {
-                    if bounding_box.hit(ray, t_min, t_max) {
-                        stack.push(*left_index);
-                        stack.push(*right_index);
+        TRAVERSAL_STACK.with(|stack_cell| {
+            let mut stack = stack_cell.borrow_mut();
+            stack.clear();
+            stack.push(self.nodes.len() - 1); // start with the root node
+
+            while let Some(node_index) = stack.pop() {
+                if node_index >= self.nodes.len() {
+                    continue;
+                }
+                let node = &self.nodes[node_index];
+                match node {
+                    FlattenedBVHNode::Leaf { bounding_box: _, hittable_index } => {
+                        if self.hittables[*hittable_index].hit(ray, t_min, t_max, hit_record) {
+                            t_max = hit_record.t; // update closest hit so far
+                            hit_anything = true;
+                        }
+                    },
+                    FlattenedBVHNode::Internal { bounding_box, left_index, right_index } => {
+                        if bounding_box.hit(ray, t_min, t_max) {
+                            stack.push(*left_index);
+                            stack.push(*right_index);
+                        }
                     }
                 }
             }
-        }
+
+        });
+
         return hit_anything;
     }
 }

@@ -86,6 +86,9 @@ impl Game {
         // After adding FlattenedBVH:
         // 2.398 second avg
 
+        // After adding Rayon parallelism:
+        // 0.720 second avg
+
         if self.bvh.is_none() {
             self.rebuild_bvh();
         }
