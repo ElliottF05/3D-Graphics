@@ -4,7 +4,7 @@ use crate::{console_log, utils::{math::Vec3}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, mesh::{Mesh, PhongProperties}, scene_object::SceneObject};
 
-#[derive(Clone)]
+
 pub struct Light {
     pub color: Vec3,
     pub min_dist: f32,
@@ -203,28 +203,30 @@ impl Light {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                for x in left..=right {
+                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, color, *properties);
 
-                    let q3 = (x as f32 - x1) / (x2 - x1);
-                    let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                    let depth = 1.0 / inv_depth;
+                // for x in left..=right {
 
-                    let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                    self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                    if world_pos.len_squared() < self.min_dist * self.min_dist {
-                        continue;
-                    }
+                //     let q3 = (x as f32 - x1) / (x2 - x1);
+                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+                //     let depth = 1.0 / inv_depth;
 
-                    if depth < self.zbuf.get_depth(x, y) {
-                        if properties.alpha == 1.0 {
-                            self.zbuf.set_depth(x, y, depth);
-                        } else {
-                            let old_color = self.color_buf.get_pixel(x, y);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
-                            self.color_buf.set_pixel(x, y, new_color);
-                        }
-                    }
-                }
+                //     let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                //     self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                //     if world_pos.len_squared() < self.min_dist * self.min_dist {
+                //         continue;
+                //     }
+
+                //     if depth < self.zbuf.get_depth(x, y) {
+                //         if properties.alpha == 1.0 {
+                //             self.zbuf.set_depth(x, y, depth);
+                //         } else {
+                //             let old_color = self.color_buf.get_pixel(x, y);
+                //             let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
+                //             self.color_buf.set_pixel(x, y, new_color);
+                //         }
+                //     }
+                // }
                 x1 += slope1;
                 x2 += slope2;
             }
@@ -256,31 +258,61 @@ impl Light {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                for x in left..=right {
+                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, color, *properties);
 
-                    let q3 = (x as f32 - x1) / (x2 - x1);
-                    let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                    let depth = 1.0 / inv_depth;
+                // for x in left..=right {
 
-                    let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                    self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                    if world_pos.len_squared() < self.min_dist * self.min_dist {
-                        continue;
-                    }
+                //     let q3 = (x as f32 - x1) / (x2 - x1);
+                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+                //     let depth = 1.0 / inv_depth;
 
-                    if depth < self.zbuf.get_depth(x, y) {
-                        if properties.alpha == 1.0 {
-                            self.zbuf.set_depth(x, y, depth);
-                        } else {
-                            let old_color = self.color_buf.get_pixel(x, y);
-                            // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
-                            let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
-                            self.color_buf.set_pixel(x, y, new_color);
-                        }
-                    }
-                }
+                //     let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                //     self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                //     if world_pos.len_squared() < self.min_dist * self.min_dist {
+                //         continue;
+                //     }
+
+                //     if depth < self.zbuf.get_depth(x, y) {
+                //         if properties.alpha == 1.0 {
+                //             self.zbuf.set_depth(x, y, depth);
+                //         } else {
+                //             let old_color = self.color_buf.get_pixel(x, y);
+                //             // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                //             let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
+                //             self.color_buf.set_pixel(x, y, new_color);
+                //         }
+                //     }
+                // }
                 x1 += slope3;
                 x2 += slope2;
+            }
+        }
+    }
+
+    fn fill_triangle_scanline_row(&self, y: usize, x1: f32, x2: f32, left: usize, right: usize, inv_left_depth: f32, inv_right_depth: f32, color: Vec3, properties: PhongProperties) {
+        let mut zbuf_row = self.zbuf.get_row_guard(y).lock().unwrap();
+        let mut pixel_row = self.color_buf.get_row_guard(y).lock().unwrap();
+        for x in left..=right {
+
+            let q3 = (x as f32 - x1) / (x2 - x1);
+            let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+            let depth = 1.0 / inv_depth;
+
+            let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+            self.camera.vertex_screen_to_camera_space(&mut world_pos);
+            if world_pos.len_squared() < self.min_dist * self.min_dist {
+                continue;
+            }
+
+            if depth < zbuf_row[x] {
+                if properties.alpha == 1.0 {
+                    zbuf_row[x] = depth;
+                } else {
+                    let old_color = pixel_row[x];
+                    // let new_color = (1.0 - properties.alpha) * Vec3::pairwise_mul_new(&properties.color, &old_color);
+                    let new_color = (1.0 - properties.alpha) * (properties.alpha * Vec3::mul_elementwise_of(old_color, color) + (1.0 - properties.alpha) * old_color);
+                    pixel_row[x] = new_color;
+                }
             }
         }
     }
@@ -322,17 +354,34 @@ impl Light {
             return Vec3::new(0.0, 0.0, 0.0);
         }
 
-        for dy in -filter_radius..=filter_radius {
+        // for dy in -filter_radius..=filter_radius {
+        //     for dx in -filter_radius..=filter_radius {
+        //         let sample_x = x + dx;
+        //         let sample_y = y + dy;
+
+        //         if sample_x < 0 || sample_x >= self.zbuf.width as i32 || sample_y < 0 || sample_y >= self.zbuf.height as i32 {
+        //             continue;
+        //         }
+
+        //         shadow_color += self.color_buf.get_pixel(sample_x as usize, sample_y as usize);
+        //         if depth - bias < self.zbuf.get_depth(sample_x as usize, sample_y as usize) {
+        //             proportion_in_light += 1.0;
+        //         }
+        //         samples += 1;
+        //     }
+        // }
+
+        // Only sample horizontally for better concurrency
+        {
+            let zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
+            let pixel_row = self.color_buf.get_row_guard(y as usize).lock().unwrap();
             for dx in -filter_radius..=filter_radius {
                 let sample_x = x + dx;
-                let sample_y = y + dy;
-
-                if sample_x < 0 || sample_x >= self.zbuf.width as i32 || sample_y < 0 || sample_y >= self.zbuf.height as i32 {
+                if sample_x < 0 || sample_x >= self.zbuf.width as i32 {
                     continue;
                 }
-
-                shadow_color += self.color_buf.get_pixel(sample_x as usize, sample_y as usize);
-                if depth - bias < self.zbuf.get_depth(sample_x as usize, sample_y as usize) {
+                shadow_color += pixel_row[sample_x as usize];
+                if depth - bias < zbuf_row[sample_x as usize] {
                     proportion_in_light += 1.0;
                 }
                 samples += 1;
@@ -379,5 +428,18 @@ impl Light {
             }
         }
         return diffuse_light + specular_light;
+    }
+}
+
+impl Clone for Light {
+    fn clone(&self) -> Self {
+        return Light {
+            color: self.color.clone(),
+            min_dist: self.min_dist,
+            max_dist: self.max_dist,
+            zbuf: ZBuffer::new(self.zbuf.width, self.zbuf.height),
+            color_buf: PixelBuf::new(self.color_buf.width, self.color_buf.height),
+            camera: self.camera.clone(),
+        }
     }
 }

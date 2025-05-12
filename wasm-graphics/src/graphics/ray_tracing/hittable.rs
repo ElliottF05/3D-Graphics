@@ -4,7 +4,7 @@ use crate::{console_log, graphics::mesh::{Mesh, PhongProperties}, utils::{math::
 
 use super::{bvh::AABoundingBox, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}, rt::{HitRecord, Ray}};
 
-pub trait Hittable: Debug {
+pub trait Hittable: Debug + Send + Sync {
     fn hit<'a>(&'a self, ray: &Ray, t_min: f32, t_max: f32, hit_record: &mut HitRecord<'a>) -> bool;
     fn sample_random_point(&self) -> Vec3;
     fn get_area(&self) -> f32;

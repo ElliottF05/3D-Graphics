@@ -1,4 +1,6 @@
-use std::{cell::RefCell, f32::consts::PI, fmt::Debug};
+use std::{cell::RefCell, f32::consts::PI, fmt::Debug, sync::RwLock};
+
+use rayon::prelude::*;
 
 use crate::{console_log, graphics::{buffers::{PixelBuf, ZBuffer}, camera::Camera, game::GameStatus, lighting::Light, scene_object::SceneObject}, utils::{math::{degrees_to_radians, Vec3}, utils::{gamma_correct_color, get_time, random_float, random_range, sample_circle, sample_square}}};
 
@@ -98,8 +100,32 @@ impl Game {
         let start_time = get_time();
         let start_row = self.rt_row;
 
-        for y in start_row..self.camera.height {
-            for x in 0..self.camera.width {
+        // for y in start_row..self.camera.height {
+        //     for x in 0..self.camera.width {
+
+        //         let mut pixel_color = Vec3::zero();
+        //         for _ in 0..self.ray_samples {
+        //             let ray = self.get_rand_ray_at_pixel_with_defocus(x, y);
+        //             // let ray_color = self.ray_trace(ray, self.ray_max_depth);
+        //             let ray_color = self.ray_trace_mis(ray, self.ray_max_depth);
+        //             pixel_color += ray_color;
+        //         }
+        //         pixel_color /= self.ray_samples as f32;
+        //         let gamma_color = gamma_correct_color(&pixel_color);
+        //         self.pixel_buf.set_pixel(x, y, gamma_color);
+        //     }
+
+        //     let curr_time = get_time();
+        //     let elapsed = curr_time - start_time;
+        //     if elapsed >= 1000.0 {
+        //         self.rt_row = y + 1;
+        //         return;
+        //     }
+        // }
+
+        (start_row..self.camera.height).into_par_iter().for_each(|y| {
+            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+            for x in 0..pixel_row.len() {
 
                 let mut pixel_color = Vec3::zero();
                 for _ in 0..self.ray_samples {
@@ -110,16 +136,17 @@ impl Game {
                 }
                 pixel_color /= self.ray_samples as f32;
                 let gamma_color = gamma_correct_color(&pixel_color);
-                self.pixel_buf.set_pixel(x, y, gamma_color);
+                // self.pixel_buf.set_pixel(x, y, gamma_color);
+                pixel_row[x] = gamma_color;
             }
 
-            let curr_time = get_time();
-            let elapsed = curr_time - start_time;
-            if elapsed >= 1000.0 {
-                self.rt_row = y + 1;
-                return;
-            }
-        }
+            // let curr_time = get_time();
+            // let elapsed = curr_time - start_time;
+            // if elapsed >= 1000.0 {
+            //     self.rt_row = y + 1;
+            //     return;
+            // }
+        });
 
         self.rt_row = 0;
         self.status = GameStatus::Paused;
@@ -545,7 +572,7 @@ impl Game {
     
         let lambert_mat = SceneObject::new_diffuse_mat();
     
-        self.scene_objects = RefCell::new(vec![
+        self.scene_objects = RwLock::new(vec![
             SceneObject::new_rectangle(
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(0.0, 55.5, 0.0),
@@ -648,7 +675,7 @@ impl Game {
         let lambert_mat = SceneObject::new_diffuse_mat();
         let metal_mat = SceneObject::new_metal_mat(0.0);
     
-        self.scene_objects = RefCell::new(vec![
+        self.scene_objects = RwLock::new(vec![
             SceneObject::new_rectangle(
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(0.0, 55.5, 0.0),
