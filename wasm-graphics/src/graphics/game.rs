@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}};
 
 use web_sys::console;
 
-use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, GameCommand, MaterialProperties, UI_COMMAND_QUEUE}};
+use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -158,7 +158,6 @@ impl Game {
     pub fn game_loop(&mut self) {
 
         // process these no matter the game state
-        self.process_js_ui_commands();
         self.process_all_input();
 
         match self.status {
@@ -350,25 +349,6 @@ impl Game {
         } else {
             console_error!("Game::add_sphere() called but not in Rasterizing state");
         }
-    }
-
-    fn process_js_ui_commands(&mut self) { // Takes &mut self
-        // Access the shared UI_COMMAND_QUEUE (needs to be in scope or use full path)
-        // To access thread_local from another module, you might need to make UI_COMMAND_QUEUE pub
-        // or pass the commands in. For simplicity, let's assume it's accessible.
-        // If not, init_and_begin_game_loop would need to drain it and pass to game.game_loop().
-        // For now, let's assume direct access for clarity of the pattern:
-        UI_COMMAND_QUEUE.with(|queue_cell| { // Adjust path to UI_COMMAND_QUEUE as needed
-            let mut queue = queue_cell.borrow_mut();
-            for command in queue.drain(..) { // drain() consumes the commands
-                match command {
-                    GameCommand::SetMaterialColor { r, g, b } => {
-                        // self.process_set_material_color(r, g, b);
-                    }
-                    // Handle other commands here
-                }
-            }
-        });
     }
 
     fn process_all_input(&mut self) {

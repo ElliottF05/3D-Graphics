@@ -176,16 +176,6 @@ pub fn set_fov(fov: f32) {
     });
 }
 
-pub enum GameCommand {
-    SetMaterialColor { r: f32, g: f32, b: f32 },
-    // Add other commands here as needed, e.g., SetMaterialType, SetIOR, etc.
-}
-
-// COMMAND QUEUE
-thread_local! {
-    pub static UI_COMMAND_QUEUE: RefCell<Vec<GameCommand>> = RefCell::new(Vec::new());
-}
-
 
 // MAIN GAME INSTANCE
 thread_local! {

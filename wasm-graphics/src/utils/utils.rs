@@ -71,7 +71,7 @@ pub fn clamp_color(color: Vec3) -> Vec3 {
 }
 pub fn shift_color(color: Vec3) -> Vec3 {
     let clamped_color = clamp_color(color);
-    let mut avg_color = (clamped_color.x + clamped_color.y + clamped_color.z) / 3.0;
+    let mut avg_color = clamped_color.y;
     avg_color += 0.5;
     if avg_color > 1.0 {
         avg_color -= 1.0;

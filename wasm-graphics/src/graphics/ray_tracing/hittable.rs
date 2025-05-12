@@ -124,6 +124,8 @@ impl Hittable for Sphere {
     }
     fn translate_by(&mut self, offset: Vec3) {
         self.center += offset;
+        let r_vector = self.radius * Vec3::ones();
+        self.bounding_box = AABoundingBox::new_from_sorted(self.center - r_vector, self.center + r_vector);
     }
     fn rotate_around(&mut self, center_of_rotation: Vec3, theta_z: f32, theta_y: f32) {
         self.center -= center_of_rotation;
@@ -132,6 +134,8 @@ impl Hittable for Sphere {
         self.center.rotate_z_fast(sin_z, cos_z);
         self.center.rotate_y_fast(sin_y, cos_y);
         self.center += center_of_rotation;
+        let r_vector = self.radius * Vec3::ones();
+        self.bounding_box = AABoundingBox::new_from_sorted(self.center - r_vector, self.center + r_vector);
     }
     fn scale_around(&mut self, center_of_scale: Vec3, scale_factor: f32) {
         self.center -= center_of_scale;
