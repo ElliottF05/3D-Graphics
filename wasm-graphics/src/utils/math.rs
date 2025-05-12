@@ -2,10 +2,10 @@ use std::{f32::consts::PI, ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign,
 
 use super::utils::random_float;
 
-pub const fn degrees_to_radians(degrees: f32) -> f32 {
+pub fn degrees_to_radians(degrees: f32) -> f32 {
     return degrees * PI / 180.0;
 }
-pub const fn radians_to_degrees(radians: f32) -> f32 {
+pub fn radians_to_degrees(radians: f32) -> f32 {
     return radians * 180.0 / PI;
 }
 
