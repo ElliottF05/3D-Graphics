@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::utils::{math::Vec3, utils::color_to_u8};
+use crate::utils::{math::Vec3, utils::{color_to_u8, gamma_correct_color}};
 
 
 pub struct PixelBuf {
@@ -63,6 +63,22 @@ impl PixelBuf {
             let pixels = row.lock().unwrap();
             for p in pixels.iter() {
                 let (r,g,b) = color_to_u8(p);
+                buf.push(r);
+                buf.push(g);
+                buf.push(b);
+                buf.push(255);
+            }
+        }
+        return buf;
+    }
+
+    pub fn get_gamma_corrected_buf_as_u8(&self) -> Vec<u8> {
+        let mut buf = Vec::with_capacity(self.height * self.width * 4);
+        for row in self.pixel_rows.iter() {
+            let pixels = row.lock().unwrap();
+            for p in pixels.iter() {
+                let gamma_corrected_color = gamma_correct_color(p);
+                let (r,g,b) = color_to_u8(&gamma_corrected_color);
                 buf.push(r);
                 buf.push(g);
                 buf.push(b);

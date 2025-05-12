@@ -289,7 +289,7 @@ pub fn init_and_begin_game_loop() {
                 //     .expect("Failed to put image data on canvas");
                 // --- End pre-rayon code ---
 
-                let pixel_buf = borrowed_game_instance.pixel_buf.get_buf_as_u8();
+                let pixel_buf = borrowed_game_instance.pixel_buf.get_gamma_corrected_buf_as_u8();
                 js_draw_wasm_pixels_to_canvas(&pixel_buf, width, height);
                 // must call js here since rayon makes wasm memory SharedArrayBuffer
                 // and the JS ImageData constructor requires non-shared buffer
