@@ -42,7 +42,7 @@ async function loadGlbModel(url: string) {
 
 // Initialize and start the game loop
 await wasm.default();
-// await wasm.initThreadPool(navigator.hardwareConcurrency);
+await wasm.initThreadPool(navigator.hardwareConcurrency);
 wasm.init_and_begin_game_loop();
 
 // loadGltfModelFromBaseUrl("../static/goose_low_poly_gltf/scene");
