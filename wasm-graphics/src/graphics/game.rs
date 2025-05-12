@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}};
+use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}, sync::RwLock};
 
 use web_sys::console;
 
@@ -19,8 +19,9 @@ pub enum RasterStatus {
     EditMode { selected_index: Option<usize> },
 }
 
+
 pub struct Game {
-    pub scene_objects: RefCell<Vec<SceneObject>>,
+    pub scene_objects: RwLock<Vec<SceneObject>>,
     lights: Vec<Light>,
 
     pub camera: Camera,
@@ -36,7 +37,7 @@ pub struct Game {
     pub mouse_move: Vec3,
     pub mouse_clicked_last_frame: bool,
 
-    pub looking_at: Option<(usize, Vec3)>,
+    pub looking_at: RwLock<Option<(usize, Vec3)>>,
     pub follow_camera: bool,
     pub enable_lighting: bool,
 
@@ -64,7 +65,7 @@ impl Game {
     pub fn new() -> Game {
         let mut game = Game {
 
-            scene_objects: RefCell::new(Vec::new()),
+            scene_objects: RwLock::new(Vec::new()),
             lights: Vec::new(),
 
             camera: Camera::new(Vec3::new(0.001, 0.001, 0.501), 0.001, 0.001, PI/2.0, 500, 500),
@@ -80,7 +81,7 @@ impl Game {
             mouse_move: Vec3::new(0.0, 0.0, 0.0),
             mouse_clicked_last_frame: false,
 
-            looking_at: None,
+            looking_at: RwLock::new(None),
             follow_camera: false,
             enable_lighting: true,
 
@@ -253,7 +254,8 @@ impl Game {
 
             console_log!("WASM: Set selected object material properties with props: {:?}", props);
 
-            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
             let color = Vec3::new(props.r, props.g, props.b);
             let material_type = props.material_type;
             let extra_prop = props.extra_prop;
@@ -273,7 +275,8 @@ impl Game {
 
     pub fn translate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
         if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
             let offset = Vec3::new(x,y,z);
             selected_obj.translate_by(offset);
             self.bvh = None; // invalidate bvh if obj is changed
@@ -284,7 +287,8 @@ impl Game {
 
     pub fn rotate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
         if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
             selected_obj.rotate_around_center(z, y);
             self.bvh = None; // invalidate bvh if obj is changed
         } else {
@@ -294,7 +298,8 @@ impl Game {
 
     pub fn scale_selected_obj(&mut self, scale_factor: f32) {
         if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
             selected_obj.scale_by(scale_factor);
             self.bvh = None; // invalidate bvh if obj is changed
         } else {
@@ -312,7 +317,7 @@ impl Game {
                 SceneObject::new_diffuse_mat(),
             );
 
-            if let Some((_, looking_at_pos)) = self.looking_at {
+            if let Some((_, looking_at_pos)) = *self.looking_at.read().unwrap() {
                 new_sphere.translate_to(looking_at_pos);
             } else {
                 let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * new_sphere.mesh.radius);
@@ -320,7 +325,8 @@ impl Game {
                 new_sphere.translate_to(looking_at_pos);
             }
 
-            self.scene_objects.borrow_mut().push(new_sphere);
+            // self.scene_objects.borrow_mut().push(new_sphere);
+            self.scene_objects.write().unwrap().push(new_sphere);
             self.bvh = None; // invalidate bvh if obj is added
         } else {
             console_error!("Game::add_sphere() called but not in Rasterizing state");
@@ -336,7 +342,7 @@ impl Game {
                 SceneObject::new_diffuse_mat(),
             );
 
-            if let Some((_, looking_at_pos)) = self.looking_at {
+            if let Some((_, looking_at_pos)) = *self.looking_at.read().unwrap() {
                 new_box.translate_to(looking_at_pos);
             } else {
                 let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * new_box.mesh.radius);
@@ -344,7 +350,8 @@ impl Game {
                 new_box.translate_to(looking_at_pos);
             }
 
-            self.scene_objects.borrow_mut().push(new_box);
+            // self.scene_objects.borrow_mut().push(new_box);
+            self.scene_objects.write().unwrap().push(new_box);
             self.bvh = None; // invalidate bvh if obj is added
         } else {
             console_error!("Game::add_sphere() called but not in Rasterizing state");
@@ -390,7 +397,10 @@ impl Game {
                     console_warn!("Not in edit mode, so not selecting object")
                 },
                 GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(idx) }) => {
-                    if let Some((looking_at_index, _)) = self.looking_at {
+                    let looking_at = {
+                        *self.looking_at.read().unwrap()
+                    };
+                    if let Some((looking_at_index, _)) = looking_at {
                         if looking_at_index == idx { // if clicked on already-selected object
                             self.deselect_object();
                         } else { // if clicked on non-selected object
@@ -401,7 +411,10 @@ impl Game {
                     }
                 },
                 GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }) => {
-                    if let Some((looking_at_index, _)) = self.looking_at {
+                    let looking_at = {
+                        *self.looking_at.read().unwrap()
+                    };
+                    if let Some((looking_at_index, _)) = looking_at {
                         self.select_object(looking_at_index);
                     } else {
                         console_warn!("Clicked on nothing, and not looking at anything, nothing to do");
@@ -420,7 +433,8 @@ impl Game {
         self.status = GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(index) });
         self.follow_camera = false;
 
-        let selected_obj = &self.scene_objects.borrow()[index];
+        // let selected_obj = &self.scene_objects.borrow()[index];
+        let selected_obj = &self.scene_objects.read().unwrap()[index];
 
         // notify JS of changes:
         let props = self.parse_selected_obj_mat_props(selected_obj);
@@ -458,7 +472,8 @@ impl Game {
             GameStatus::Rasterizing(RasterStatus::EditMode { selected_index }) => {
                 if let Some(selected_index) = selected_index {
                     console_log!("Deleting object with index: {}", selected_index);
-                    self.scene_objects.borrow_mut().remove(selected_index);
+                    // self.scene_objects.borrow_mut().remove(selected_index);
+                    self.scene_objects.write().unwrap().remove(selected_index);
                     self.deselect_object();
                     self.bvh = None; // invalidate bvh if obj is deleted
                 } else {
@@ -526,8 +541,9 @@ impl Game {
         if self.follow_camera {
             match self.status {
                 GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
-                    let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-                    if let Some((_, looking_at_pos)) = self.looking_at {
+                    // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                    let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                    if let Some((_, looking_at_pos)) = *self.looking_at.read().unwrap(){
                         console_log!("looking at object, translating to {:?}", looking_at_pos);
                         selected_obj.translate_to(looking_at_pos);
                     } else {
@@ -541,15 +557,16 @@ impl Game {
                 _ => {} // nowhere to move object otherwise
             }
         }
-        self.looking_at = None;
+        *self.looking_at.write().unwrap() = None;
     }
 
     pub fn apply_post_processing_effects(&mut self) {
-        for y in 0..self.camera.height {
-            for x in 0..self.camera.width {
-                let color = self.pixel_buf.get_pixel(x, y);
+        for y in 0..self.pixel_buf.height {
+            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+            for x in 0..pixel_row.len() {
+                let color = pixel_row[x];
                 let gamma_color = gamma_correct_color(&color);
-                self.pixel_buf.set_pixel(x, y, gamma_color);
+                pixel_row[x] = gamma_color;
             }
         }
     }
@@ -577,7 +594,8 @@ impl Game {
         // not within the whole scene.;
 
         // self.sort_meshes_by_distance_to_camera();
-        let scene_objects = self.scene_objects.take();
+        // let scene_objects = self.scene_objects.take();
+        let scene_objects = self.scene_objects.read().unwrap();
 
         // opaque objects
         for (scene_obj_index, scene_obj) in scene_objects.iter().enumerate() {
@@ -622,20 +640,20 @@ impl Game {
             }
         }
 
-        self.scene_objects.replace(scene_objects);
+        // self.scene_objects.replace(scene_objects);
 
         let t2 = get_time();
         // console_log!("Frame time: {}", t2 - t1);
     }
 
-    fn render_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+    fn render_triangle(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
         // render triangle from transformed vertices
         let normal = (v3 - v1).cross(v2 - v1).normalized();
         self.camera.three_vertices_world_to_camera_space(&mut v1, &mut v2, &mut v3);
         self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, scene_obj, scene_obj_index);
     }
 
-    fn render_triangle_from_transformed_vertices(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+    fn render_triangle_from_transformed_vertices(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, mut normal: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
 
         // do not render if normal is pointing away from cam - BACK FACE CULLING
         // only applies to opaque objects
@@ -667,7 +685,7 @@ impl Game {
         const NEAR_PLANE: f32 = 0.001;
         if v1.x > 0.0 { // all vertices in view
             self.camera.vertices_camera_to_screen_space(&mut v1, &mut v2, &mut v3);
-            self.fill_triangle(v1, v2, v3, &normal, color, scene_obj, scene_obj_index);
+            self.fill_triangle(v1, v2, v3, normal, color, scene_obj, scene_obj_index);
         } else if v2.x > 0.0 { // 2 vertices in view
             let q = (NEAR_PLANE - v2.x) / (v1.x - v2.x);
             let mut v1_new_1 = v2 + (v1 - v2) * q;
@@ -676,8 +694,8 @@ impl Game {
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new_1, &mut v2, &mut v3);
             self.camera.vertex_camera_to_screen_space(&mut v1_new_2);
-            self.fill_triangle(v1_new_1, v2, v3, &normal, color, scene_obj, scene_obj_index);
-            self.fill_triangle(v1_new_1, v1_new_2, v3, &normal, color, scene_obj, scene_obj_index);
+            self.fill_triangle(v1_new_1, v2, v3, normal, color, scene_obj, scene_obj_index);
+            self.fill_triangle(v1_new_1, v1_new_2, v3, normal, color, scene_obj, scene_obj_index);
         } else if v3.x > 0.0 { // 1 vertex in view
             let q = (NEAR_PLANE - v2.x) / (v3.x - v2.x);
             let mut v2_new = v2 + (v3 - v2) * q;
@@ -685,14 +703,14 @@ impl Game {
             let mut v1_new = v1 + (v3 - v1) * q;
 
             self.camera.vertices_camera_to_screen_space(&mut v1_new, &mut v2_new, &mut v3);
-            self.fill_triangle(v1_new, v2_new, v3, &normal, color, scene_obj, scene_obj_index);
+            self.fill_triangle(v1_new, v2_new, v3, normal, color, scene_obj, scene_obj_index);
         } else { // no vertices in view
             return;
         }
     }
 
 
-    fn fill_triangle(&mut self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: &Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+    fn fill_triangle(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
 
         let properties = &scene_obj.mesh.properties;
@@ -752,57 +770,60 @@ impl Game {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                for x in left..=right {
+                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, top as usize, color, normal, scene_obj, scene_obj_index);
 
-                    let q3 = (x as f32 - x1) / (x2 - x1);
-                    let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                    let depth = 1.0 / inv_depth;
-                    let bias = if properties.alpha == 1.0 {0.0} else {0.01};
+                // for x in left..=right {
 
-                    if depth - bias < self.zbuf.get_depth(x, y) {
+                //     let q3 = (x as f32 - x1) / (x2 - x1);
+                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+                //     let depth = 1.0 / inv_depth;
+                //     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
-                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+                //     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj_index, world_pos));
-                        }
+                //         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                //         self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                //         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                        if looking_at_selected && (x == left || x == right || y == top as usize) {
-                            let edge_color = shift_color(color);
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, edge_color);
-                        } else if properties.is_light {
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, color);
-                        } else {
-                            let sky_color = self.get_sky_color(normal);
+                //         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                //             // self.looking_at = Some((scene_obj_index, world_pos));
+                //             *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
+                //         }
 
-                            // start as ambient light
-                            let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
+                //         if looking_at_selected && (x == left || x == right || y == top as usize) {
+                //             let edge_color = shift_color(color);
+                //             self.zbuf.set_depth(x, y, depth);
+                //             self.pixel_buf.set_pixel(x, y, edge_color);
+                //         } else if properties.is_light {
+                //             self.zbuf.set_depth(x, y, depth);
+                //             self.pixel_buf.set_pixel(x, y, color);
+                //         } else {
+                //             let sky_color = self.get_sky_color(normal);
 
-                            if self.enable_lighting {
-                                for light in &self.lights {
-                                    blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                                }
-                            }
-                            // blended_color.x = blended_color.x.min(1.0);
-                            // blended_color.y = blended_color.y.min(1.0);
-                            // blended_color.z = blended_color.z.min(1.0);
+                //             // start as ambient light
+                //             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
-                            if properties.alpha == 1.0 {
-                                self.zbuf.set_depth(x, y, depth);
-                                self.pixel_buf.set_pixel(x, y, blended_color);
-                            } else {
-                                // alpha blending, don't set depth
-                                let old_color = self.pixel_buf.get_pixel(x, y);
-                                blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                                self.pixel_buf.set_pixel(x, y, blended_color);
-                            }
-                        }
-                    }
-                }
+                //             if self.enable_lighting {
+                //                 for light in &self.lights {
+                //                     blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                //                 }
+                //             }
+                //             // blended_color.x = blended_color.x.min(1.0);
+                //             // blended_color.y = blended_color.y.min(1.0);
+                //             // blended_color.z = blended_color.z.min(1.0);
+
+                //             if properties.alpha == 1.0 {
+                //                 self.zbuf.set_depth(x, y, depth);
+                //                 self.pixel_buf.set_pixel(x, y, blended_color);
+                //             } else {
+                //                 // alpha blending, don't set depth
+                //                 let old_color = self.pixel_buf.get_pixel(x, y);
+                //                 blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                //                 self.pixel_buf.set_pixel(x, y, blended_color);
+                //             }
+                //         }
+                //     }
+                // }
                 x1 += slope1;
                 x2 += slope2;
             }
@@ -834,59 +855,120 @@ impl Game {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                for x in left..=right {
+                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, bottom as usize, color, normal, scene_obj, scene_obj_index);
 
-                    let q3 = (x as f32 - x1) / (x2 - x1);
-                    let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                    let depth = 1.0 / inv_depth;
-                    let bias = if properties.alpha == 1.0 {0.0} else {0.01};
+                // for x in left..=right {
 
-                    if depth - bias < self.zbuf.get_depth(x, y) {
+                //     let q3 = (x as f32 - x1) / (x2 - x1);
+                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+                //     let depth = 1.0 / inv_depth;
+                //     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
 
-                        let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                        self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                        self.camera.vertex_camera_to_world_space(&mut world_pos);
+                //     if depth - bias < self.zbuf.get_depth(x, y) {
 
-                        if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                            self.looking_at = Some((scene_obj_index, world_pos));
-                        }
+                //         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                //         self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                //         self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                        if looking_at_selected && (x == left || x == right || y == bottom as usize) {
-                            let edge_color = shift_color(color);
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, edge_color);
-                        } else if properties.is_light {
-                            self.zbuf.set_depth(x, y, depth);
-                            self.pixel_buf.set_pixel(x, y, color);
-                        } else {
-                            let sky_color = self.get_sky_color(normal);
+                //         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                //             // self.looking_at = Some((scene_obj_index, world_pos));
+                //             *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
+                //         }
 
-                            // start as ambient light
-                            let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
+                //         if looking_at_selected && (x == left || x == right || y == bottom as usize) {
+                //             let edge_color = shift_color(color);
+                //             self.zbuf.set_depth(x, y, depth);
+                //             self.pixel_buf.set_pixel(x, y, edge_color);
+                //         } else if properties.is_light {
+                //             self.zbuf.set_depth(x, y, depth);
+                //             self.pixel_buf.set_pixel(x, y, color);
+                //         } else {
+                //             let sky_color = self.get_sky_color(normal);
 
-                            if self.enable_lighting {
-                                for light in &self.lights {
-                                    blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                                }
-                            }   
-                            // blended_color.x = blended_color.x.min(1.0);
-                            // blended_color.y = blended_color.y.min(1.0);
-                            // blended_color.z = blended_color.z.min(1.0);
+                //             // start as ambient light
+                //             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
-                            if properties.alpha == 1.0 {
-                                self.zbuf.set_depth(x, y, depth);
-                                self.pixel_buf.set_pixel(x, y, blended_color);
-                            } else {
-                                // alpha blending, don't set depth
-                                let old_color = self.pixel_buf.get_pixel(x, y);
-                                blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                                self.pixel_buf.set_pixel(x, y, blended_color);
-                            }
-                        }
-                    }
-                }
+                //             if self.enable_lighting {
+                //                 for light in &self.lights {
+                //                     blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
+                //                 }
+                //             }   
+                //             // blended_color.x = blended_color.x.min(1.0);
+                //             // blended_color.y = blended_color.y.min(1.0);
+                //             // blended_color.z = blended_color.z.min(1.0);
+
+                //             if properties.alpha == 1.0 {
+                //                 self.zbuf.set_depth(x, y, depth);
+                //                 self.pixel_buf.set_pixel(x, y, blended_color);
+                //             } else {
+                //                 // alpha blending, don't set depth
+                //                 let old_color = self.pixel_buf.get_pixel(x, y);
+                //                 blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                //                 self.pixel_buf.set_pixel(x, y, blended_color);
+                //             }
+                //         }
+                //     }
+                // }
                 x1 += slope3;
                 x2 += slope2;
+            }
+        }
+    }
+
+    fn fill_triangle_scanline_row(&self, y: usize, x1: f32, x2: f32, left: usize, right: usize, inv_left_depth: f32, inv_right_depth: f32, looking_at_selected: bool, y_extremity: usize, color: Vec3, normal: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+        let properties = scene_obj.mesh.properties;
+        let mut zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
+        let mut pixel_row = self.pixel_buf.get_row_guard(y as usize).lock().unwrap();
+        for x in left..=right {
+
+            let q3 = (x as f32 - x1) / (x2 - x1);
+            let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+            let depth = 1.0 / inv_depth;
+            let bias = if properties.alpha == 1.0 {0.0} else {0.01};
+
+            if depth - bias < zbuf_row[x] {
+
+                let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                    // self.looking_at = Some((scene_obj_index, world_pos));
+                    *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
+                }
+
+                if looking_at_selected && (x == left || x == right || y == y_extremity) {
+                    let edge_color = shift_color(color);
+                    zbuf_row[x] = depth;
+                    pixel_row[x] = edge_color;
+                } else if properties.is_light {
+                    zbuf_row[x] = depth;
+                    pixel_row[x] = color;
+                } else {
+                    let sky_color = self.get_sky_color(&normal);
+
+                    // start as ambient light
+                    let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
+
+                    if self.enable_lighting {
+                        for light in &self.lights {
+                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, &normal, color, &properties);
+                        }
+                    }   
+                    // blended_color.x = blended_color.x.min(1.0);
+                    // blended_color.y = blended_color.y.min(1.0);
+                    // blended_color.z = blended_color.z.min(1.0);
+
+                    if properties.alpha == 1.0 {
+                        zbuf_row[x] = depth;
+                        pixel_row[x] = blended_color;
+                    } else {
+                        // alpha blending, don't set depth
+                        let old_color = pixel_row[x];
+                        blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                        pixel_row[x] = blended_color;
+                    }
+                }
             }
         }
     }
@@ -896,23 +978,23 @@ impl Game {
         return self.min_sky_color * (1.0 - a) + self.max_sky_color * a;
     }
     pub fn clear_pixel_buf_to_sky(&mut self) {
-        let width = self.pixel_buf.width;
         let height = self.pixel_buf.height;
-        for x in 0..height {
-            for y in 0..width {
+        for y in 0..height {
+            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+            for x in 0..pixel_row.len() {
                 let mut v = Vec3::new(x as f32, y as f32, 1.0);
                 self.camera.vertex_screen_to_world_space(& mut v);
                 v -= self.camera.pos;
                 v.normalize();
                 let sky_color = self.get_sky_color(&v);
-                self.pixel_buf.set_pixel(x, y, sky_color);
+                pixel_row[x] = sky_color;
             }
         }
     }
 
-    pub fn sort_meshes_by_distance_to_camera(&mut self) {
+    pub fn sort_meshes_by_distance_to_camera(&self) {
         let camera_pos = self.camera.pos;
-        self.scene_objects.borrow_mut().sort_by(|a, b| {
+        self.scene_objects.write().unwrap().sort_by(|a, b| {
             let d1 = (a.mesh.center - camera_pos).len_squared();
             let d2 = (b.mesh.center - camera_pos).len_squared();
             return d1.total_cmp(&d2);
@@ -926,7 +1008,8 @@ impl Game {
     }
 
     pub fn add_scene_object(&mut self, scene_obj: SceneObject) {
-        self.scene_objects.borrow_mut().push(scene_obj);
+        // self.scene_objects.borrow_mut().push(scene_obj);
+        self.scene_objects.write().unwrap().push(scene_obj);
     }
 
     pub fn get_lights(&self) -> &Vec<Light> {
@@ -939,13 +1022,15 @@ impl Game {
     pub fn extract_lights_from_scene_objects(&mut self) {
         self.lights = self
             .scene_objects
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .flat_map(|s| s.lights.clone())
             .collect();
         self.rt_lights = self
             .scene_objects
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .filter(|s| s.is_light())
             .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
@@ -955,14 +1040,15 @@ impl Game {
     pub fn recalculate_shadow_maps(&mut self) {
         for light in self.lights.iter_mut() {
             light.clear_shadow_map();
-            light.add_scene_objects_to_shadow_map(&self.scene_objects.borrow());
+            light.add_scene_objects_to_shadow_map(&self.scene_objects.read().unwrap());
         }
     }
 
     pub fn rebuild_bvh(&mut self) {
         let rt_objects = self
             .scene_objects
-            .borrow()
+            .read()
+            .unwrap()
             .iter()
             .flat_map(|s| s.hittables.iter().map(|h| h.clone_box()))
             .collect();

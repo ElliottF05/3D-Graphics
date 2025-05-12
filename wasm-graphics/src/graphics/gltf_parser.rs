@@ -1,7 +1,7 @@
 use gltf::{buffer::{Data, Source}, image, json::extensions::material, mesh::{util::{tex_coords, ReadColors}, Reader}, Gltf, Primitive};
 use ::image::{load_from_memory, GenericImageView};
 use wasm_bindgen::prelude::*;
-use std::{cell::RefCell, f32::consts::PI};
+use std::{cell::RefCell, f32::consts::PI, sync::RwLock};
 use data_url;
 use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm::wasm::GAME_INSTANCE};
 
@@ -9,73 +9,73 @@ use crate::utils::math::Vec3;
 
 use super::{mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Lambertian, Material}}, scene_object::SceneObject};
 
-#[wasm_bindgen]
-pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
-    match decode_gltf_bytes(gltf_bytes, bin_bytes) {
-        Ok((gltf, buffers)) => {
-            match parse_gltf_objects(gltf, &buffers) {
-                Ok(mut meshes) => {
+// #[wasm_bindgen]
+// pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
+//     match decode_gltf_bytes(gltf_bytes, bin_bytes) {
+//         Ok((gltf, buffers)) => {
+//             match parse_gltf_objects(gltf, &buffers) {
+//                 Ok(mut meshes) => {
 
-                    // TODO: remove later, this is for testing
-                    for mesh in meshes.iter_mut() {
-                        for vertex in mesh.vertices.iter_mut() {
-                            // vertex.rotate_z(PI / 2.0);
-                            vertex.rotate_y(-PI / 2.0);
-                            *vertex *= 0.2;
-                            vertex.x += 10.0;
-                            vertex.z += 5.0;
-                        }
-                    }
+//                     // TODO: remove later, this is for testing
+//                     for mesh in meshes.iter_mut() {
+//                         for vertex in mesh.vertices.iter_mut() {
+//                             // vertex.rotate_z(PI / 2.0);
+//                             vertex.rotate_y(-PI / 2.0);
+//                             *vertex *= 0.2;
+//                             vertex.x += 10.0;
+//                             vertex.z += 5.0;
+//                         }
+//                     }
 
-                    let scene_objects: Vec<SceneObject> = meshes
-                        .into_iter()
-                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
-                        .collect();
+//                     let scene_objects: Vec<SceneObject> = meshes
+//                         .into_iter()
+//                         .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
+//                         .collect();
 
-                    GAME_INSTANCE.with(|game_instance| {
-                        let mut g = game_instance.borrow_mut();
-                        g.scene_objects = RefCell::new(scene_objects);
-                    });
-                    true
-                },
-                Err(e) => {
-                    console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
-                    false
-                }
-            }
-        },
-        Err(e) => {
-            console_error!("GLTF parse error on decode_gltf_bytes(): {}", e);
-            false
-        }
-    }
-}
+//                     GAME_INSTANCE.with(|game_instance| {
+//                         let mut g = game_instance.borrow_mut();
+//                         g.scene_objects = RefCell::new(scene_objects);
+//                     });
+//                     true
+//                 },
+//                 Err(e) => {
+//                     console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
+//                     false
+//                 }
+//             }
+//         },
+//         Err(e) => {
+//             console_error!("GLTF parse error on decode_gltf_bytes(): {}", e);
+//             false
+//         }
+//     }
+// }
 
-// First parse just the GLTF structure
-pub fn decode_gltf_bytes(gltf_bytes: &[u8], bin_bytes: &[u8]) 
-    -> Result<(Gltf, Vec<Data>), String> {
+// // First parse just the GLTF structure
+// pub fn decode_gltf_bytes(gltf_bytes: &[u8], bin_bytes: &[u8]) 
+//     -> Result<(Gltf, Vec<Data>), String> {
     
-    // Parse the GLTF structure
-    let gltf = match gltf::Gltf::from_slice(gltf_bytes) {
-        Ok(gltf) => gltf,
-        Err(e) => return Err(format!("Failed to parse GLTF: {}", e)),
-    };
+//     // Parse the GLTF structure
+//     let gltf = match gltf::Gltf::from_slice(gltf_bytes) {
+//         Ok(gltf) => gltf,
+//         Err(e) => return Err(format!("Failed to parse GLTF: {}", e)),
+//     };
 
-    console_log!("buffers().len(): {:?}", gltf.buffers().len());
-    console_log!("buffers(): {:?}", gltf.buffers());
-    console_log!("images().len(): {:?}", gltf.images().len());
-    console_log!("images(): {:?}", gltf.images());
+//     console_log!("buffers().len(): {:?}", gltf.buffers().len());
+//     console_log!("buffers(): {:?}", gltf.buffers());
+//     console_log!("images().len(): {:?}", gltf.images().len());
+//     console_log!("images(): {:?}", gltf.images());
 
-    console_log!("has blob: {:?}", gltf.blob.is_some());
+//     console_log!("has blob: {:?}", gltf.blob.is_some());
     
-    let buffer = match Data::from_source_and_blob(Source::Bin, None, &mut Some(bin_bytes.to_vec())) {
-        Ok(buffer) => buffer,
-        Err(e) => return Err(format!("Failed to create buffer: {}", e)),
-    };
-    let buffers = vec![buffer];
+//     let buffer = match Data::from_source_and_blob(Source::Bin, None, &mut Some(bin_bytes.to_vec())) {
+//         Ok(buffer) => buffer,
+//         Err(e) => return Err(format!("Failed to create buffer: {}", e)),
+//     };
+//     let buffers = vec![buffer];
 
-    return Ok((gltf, buffers));
-}
+//     return Ok((gltf, buffers));
+// }
 
 pub fn parse_gltf_objects(gltf: Gltf, buffers: &[Data]) 
     -> Result<Vec<Mesh>, String> {
@@ -369,7 +369,7 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
 
                     GAME_INSTANCE.with(|game_instance| {
                         let mut g = game_instance.borrow_mut();
-                        g.scene_objects = RefCell::new(scene_objects);
+                        g.scene_objects = RwLock::new(scene_objects);
                     });
                     true
                 },
