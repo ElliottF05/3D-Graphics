@@ -8,7 +8,7 @@
 
 # --- Rayon version ---
 echo "Building WASM with Rayon support..."
-RUSTFLAGS='-C debuginfo=2 --cfg getrandom_backend="wasm_js" -C target-feature=+atomics,+bulk-memory' \
+RUSTFLAGS='-C debuginfo=2 --cfg getrandom_backend="wasm_js" -C target-feature=+atomics,+bulk-memory -C link-arg=--max-memory=4294967296' \
   rustup run nightly-2024-08-02 \
   cargo build --release --target wasm32-unknown-unknown -Z build-std=panic_abort,std
 # --- End rayon version ---

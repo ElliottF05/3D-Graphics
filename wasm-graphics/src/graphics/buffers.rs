@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use crate::utils::{math::Vec3, utils::{color_to_u8, gamma_correct_color}};
+use crate::{console_log, utils::{math::Vec3, utils::{color_to_u8, gamma_correct_color}}};
 
 
 pub struct PixelBuf {

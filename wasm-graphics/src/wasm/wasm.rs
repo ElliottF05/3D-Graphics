@@ -111,6 +111,7 @@ pub fn enter_edit_mode() {
 }
 #[wasm_bindgen]
 pub fn exit_edit_mode() {
+    console_log!("wasm.rs: eixt_edit_mode");
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().exit_edit_mode();
     });

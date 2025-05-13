@@ -514,7 +514,7 @@ impl Game {
             Vec3::new(0.0, 0.0, 2.0),
             Vec3::new(2.0, 0.0, 0.0),
             Vec3::new(4.0, 4.0, 4.0),
-            0.1, 2000);
+            0.1, 1000);
         self.add_scene_object(light_rec);
 
         self.extract_lights_from_scene_objects();
@@ -569,7 +569,7 @@ impl Game {
                 Vec3::new(-17.0, 0.0, 0.0),
                 light_color,
                 0.1,
-                2000,
+                1000,
             ),
             SceneObject::new_rectangle(
                 Vec3::new(0.0, 0.0, 0.0),
@@ -672,7 +672,7 @@ impl Game {
                 Vec3::new(-17.0, 0.0, 0.0),
                 light_color,
                 0.1,
-                2000,
+                1000,
             ),
             SceneObject::new_rectangle(
                 Vec3::new(0.0, 0.0, 0.0),
