@@ -2,6 +2,8 @@ use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}, sync::RwLoc
 
 use web_sys::console;
 
+use rayon::prelude::*;
+
 use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
@@ -103,10 +105,10 @@ impl Game {
             // testing
         };
 
-        game.create_rt_test_scene_spheres();
+        // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
-        // game.create_rt_test_scene_cornell_metal();
+        game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -218,6 +220,7 @@ impl Game {
     }
 
     pub fn enter_edit_mode(&mut self) {
+        self.deselect_object();
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }));
     }
 
@@ -243,6 +246,7 @@ impl Game {
     }
 
     pub fn exit_edit_mode(&mut self) {
+        console_log!("game.rs: exit_edit_mode()");
         self.extract_lights_from_scene_objects();
         self.recalculate_shadow_maps();
         self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
@@ -602,52 +606,50 @@ impl Game {
         let scene_objects = self.scene_objects.read().unwrap();
 
         // opaque objects
-        for (scene_obj_index, scene_obj) in scene_objects.iter().enumerate() {
-            let mesh = &scene_obj.mesh;
-            if mesh.properties.alpha < 1.0 {
-                continue;
-            }
-            let vertices = &mesh.vertices;
-            let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = &mesh.indices;
-            let colors = &mesh.colors;
-            let normals = &mesh.normals;
-            for i in 0..colors.len() {
-                let v1 = transformed_vertices[indices[i*3]];
-                let v2 = transformed_vertices[indices[i*3+1]];
-                let v3 = transformed_vertices[indices[i*3+2]];
-                let color = colors[i];
-                let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
-            }
-        }
-
-        // transparent objects
-        for (idx, scene_obj) in scene_objects.iter().rev().enumerate() {
-            let scene_obj_index = scene_objects.len() - 1 - idx;
+        scene_objects.par_iter().enumerate().for_each(|(scene_obj_index, scene_obj)| {
             let mesh = &scene_obj.mesh;
             if mesh.properties.alpha == 1.0 {
-                continue;
+                let vertices = &mesh.vertices;
+                let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
+                let indices = &mesh.indices;
+                let colors = &mesh.colors;
+                let normals = &mesh.normals;
+                for i in 0..colors.len() {
+                    let v1 = transformed_vertices[indices[i*3]];
+                    let v2 = transformed_vertices[indices[i*3+1]];
+                    let v3 = transformed_vertices[indices[i*3+2]];
+                    let color = colors[i];
+                    let normal = normals[i];
+                    self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                }
             }
-            let vertices = &mesh.vertices;
-            let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
-            let indices = &mesh.indices;
-            let colors = &mesh.colors;
-            let normals = &mesh.normals;
-            for i in 0..colors.len() {
-                let v1 = transformed_vertices[indices[i*3]];
-                let v2 = transformed_vertices[indices[i*3+1]];
-                let v3 = transformed_vertices[indices[i*3+2]];
-                let color = colors[i];
-                let normal = normals[i];
-                self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+        });
+
+        // transparent objects
+        scene_objects.par_iter().rev().enumerate().for_each(|(idx, scene_obj)| {
+            let scene_obj_index = scene_objects.len() - 1 - idx;
+            let mesh = &scene_obj.mesh;
+            if mesh.properties.alpha < 1.0 {
+                let vertices = &mesh.vertices;
+                let transformed_vertices = self.camera.vertices_world_to_camera_space(&vertices);
+                let indices = &mesh.indices;
+                let colors = &mesh.colors;
+                let normals = &mesh.normals;
+                for i in 0..colors.len() {
+                    let v1 = transformed_vertices[indices[i*3]];
+                    let v2 = transformed_vertices[indices[i*3+1]];
+                    let v3 = transformed_vertices[indices[i*3+2]];
+                    let color = colors[i];
+                    let normal = normals[i];
+                    self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                }
             }
-        }
+        });
 
         // self.scene_objects.replace(scene_objects);
 
         let t2 = get_time();
-        // console_log!("Frame time: {}", t2 - t1);
+        console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
@@ -751,13 +753,14 @@ impl Game {
 
         // calculate starting and ending x values
         let top = v1.y.ceil().max(0.0);
-        let mut x1 = slope1 * (top - v1.y) + v1.x;
-        let mut x2 = slope2 * (top - v1.y) + v1.x;
         let bottom = v2.y.floor().min(height - 1.0);
 
         // fill top half
         if v1.y != v2.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
+                let x1 = slope1 * (y as f32 - v1.y) + v1.x;
+                let x2 = slope2 * (y as f32 - v1.y) + v1.x;
+
                 let left;
                 let right;
                 if x1 < x2 {
@@ -775,74 +778,19 @@ impl Game {
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
                 self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, top as usize, color, normal, scene_obj, scene_obj_index);
-
-                // for x in left..=right {
-
-                //     let q3 = (x as f32 - x1) / (x2 - x1);
-                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                //     let depth = 1.0 / inv_depth;
-                //     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
-
-                //     if depth - bias < self.zbuf.get_depth(x, y) {
-
-                //         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                //         self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                //         self.camera.vertex_camera_to_world_space(&mut world_pos);
-
-                //         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                //             // self.looking_at = Some((scene_obj_index, world_pos));
-                //             *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
-                //         }
-
-                //         if looking_at_selected && (x == left || x == right || y == top as usize) {
-                //             let edge_color = shift_color(color);
-                //             self.zbuf.set_depth(x, y, depth);
-                //             self.pixel_buf.set_pixel(x, y, edge_color);
-                //         } else if properties.is_light {
-                //             self.zbuf.set_depth(x, y, depth);
-                //             self.pixel_buf.set_pixel(x, y, color);
-                //         } else {
-                //             let sky_color = self.get_sky_color(normal);
-
-                //             // start as ambient light
-                //             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
-
-                //             if self.enable_lighting {
-                //                 for light in &self.lights {
-                //                     blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                //                 }
-                //             }
-                //             // blended_color.x = blended_color.x.min(1.0);
-                //             // blended_color.y = blended_color.y.min(1.0);
-                //             // blended_color.z = blended_color.z.min(1.0);
-
-                //             if properties.alpha == 1.0 {
-                //                 self.zbuf.set_depth(x, y, depth);
-                //                 self.pixel_buf.set_pixel(x, y, blended_color);
-                //             } else {
-                //                 // alpha blending, don't set depth
-                //                 let old_color = self.pixel_buf.get_pixel(x, y);
-                //                 blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                //                 self.pixel_buf.set_pixel(x, y, blended_color);
-                //             }
-                //         }
-                //     }
-                // }
-                x1 += slope1;
-                x2 += slope2;
             }
         }
 
 
         // calculate starting and ending x values (for bottom half)
         let top = v2.y.ceil().max(0.0);
-        let mut x1 = slope3 * (top - v2.y) + v2.x;
-        let mut x2 = slope2 * (top - v1.y) + v1.x;
         let bottom = v3.y.floor().min(height - 1.0);
 
         // fill bottom half
         if v2.y != v3.y && bottom >= 0.0 {
             for y in (top as usize)..=(bottom as usize) {
+                let x1 = slope3 * (y as f32 - v2.y) + v2.x;
+                let x2 = slope2 * (y as f32 - v1.y) + v1.x;
                 let left;
                 let right;
                 if x1 < x2 {
@@ -860,61 +808,6 @@ impl Game {
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
                 self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, bottom as usize, color, normal, scene_obj, scene_obj_index);
-
-                // for x in left..=right {
-
-                //     let q3 = (x as f32 - x1) / (x2 - x1);
-                //     let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
-                //     let depth = 1.0 / inv_depth;
-                //     let bias = if properties.alpha == 1.0 {0.0} else {0.01};
-
-                //     if depth - bias < self.zbuf.get_depth(x, y) {
-
-                //         let mut world_pos = Vec3::new(x as f32, y as f32, depth);
-                //         self.camera.vertex_screen_to_camera_space(&mut world_pos);
-                //         self.camera.vertex_camera_to_world_space(&mut world_pos);
-
-                //         if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                //             // self.looking_at = Some((scene_obj_index, world_pos));
-                //             *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
-                //         }
-
-                //         if looking_at_selected && (x == left || x == right || y == bottom as usize) {
-                //             let edge_color = shift_color(color);
-                //             self.zbuf.set_depth(x, y, depth);
-                //             self.pixel_buf.set_pixel(x, y, edge_color);
-                //         } else if properties.is_light {
-                //             self.zbuf.set_depth(x, y, depth);
-                //             self.pixel_buf.set_pixel(x, y, color);
-                //         } else {
-                //             let sky_color = self.get_sky_color(normal);
-
-                //             // start as ambient light
-                //             let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
-
-                //             if self.enable_lighting {
-                //                 for light in &self.lights {
-                //                     blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, normal, color, properties);
-                //                 }
-                //             }   
-                //             // blended_color.x = blended_color.x.min(1.0);
-                //             // blended_color.y = blended_color.y.min(1.0);
-                //             // blended_color.z = blended_color.z.min(1.0);
-
-                //             if properties.alpha == 1.0 {
-                //                 self.zbuf.set_depth(x, y, depth);
-                //                 self.pixel_buf.set_pixel(x, y, blended_color);
-                //             } else {
-                //                 // alpha blending, don't set depth
-                //                 let old_color = self.pixel_buf.get_pixel(x, y);
-                //                 blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
-                //                 self.pixel_buf.set_pixel(x, y, blended_color);
-                //             }
-                //         }
-                //     }
-                // }
-                x1 += slope3;
-                x2 += slope2;
             }
         }
     }

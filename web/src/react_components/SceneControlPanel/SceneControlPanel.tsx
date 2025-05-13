@@ -107,6 +107,7 @@ const SceneControlPanel: React.FC = () => {
                     </div>
                     <Slider
                         id="fov-slider"
+                        disabled={inRayTracingMode}
                         min={20}
                         max={120}
                         step={1}
