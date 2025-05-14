@@ -371,7 +371,7 @@ impl Light {
         //     }
         // }
 
-        // Only sample horizontally for better concurrency
+        // only sample horizontally for better concurrency
         {
             let zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
             let pixel_row = self.color_buf.get_row_guard(y as usize).lock().unwrap();

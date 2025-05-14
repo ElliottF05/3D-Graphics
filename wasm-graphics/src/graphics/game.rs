@@ -10,15 +10,10 @@ use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh:
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameStatus {
-    Rasterizing(RasterStatus),
+    RasterizingNoLighting,
+    RasterizingWithLighting,
     RayTracing,
     Paused,
-}
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum RasterStatus {
-    Normal,
-    EditMode { selected_index: Option<usize> },
 }
 
 
@@ -41,9 +36,9 @@ pub struct Game {
 
     pub looking_at: RwLock<Option<(usize, Vec3)>>,
     pub follow_camera: bool,
-    pub enable_lighting: bool,
 
     pub status: GameStatus,
+    pub selected_object_index: Option<usize>,
     pub ray_samples_accumulated: usize,
 
     // ray-tracing variables
@@ -85,9 +80,9 @@ impl Game {
 
             looking_at: RwLock::new(None),
             follow_camera: false,
-            enable_lighting: true,
 
-            status: GameStatus::Rasterizing(RasterStatus::Normal),
+            status: GameStatus::RasterizingNoLighting,
+            selected_object_index: None,
             ray_samples_accumulated: 0,
 
             // ray tracing variables
@@ -105,10 +100,10 @@ impl Game {
             // testing
         };
 
-        // game.create_rt_test_scene_spheres();
+        game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
-        game.create_rt_test_scene_cornell_metal();
+        // game.create_rt_test_scene_cornell_metal();
 
         // game.add_mesh(Mesh::build_cube(
         //     Vec3::new(11.0, 0.0, 0.5),
@@ -164,22 +159,16 @@ impl Game {
         self.process_all_input();
 
         match self.status {
-
-            GameStatus::Rasterizing(raster_status) => {
-                match raster_status {
-                    RasterStatus::Normal => {
-                        self.pre_raster_render_logic();
-                        self.render_frame();
-                        self.apply_post_processing_effects();
-                    },
-                    RasterStatus::EditMode { selected_index } => {
-                        self.pre_raster_render_logic();
-                        self.render_frame();
-                        self.apply_post_processing_effects();
-                    },
-                }
+            GameStatus::RasterizingNoLighting => {
+                self.pre_raster_render_logic();
+                self.render_frame();
+                self.apply_post_processing_effects();
             },
-
+            GameStatus::RasterizingWithLighting => {
+                self.pre_raster_render_logic();
+                self.render_frame();
+                self.apply_post_processing_effects();
+            },
             GameStatus::RayTracing => {
                 self.render_ray_tracing();
             },
@@ -193,20 +182,10 @@ impl Game {
         console_log!("WASM: Game status changed from {:?} to {:?}", self.status, status);
         self.status = status;
 
-        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: _}) = self.status {
-            self.enable_lighting = false;
-        } else {
-            self.enable_lighting = true;
-        }
-
         // 0 = Rasterizing, 1 = Editing, 2 = RayTracing
         let game_status_number = match self.status {
-            GameStatus::Rasterizing(raster_status) => {
-                match raster_status {
-                    RasterStatus::Normal => 0,
-                    RasterStatus::EditMode { selected_index: _} => 1,
-                }
-            },
+            GameStatus::RasterizingWithLighting => 0,
+            GameStatus::RasterizingNoLighting => 1,
             GameStatus::RayTracing => 2,
             GameStatus::Paused => 0, // TODO: check this
         };
@@ -221,7 +200,7 @@ impl Game {
 
     pub fn enter_edit_mode(&mut self) {
         self.deselect_object();
-        self.set_game_status(GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }));
+        self.set_game_status(GameStatus::RasterizingNoLighting);
     }
 
     pub fn enter_ray_tracing_mode(&mut self) {
@@ -240,16 +219,15 @@ impl Game {
             console_error!("Game::stop_ray_tracing() called but not in RayTracing or Paused state");
             return;
         }
-        self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
+        self.set_game_status(GameStatus::RasterizingNoLighting);
         self.ray_samples_accumulated = 0;
-        js_update_game_status(0);
     }
 
     pub fn exit_edit_mode(&mut self) {
         console_log!("game.rs: exit_edit_mode()");
         self.extract_lights_from_scene_objects();
         self.recalculate_shadow_maps();
-        self.set_game_status(GameStatus::Rasterizing(RasterStatus::Normal));
+        self.set_game_status(GameStatus::RasterizingWithLighting);
     }
 
     pub fn set_follow_camera(&mut self, follow: bool) {
@@ -258,65 +236,79 @@ impl Game {
     }
 
     pub fn set_selected_object_material_properties(&mut self, props: MaterialProperties) {
-        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
+        if self.status == GameStatus::RasterizingNoLighting {
+            if let Some(selected_index) = self.selected_object_index {
+                console_log!("WASM: Set selected object material properties with props: {:?}", props);
 
-            console_log!("WASM: Set selected object material properties with props: {:?}", props);
+                // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                let color = Vec3::new(props.r, props.g, props.b);
+                let material_type = props.material_type;
+                let extra_prop = props.extra_prop;
 
-            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-            let color = Vec3::new(props.r, props.g, props.b);
-            let material_type = props.material_type;
-            let extra_prop = props.extra_prop;
+                selected_obj.set_color(color);
+                selected_obj.set_material_properties(material_type, extra_prop);
 
-            selected_obj.set_color(color);
-            selected_obj.set_material_properties(material_type, extra_prop);
+                self.bvh = None; // invalidate bvh if obj is changed
 
-            self.bvh = None; // invalidate bvh if obj is changed
-
-            let props = self.parse_selected_obj_mat_props(selected_obj);
-            js_update_selected_obj_mat_props(Some(props));
-
+                let props = self.parse_selected_obj_mat_props(selected_obj);
+                js_update_selected_obj_mat_props(Some(props));
+            } else {
+                console_error!("Game::set_selected_object_material_properties() called but no object is selected");
+            }
         } else {
             console_error!("Game::set_selected_object_material_properties() called but not in EditMode");
         }
     }
 
     pub fn translate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
-        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-            let offset = Vec3::new(x,y,z);
-            selected_obj.translate_by(offset);
-            self.bvh = None; // invalidate bvh if obj is changed
+        if self.status == GameStatus::RasterizingNoLighting {
+            if let Some(selected_index) = self.selected_object_index {
+                // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                let offset = Vec3::new(x,y,z);
+                selected_obj.translate_by(offset);
+                self.bvh = None; // invalidate bvh if obj is changed
+            } else {
+                console_error!("Game::translate_selected_obj() called but no object is selected");
+            }
         } else {
             console_error!("Game::translate_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
         }
     }
 
     pub fn rotate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
-        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-            selected_obj.rotate_around_center(z, y);
-            self.bvh = None; // invalidate bvh if obj is changed
+        if self.status == GameStatus::RasterizingNoLighting {
+            if let Some(selected_index) = self.selected_object_index {
+                // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                selected_obj.rotate_around_center(z, y);
+                self.bvh = None; // invalidate bvh if obj is changed
+            } else {
+                console_error!("Game::rotate_selected_obj() called but no object is selected");
+            }
         } else {
             console_error!("Game::rotate_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
         }
     }
 
     pub fn scale_selected_obj(&mut self, scale_factor: f32) {
-        if let GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) = self.status {
-            // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-            let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-            selected_obj.scale_by(scale_factor);
-            self.bvh = None; // invalidate bvh if obj is changed
+        if self.status == GameStatus::RasterizingNoLighting {
+            if let Some(selected_index) = self.selected_object_index {
+                // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
+                let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                selected_obj.scale_by(scale_factor);
+                self.bvh = None; // invalidate bvh if obj is changed
+            } else {
+                console_error!("Game::scale_selected_obj() called but no object is selected");
+            }
         } else {
             console_error!("Game::scale_selected_obj() called but not in EditMode with obj selected, got GameStatus: {:?}", self.status);
         }
     }
 
     pub fn add_sphere(&mut self, radius: f32) {
-        if let GameStatus::Rasterizing(_) = self.status {
+        if self.status == GameStatus::RasterizingNoLighting {
             let mut new_sphere = SceneObject::new_sphere(
                 Vec3::new(0.0, 0.0, 0.0),
                 radius,
@@ -342,7 +334,7 @@ impl Game {
     }
 
     pub fn add_box(&mut self, x: f32, y: f32, z: f32) {
-        if let GameStatus::Rasterizing(_) = self.status {
+        if self.status == GameStatus::RasterizingNoLighting {
             let mut new_box = SceneObject::new_box_from_side_lengths(
                 Vec3::new(0.0, 0.0, 0.0),
                 x, y, z,
@@ -368,21 +360,25 @@ impl Game {
 
     fn process_all_input(&mut self) {
 
-        if let GameStatus::Rasterizing(_) = self.status {
-            self.process_rasterization_input();
+        match self.status {
+            GameStatus::RasterizingNoLighting => {
+                self.process_rasterization_input();
+            },
+            GameStatus::RasterizingWithLighting => {
+                self.process_rasterization_input();
+            },
+            _ => {} 
         }
 
         if self.keys_pressed_last_frame.contains("p") {
             console_log!("Pausing or unpausing");
             if self.status == GameStatus::Paused {
-                self.status = GameStatus::Rasterizing(RasterStatus::Normal);
+                self.status = GameStatus::RasterizingNoLighting;
             } else {
                 self.status = GameStatus::Paused;
             }
         }
         if self.keys_pressed_last_frame.contains("r") {
-            // self.status = GameStatus::RayTracing;
-            // self.rt_start_time = get_time();
             self.enter_ray_tracing_mode();
         }
 
@@ -392,42 +388,36 @@ impl Game {
 
     fn process_rasterization_input(&mut self) {
         
-        if let GameStatus::Rasterizing(_) = self.status {
-        } else {
+        if self.status != GameStatus::RasterizingNoLighting && self.status != GameStatus::RasterizingWithLighting {
             console_error!("Game::process_rasterization_input() called but not in Rasterizing state");
+            return;
         }
 
         self.process_movement_input();
         if self.mouse_clicked_last_frame {
 
             match self.status {
-                GameStatus::Rasterizing(RasterStatus::Normal) => { // if NOT in edit mode
+                GameStatus::RasterizingWithLighting => { // if NOT in edit mode
                     console_warn!("Not in edit mode, so not selecting object")
                 },
-                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(idx) }) => {
+                GameStatus::RasterizingNoLighting => {
                     let looking_at = {
                         *self.looking_at.read().unwrap()
                     };
-                    if let Some((looking_at_index, _)) = looking_at {
-                        if looking_at_index == idx { // if clicked on already-selected object
-                            self.deselect_object();
-                        } else { // if clicked on non-selected object
+                    if let Some((looking_at_index, _)) = looking_at { // if clicked on something
+                        if let Some(selected_index) = self.selected_object_index {
+                            if looking_at_index == selected_index { // if clicked on already-selected object
+                                self.deselect_object();
+                            } else { // if clicked on non-selected object
+                                self.select_object(looking_at_index);
+                            }
+                        } else { // if clicked on something and nothing selected
                             self.select_object(looking_at_index);
                         }
                     } else { // if clicked on nothing
                         self.deselect_object();
                     }
                 },
-                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None }) => {
-                    let looking_at = {
-                        *self.looking_at.read().unwrap()
-                    };
-                    if let Some((looking_at_index, _)) = looking_at {
-                        self.select_object(looking_at_index);
-                    } else {
-                        console_warn!("Clicked on nothing, and not looking at anything, nothing to do");
-                    }
-                }
                 _ => {
                     console_error!("In process_rasterization_input, got unreachable game status {:?}", self.status);
                     unreachable!();
@@ -437,19 +427,25 @@ impl Game {
     }
 
     fn select_object(&mut self, index: usize) {
-        console_log!("WASM: Selected object with index: {}", index);
-        self.status = GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(index) });
-        self.follow_camera = false;
+        match self.status {
+            GameStatus::RasterizingNoLighting => {
+                console_log!("WASM: Selected object with index: {}", index);
+                self.selected_object_index = Some(index);
+                self.follow_camera = false;
+                // let selected_obj = &self.scene_objects.borrow()[index];
+                let selected_obj = &self.scene_objects.read().unwrap()[index];
+                // notify JS of changes:
+                let props = self.parse_selected_obj_mat_props(selected_obj);
+                js_update_follow_camera(false);
+                js_update_selected_obj_mat_props(Some(props));
+                js_update_game_status(1); // this is just for redundancy
+            },
+            _ => {
+                console_error!("Game::select_object() called but not in RasterizingNoLighting state, got {:?}", self.status);
+                return;
+            }
+        }
 
-        // let selected_obj = &self.scene_objects.borrow()[index];
-        let selected_obj = &self.scene_objects.read().unwrap()[index];
-
-        // notify JS of changes:
-        let props = self.parse_selected_obj_mat_props(selected_obj);
-
-        js_update_follow_camera(false);
-        js_update_selected_obj_mat_props(Some(props));
-        js_update_game_status(1); // this is just for redundancy
     }
 
     fn parse_selected_obj_mat_props(&self, selected_obj: &SceneObject) -> MaterialProperties {
@@ -466,7 +462,6 @@ impl Game {
 
     pub fn deselect_object(&mut self) {
         console_log!("WASM: Deselected object");
-        self.status = GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: None });
         self.follow_camera = false;
         
         // notify JS of changes:
@@ -475,10 +470,10 @@ impl Game {
     }
 
     pub fn delete_selected_object(&mut self) {
-        // Only allow deletion if in EditMode and an object is selected
+        // Only allow deletion if in RasterizingNoLighting state
         match self.status {
-            GameStatus::Rasterizing(RasterStatus::EditMode { selected_index }) => {
-                if let Some(selected_index) = selected_index {
+            GameStatus::RasterizingNoLighting => {
+                if let Some(selected_index) = self.selected_object_index {
                     console_log!("Deleting object with index: {}", selected_index);
                     // self.scene_objects.borrow_mut().remove(selected_index);
                     self.scene_objects.write().unwrap().remove(selected_index);
@@ -487,10 +482,10 @@ impl Game {
                 } else {
                     console_error!("Game::delete_selected_object() called while in edit mode but no object is selected");
                     return;
-                } 
+                }
             },
             _ => {
-                console_error!("Game::delete_selected_object() called but not in EditMode");
+                console_error!("Game::delete_selected_object() called but not in RasterizingNoLighting state, got {:?}", self.status);
                 return;
             }
         }
@@ -546,23 +541,19 @@ impl Game {
     }
 
     fn pre_raster_render_logic(&mut self) {
-        if self.follow_camera {
-            match self.status {
-                GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
-                    // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
-                    let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-                    if let Some((_, looking_at_pos)) = *self.looking_at.read().unwrap(){
-                        console_log!("looking at object, translating to {:?}", looking_at_pos);
-                        selected_obj.translate_to(looking_at_pos);
-                    } else {
-                        let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
-                        self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
-                        console_log!("not looking at anything, translating to {:?}", looking_at_pos);
-                        selected_obj.translate_to(looking_at_pos);
-                    }
-                    self.bvh = None; // invalidate bvh if obj is moved
-                },
-                _ => {} // nowhere to move object otherwise
+        if self.follow_camera && self.status == GameStatus::RasterizingNoLighting {
+            if let Some(selected_index) = self.selected_object_index {
+                let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
+                if let Some((_, looking_at_pos)) = *self.looking_at.read().unwrap(){
+                    console_log!("looking at object, translating to {:?}", looking_at_pos);
+                    selected_obj.translate_to(looking_at_pos);
+                } else {
+                    let mut looking_at_pos = Vec3::new(self.camera.width as f32 / 2.0, self.camera.height as f32 / 2.0, 8.0 * selected_obj.mesh.radius);
+                    self.camera.vertex_screen_to_world_space(&mut looking_at_pos);
+                    console_log!("not looking at anything, translating to {:?}", looking_at_pos);
+                    selected_obj.translate_to(looking_at_pos);
+                }
+                self.bvh = None; // invalidate bvh if obj is moved
             }
         }
         *self.looking_at.write().unwrap() = None;
@@ -649,7 +640,7 @@ impl Game {
         // self.scene_objects.replace(scene_objects);
 
         let t2 = get_time();
-        console_log!("Frame time: {}", t2 - t1);
+        // console_log!("Frame time: {}", t2 - t1);
     }
 
     fn render_triangle(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
@@ -744,11 +735,19 @@ impl Game {
             return;
         }
 
-        let looking_at_selected = match self.status {
-            GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
+        // let looking_at_selected = match self.status {
+        //     GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
+        //         selected_index == scene_obj_index
+        //     },
+        //     _ => false,
+        // };
+
+        let looking_at_selected = self.status == GameStatus::RasterizingNoLighting && {
+            if let Some(selected_index) = self.selected_object_index {
                 selected_index == scene_obj_index
-            },
-            _ => false,
+            } else {
+                false
+            }
         };
 
         // calculate starting and ending x values
@@ -829,8 +828,7 @@ impl Game {
                 self.camera.vertex_screen_to_camera_space(&mut world_pos);
                 self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                    // self.looking_at = Some((scene_obj_index, world_pos));
+                if self.status == GameStatus::RasterizingNoLighting && !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
                     *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
                 }
 
@@ -838,7 +836,7 @@ impl Game {
                     let edge_color = shift_color(color);
                     zbuf_row[x] = depth;
                     pixel_row[x] = edge_color;
-                } else if properties.is_light {
+                } else if properties.is_light || self.status == GameStatus::RasterizingNoLighting {
                     zbuf_row[x] = depth;
                     pixel_row[x] = color;
                 } else {
@@ -847,11 +845,9 @@ impl Game {
                     // start as ambient light
                     let mut blended_color = properties.ambient * Vec3::mul_elementwise_of(sky_color, color);
 
-                    if self.enable_lighting {
-                        for light in &self.lights {
-                            blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, &normal, color, &properties);
-                        }
-                    }   
+                    for light in &self.lights {
+                        blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, &normal, color, &properties);
+                    }
                     // blended_color.x = blended_color.x.min(1.0);
                     // blended_color.y = blended_color.y.min(1.0);
                     // blended_color.z = blended_color.z.min(1.0);

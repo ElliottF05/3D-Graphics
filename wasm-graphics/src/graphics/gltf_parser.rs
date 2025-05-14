@@ -349,7 +349,6 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
             match parse_gltf_objects(gltf, &buffers) {
                 Ok(mut meshes) => {
 
-                    // TODO: remove later, this is for testing to translate the model to a good location
                     for mesh in meshes.iter_mut() {
                         for vertex in mesh.vertices.iter_mut() {
                             // vertex.rotate_z(PI / 2.0);
@@ -360,7 +359,7 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                         }
                     }
 
-                    // TODO: improve this
+                    // TODO: ADD MATERIAL SUPPORT
                     // add meshes to rt as triangles
                     let scene_objects: Vec<SceneObject> = meshes
                         .into_iter()
@@ -370,6 +369,7 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
                     GAME_INSTANCE.with(|game_instance| {
                         let mut g = game_instance.borrow_mut();
                         g.scene_objects = RwLock::new(scene_objects);
+                        g.bvh = None; // invalidate the bvh
                     });
                     true
                 },
