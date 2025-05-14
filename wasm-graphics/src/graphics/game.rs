@@ -215,12 +215,15 @@ impl Game {
     }
 
     pub fn stop_ray_tracing(&mut self) {
-        if self.status != GameStatus::RayTracing && self.status != GameStatus::Paused {
-            console_error!("Game::stop_ray_tracing() called but not in RayTracing or Paused state");
-            return;
+        match self.status {
+            GameStatus::RayTracing => {
+                self.set_game_status(GameStatus::RasterizingNoLighting);
+            },
+            _ => {
+                console_error!("Game::stop_ray_tracing() called but not in RayTracing state, got {:?}", self.status);
+                return;
+            }
         }
-        self.set_game_status(GameStatus::RasterizingNoLighting);
-        self.ray_samples_accumulated = 0;
     }
 
     pub fn exit_edit_mode(&mut self) {
@@ -492,8 +495,8 @@ impl Game {
     }
 
     fn process_movement_input(&mut self) {
-        const MOVE_SPEED: f32 = 0.1;
-        const ROTATE_SPEED: f32 = 0.01;
+        const MOVE_SPEED: f32 = 0.05;
+        const ROTATE_SPEED: f32 = 0.005;
         const KEY_ROTATE_SPEED: f32 = 0.03;
 
         let mut move_dir = Vec3::new(0.0, 0.0, 0.0);
@@ -734,13 +737,6 @@ impl Game {
         if v1.y == v3.y { // triangle has no height
             return;
         }
-
-        // let looking_at_selected = match self.status {
-        //     GameStatus::Rasterizing(RasterStatus::EditMode { selected_index: Some(selected_index) }) => {
-        //         selected_index == scene_obj_index
-        //     },
-        //     _ => false,
-        // };
 
         let looking_at_selected = self.status == GameStatus::RasterizingNoLighting && {
             if let Some(selected_index) = self.selected_object_index {

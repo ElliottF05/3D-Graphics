@@ -31,7 +31,7 @@ interface GameProviderProps {
 
 export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const [selectedObjMatProps, setSelectedObjMatProps] = useState<wasm.MaterialProperties | null | undefined>(null);
-    const [gameStatus, setGameStatus] = useState<GameStatus>('Rasterizing');
+    const [gameStatus, setGameStatus] = useState<GameStatus>('Editing');
     const [followCamera, setFollowCamera] = useState<boolean>(false);
     const [fov, setFov] = useState<number>(90); // Default FOV, adjust as needed
 
