@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch"
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
@@ -65,6 +66,15 @@ const SceneControlPanel: React.FC = () => {
         wasm.set_fov(fov_radians); 
     };
 
+    const handleToggleRealtimeLighting = (checked: boolean) => {
+        console.log(`Context: Toggling real-time lighting to ${checked} via WASM`);
+        if (checked) {
+            wasm.exit_edit_mode();
+        } else {
+            wasm.enter_edit_mode();
+        }
+    };
+
     const inEditMode = gameStatus === 'Editing';
     const inRayTracingMode = gameStatus === 'RayTracing';
 
@@ -108,8 +118,8 @@ const SceneControlPanel: React.FC = () => {
                     <Slider
                         id="fov-slider"
                         disabled={inRayTracingMode}
-                        min={20}
-                        max={120}
+                        min={10}
+                        max={140}
                         step={1}
                         // Use fov from context, provide a fallback for initial render if needed
                         value={[fov ?? 90]} 
@@ -119,41 +129,13 @@ const SceneControlPanel: React.FC = () => {
                 </div>
 
                 {/* Top Level Mode Buttons */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                    {/* Enter Edit Mode / Exit Edit Mode Button Slot */}
-                    {inEditMode ? (
-                        <Button
-                            onClick={handleExitEditMode}
-                            className="w-full whitespace-normal break-words h-14"
-                        >
-                            Exit Edit Mode
-                        </Button>
-                    ) : (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="w-full"> {/* Wrapper for TooltipTrigger when button is disabled */}
-                                    <Button
-                                        onClick={handleEnterEditMode}
-                                        disabled={inRayTracingMode}
-                                        className="w-full whitespace-normal break-words h-14"
-                                    >
-                                        Enter Edit Mode
-                                    </Button>
-                                </div>
-                            </TooltipTrigger>
-                            {inRayTracingMode && (
-                                <TooltipContent>
-                                    <p>Stop ray tracing to enter edit mode.</p>
-                                </TooltipContent>
-                            )}
-                        </Tooltip>
-                    )}
+                <div className="mb-4 p-2">
 
                     {/* Ray Trace / Stop Ray Tracing Button Slot */}
                     {inRayTracingMode ? (
                         <Button
                             onClick={handleStopRayTracing}
-                            className="w-full whitespace-normal break-words h-14"
+                            className="w-full whitespace-normal break-words h-10"
                         >
                             Stop Ray Tracing
                         </Button>
@@ -163,21 +145,34 @@ const SceneControlPanel: React.FC = () => {
                                     <div className="w-full"> {/* Wrapper for TooltipTrigger when button is disabled */}
                                     <Button
                                         onClick={handleEnterRayTraceMode}
-                                        disabled={inEditMode}
-                                        className="w-full whitespace-normal break-words h-14"
+                                        className="w-full whitespace-normal break-words h-10 bg-green-600 hover:bg-green-700"
                                     >
                                         Ray Trace
                                     </Button>
                                 </div>
                             </TooltipTrigger>
-                            {inEditMode && (
                                 <TooltipContent>
-                                    <p>Exit edit mode to ray trace.</p>
+                                    <p>Generate a photorealistic still image.</p>
                                 </TooltipContent>
-                            )}
                         </Tooltip>
                     )}
                 </div>
+
+                {/* Real-time Shadows & Lighting Toggle */}
+                <div className="flex items-center justify-between space-x-2 p-2">
+                    <Label htmlFor="realtime-lighting-toggle" className="text-sm font-medium">
+                        Real-time Shadows & Lighting
+                    </Label>
+                    <Switch
+                        id="realtime-lighting-toggle"
+                        checked={!inEditMode} // Provide a fallback if undefined initially
+                        onCheckedChange={handleToggleRealtimeLighting}
+                        disabled={inRayTracingMode} // Disable if ray tracing
+                    />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                    {!inEditMode ? "Scene-editing unavailable when using real-time lighting." : ""}
+                </p>
 
                 <Accordion
                     type="multiple"
