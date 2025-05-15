@@ -772,7 +772,18 @@ impl Game {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, top as usize, color, normal, scene_obj, scene_obj_index);
+                match self.status {
+                    GameStatus::RasterizingNoLighting => {
+                        self.fill_triangle_scanline_row_no_lighting(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, top as usize, color, normal, scene_obj, scene_obj_index);
+                    },
+                    GameStatus::RasterizingWithLighting => {
+                        self.fill_triangle_scanline_row_with_lighting(y, x1, x2, left, right, inv_left_depth, inv_right_depth, color, normal, scene_obj);
+                    },
+                    _ => {
+                        console_error!("Game::fill_triangle() called but not in Rasterizing state, got {:?}", self.status);
+                        return;
+                    }
+                }
             }
         }
 
@@ -802,12 +813,23 @@ impl Game {
                 let q2 = (y as f32 - v1.y) / (v3.y - v1.y);
                 let inv_right_depth = (1.0 / v1.z) * (1.0 - q2) + (1.0 / v3.z) * q2;
 
-                self.fill_triangle_scanline_row(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, bottom as usize, color, normal, scene_obj, scene_obj_index);
+                match self.status {
+                    GameStatus::RasterizingNoLighting => {
+                        self.fill_triangle_scanline_row_no_lighting(y, x1, x2, left, right, inv_left_depth, inv_right_depth, looking_at_selected, bottom as usize, color, normal, scene_obj, scene_obj_index);
+                    },
+                    GameStatus::RasterizingWithLighting => {
+                        self.fill_triangle_scanline_row_with_lighting(y, x1, x2, left, right, inv_left_depth, inv_right_depth, color, normal, scene_obj);
+                    },
+                    _ => {
+                        console_error!("Game::fill_triangle() called but not in Rasterizing state, got {:?}", self.status);
+                        return;
+                    }
+                }
             }
         }
     }
 
-    fn fill_triangle_scanline_row(&self, y: usize, x1: f32, x2: f32, left: usize, right: usize, inv_left_depth: f32, inv_right_depth: f32, looking_at_selected: bool, y_extremity: usize, color: Vec3, normal: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+    fn fill_triangle_scanline_row_with_lighting(&self, y: usize, x1: f32, x2: f32, left: usize, right: usize, inv_left_depth: f32, inv_right_depth: f32, color: Vec3, normal: Vec3, scene_obj: &SceneObject) {
         let properties = scene_obj.mesh.properties;
         let mut zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
         let mut pixel_row = self.pixel_buf.get_row_guard(y as usize).lock().unwrap();
@@ -824,15 +846,7 @@ impl Game {
                 self.camera.vertex_screen_to_camera_space(&mut world_pos);
                 self.camera.vertex_camera_to_world_space(&mut world_pos);
 
-                if self.status == GameStatus::RasterizingNoLighting && !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
-                    *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
-                }
-
-                if looking_at_selected && (x == left || x == right || y == y_extremity) {
-                    let edge_color = shift_color(color);
-                    zbuf_row[x] = depth;
-                    pixel_row[x] = edge_color;
-                } else if properties.is_light || self.status == GameStatus::RasterizingNoLighting {
+                if properties.is_light {
                     zbuf_row[x] = depth;
                     pixel_row[x] = color;
                 } else {
@@ -844,9 +858,54 @@ impl Game {
                     for light in &self.lights {
                         blended_color += light.get_lighting_at(&world_pos, &self.camera.pos, &normal, color, &properties);
                     }
-                    // blended_color.x = blended_color.x.min(1.0);
-                    // blended_color.y = blended_color.y.min(1.0);
-                    // blended_color.z = blended_color.z.min(1.0);
+
+                    if properties.alpha == 1.0 {
+                        zbuf_row[x] = depth;
+                        pixel_row[x] = blended_color;
+                    } else {
+                        // alpha blending, don't set depth
+                        let old_color = pixel_row[x];
+                        blended_color = blended_color * properties.alpha + old_color * (1.0 - properties.alpha);
+                        pixel_row[x] = blended_color;
+                    }
+                }
+            }
+        }
+    }
+
+    fn fill_triangle_scanline_row_no_lighting(&self, y: usize, x1: f32, x2: f32, left: usize, right: usize, inv_left_depth: f32, inv_right_depth: f32, looking_at_selected: bool, y_extremity: usize, color: Vec3, normal: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
+        let properties = scene_obj.mesh.properties;
+        let mut zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
+        let mut pixel_row = self.pixel_buf.get_row_guard(y as usize).lock().unwrap();
+        for x in left..=right {
+
+            let q3 = (x as f32 - x1) / (x2 - x1);
+            let inv_depth = inv_left_depth * (1.0 - q3) + inv_right_depth * q3;
+            let depth = 1.0 / inv_depth;
+            let bias = if properties.alpha == 1.0 {0.0} else {0.01};
+
+            if depth - bias < zbuf_row[x] {
+
+                let mut world_pos = Vec3::new(x as f32, y as f32, depth);
+                self.camera.vertex_screen_to_camera_space(&mut world_pos);
+                self.camera.vertex_camera_to_world_space(&mut world_pos);
+
+                if !looking_at_selected && x == self.camera.width / 2 && y == self.camera.height / 2 {
+                    *self.looking_at.write().unwrap() = Some((scene_obj_index, world_pos));
+                }
+
+                if looking_at_selected && (x == left || x == right || y == y_extremity) {
+                    let edge_color = shift_color(color);
+                    zbuf_row[x] = depth;
+                    pixel_row[x] = edge_color;
+                } else if properties.is_light {
+                    zbuf_row[x] = depth;
+                    pixel_row[x] = color;
+                } else {
+                    let sky_color = self.get_sky_color(&normal);
+
+                    // start as ambient light
+                    let mut blended_color = Vec3::mul_elementwise_of(sky_color, color);
 
                     if properties.alpha == 1.0 {
                         zbuf_row[x] = depth;
