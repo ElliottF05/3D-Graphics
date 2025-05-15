@@ -129,7 +129,7 @@ const SceneControlPanel: React.FC = () => {
                 </div>
 
                 {/* Top Level Mode Buttons */}
-                <div className="mb-4 p-2">
+                <div className="mb-4">
 
                     {/* Ray Trace / Stop Ray Tracing Button Slot */}
                     {inRayTracingMode ? (
