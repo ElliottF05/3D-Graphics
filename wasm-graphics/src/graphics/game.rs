@@ -100,8 +100,8 @@ impl Game {
             // testing
         };
 
-        // game.create_rt_test_scene_spheres();
-        game.create_rt_test_scene_simple_light();
+        game.create_rt_test_scene_spheres();
+        // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
         // game.create_rt_test_scene_cornell_metal();
 
@@ -162,12 +162,12 @@ impl Game {
             GameStatus::RasterizingNoLighting => {
                 self.pre_raster_render_logic();
                 self.render_frame();
-                self.apply_post_processing_effects();
+                self.gamma_correct_post_processing();
             },
             GameStatus::RasterizingWithLighting => {
                 self.pre_raster_render_logic();
                 self.render_frame();
-                self.apply_post_processing_effects();
+                self.gamma_correct_post_processing();
             },
             GameStatus::RayTracing => {
                 self.render_ray_tracing();
@@ -564,15 +564,29 @@ impl Game {
         *self.looking_at.write().unwrap() = None;
     }
 
-    pub fn apply_post_processing_effects(&mut self) {
-        // for y in 0..self.pixel_buf.height {
-        //     let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
-        //     for x in 0..pixel_row.len() {
-        //         let color = pixel_row[x];
-        //         let gamma_color = gamma_correct_color(&color);
-        //         pixel_row[x] = gamma_color;
-        //     }
-        // }
+    fn gamma_correct_post_processing(&mut self) {
+        (0..self.pixel_buf.height).into_par_iter().for_each(|y| {
+            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+            for x in 0..pixel_row.len() {
+                let color = pixel_row[x];
+                let gamma_color = gamma_correct_color(&color);
+                pixel_row[x] = gamma_color;
+            }
+        });
+    }
+
+    fn depth_of_field_post_processing(&mut self) {
+        let focal_dist = self.focus_dist;
+        let aperture_factor = 10.0 * self.defocus_angle;
+
+        if aperture_factor <= 0.0 {
+            return;
+        }
+
+        let width = self.pixel_buf.width;
+        let height = self.pixel_buf.height;
+
+        // let output_pixel_buf = 
     }
 
     fn render_frame(&mut self) {
