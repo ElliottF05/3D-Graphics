@@ -100,8 +100,8 @@ impl Game {
             // testing
         };
 
-        game.create_rt_test_scene_spheres();
-        // game.create_rt_test_scene_simple_light();
+        // game.create_rt_test_scene_spheres();
+        game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
         // game.create_rt_test_scene_cornell_metal();
 
@@ -231,6 +231,7 @@ impl Game {
         self.extract_lights_from_scene_objects();
         self.recalculate_shadow_maps();
         self.set_game_status(GameStatus::RasterizingWithLighting);
+        self.deselect_object();
     }
 
     pub fn set_follow_camera(&mut self, follow: bool) {
@@ -466,6 +467,7 @@ impl Game {
     pub fn deselect_object(&mut self) {
         console_log!("WASM: Deselected object");
         self.follow_camera = false;
+        self.selected_object_index = None;
         
         // notify JS of changes:
         js_update_follow_camera(false);
@@ -608,13 +610,25 @@ impl Game {
                 let indices = &mesh.indices;
                 let colors = &mesh.colors;
                 let normals = &mesh.normals;
-                for i in 0..colors.len() {
-                    let v1 = transformed_vertices[indices[i*3]];
-                    let v2 = transformed_vertices[indices[i*3+1]];
-                    let v3 = transformed_vertices[indices[i*3+2]];
-                    let color = colors[i];
-                    let normal = normals[i];
-                    self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+
+                if colors.len() > 200 {
+                    (0..colors.len()).into_par_iter().for_each(|i| {
+                        let v1 = transformed_vertices[indices[i*3]];
+                        let v2 = transformed_vertices[indices[i*3+1]];
+                        let v3 = transformed_vertices[indices[i*3+2]];
+                        let color = colors[i];
+                        let normal = normals[i];
+                        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                    });
+                } else {
+                    for i in 0..colors.len() {
+                        let v1 = transformed_vertices[indices[i*3]];
+                        let v2 = transformed_vertices[indices[i*3+1]];
+                        let v3 = transformed_vertices[indices[i*3+2]];
+                        let color = colors[i];
+                        let normal = normals[i];
+                        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                    }
                 }
             }
         });
