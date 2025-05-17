@@ -162,12 +162,13 @@ impl Game {
             GameStatus::RasterizingNoLighting => {
                 self.pre_raster_render_logic();
                 self.render_frame();
-                self.gamma_correct_post_processing();
+                // self.gamma_correct_post_processing(); // already done in wasm.rs by get_gamma_corrected_buf_as_u8
             },
             GameStatus::RasterizingWithLighting => {
                 self.pre_raster_render_logic();
                 self.render_frame();
-                self.gamma_correct_post_processing();
+                self.depth_of_field_post_processing();
+                // self.gamma_correct_post_processing(); // already done in wasm.rs by get_gamma_corrected_buf_as_u8
             },
             GameStatus::RayTracing => {
                 self.render_ray_tracing();
@@ -564,20 +565,18 @@ impl Game {
         *self.looking_at.write().unwrap() = None;
     }
 
-    fn gamma_correct_post_processing(&mut self) {
-        (0..self.pixel_buf.height).into_par_iter().for_each(|y| {
-            let mut pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
-            for x in 0..pixel_row.len() {
-                let color = pixel_row[x];
-                let gamma_color = gamma_correct_color(&color);
-                pixel_row[x] = gamma_color;
-            }
-        });
-    }
-
+    #[inline(never)]
     fn depth_of_field_post_processing(&mut self) {
+        // first ver: 12 ms per frame
+
+        // using prefix sums:
+        // 6 ms per frame?
+
+        // parallelizing:
+        // 4 ms per frame?
+
         let focal_dist = self.focus_dist;
-        let aperture_factor = 10.0 * self.defocus_angle;
+        let aperture_factor = 30.0 * self.defocus_angle;
 
         if aperture_factor <= 0.0 {
             return;
@@ -585,6 +584,70 @@ impl Game {
 
         let width = self.pixel_buf.width;
         let height = self.pixel_buf.height;
+
+        let mut temp_pixels = Vec::with_capacity(width * height);
+        for y in 0..height {
+            let guard = self.pixel_buf.get_row_guard(y);
+            let pixel_row = guard.lock().unwrap();
+            temp_pixels.extend_from_slice(&pixel_row);
+        }
+
+        // use prefix sums
+        temp_pixels.par_chunks_mut(width).for_each(|row| {
+            for x in 1..width {
+                let prev = row[x - 1];
+                row[x] += prev;
+            }
+        });
+        for y in 1..height {
+            for x in 0..width {
+                let prev = temp_pixels[(y - 1) * width + x];
+                temp_pixels[y * width + x] += prev;
+            }
+        }
+
+        let new_pixel_buf = PixelBuf::new(width, height);
+        
+        (0..height).into_par_iter().for_each(|y| {
+            let mut new_pixel_row = new_pixel_buf.get_row_guard(y).lock().unwrap();
+            let old_pixel_row = self.pixel_buf.get_row_guard(y).lock().unwrap();
+            let zbuf_row = self.zbuf.get_row_guard(y).lock().unwrap();
+            for x in 0..width {
+                let depth = zbuf_row[x];
+
+                let coc_radius = ((depth - focal_dist).abs() * aperture_factor)
+                    .round()
+                    .max(0.0) as i32;
+
+                let curr_pixel_color = old_pixel_row[x];
+
+                if coc_radius < 1 { // pixel is in focus
+                    new_pixel_row[x] = curr_pixel_color;
+                } else { // pixel is out of focus
+                    let kernel_radius = coc_radius.min(5); // clamp for performance
+
+                    let min_x = (x as i32 - kernel_radius).max(0) as usize;
+                    let max_x = (x as i32 + kernel_radius).min(width as i32 - 1) as usize;
+                    let min_y = (y as i32 - kernel_radius).max(0) as usize;
+                    let max_y = (y as i32 + kernel_radius).min(height as i32 - 1) as usize;
+
+                    let num_samples = ((max_x - min_x + 1) * (max_y - min_y + 1)) as f32;
+
+                    let a = temp_pixels[max_y * width + max_x];
+                    let b = if min_x > 0 {temp_pixels[max_y * width + min_x - 1]} else {Vec3::zero()};
+                    let c = if min_y > 0 {temp_pixels[(min_y - 1) * width + max_x]} else {Vec3::zero()};
+                    let d = if min_x > 0 && min_y > 0 {temp_pixels[(min_y - 1) * width + min_x - 1]} else {Vec3::zero()};
+
+                    let new_color = (a - b - c + d) / num_samples;
+
+                    new_pixel_row[x] = new_color;
+                }
+            }
+        });
+
+        // set pixel buf to new_pixel_buf
+        self.pixel_buf = new_pixel_buf;
+
 
         // let output_pixel_buf = 
     }
@@ -657,13 +720,25 @@ impl Game {
                 let indices = &mesh.indices;
                 let colors = &mesh.colors;
                 let normals = &mesh.normals;
-                for i in 0..colors.len() {
-                    let v1 = transformed_vertices[indices[i*3]];
-                    let v2 = transformed_vertices[indices[i*3+1]];
-                    let v3 = transformed_vertices[indices[i*3+2]];
-                    let color = colors[i];
-                    let normal = normals[i];
-                    self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                
+                if colors.len() > 200 {
+                    (0..colors.len()).into_par_iter().for_each(|i| {
+                        let v1 = transformed_vertices[indices[i*3]];
+                        let v2 = transformed_vertices[indices[i*3+1]];
+                        let v3 = transformed_vertices[indices[i*3+2]];
+                        let color = colors[i];
+                        let normal = normals[i];
+                        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                    });
+                } else {
+                    for i in 0..colors.len() {
+                        let v1 = transformed_vertices[indices[i*3]];
+                        let v2 = transformed_vertices[indices[i*3+1]];
+                        let v3 = transformed_vertices[indices[i*3+2]];
+                        let color = colors[i];
+                        let normal = normals[i];
+                        self.render_triangle_from_transformed_vertices(v1, v2, v3, normal, color, &scene_obj, scene_obj_index);
+                    }
                 }
             }
         });
@@ -740,8 +815,6 @@ impl Game {
 
     fn fill_triangle(&self, mut v1: Vec3, mut v2: Vec3, mut v3: Vec3, normal: Vec3, color: Vec3, scene_obj: &SceneObject, scene_obj_index: usize) {
         // depth calculations from https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/visibility-problem-depth-buffer-depth-interpolation.html#:~:text=As%20previously%20mentioned%2C%20the%20correct,z%20%3D%201%20V%200.
-
-        let properties = &scene_obj.mesh.properties;
 
         // sort vertices by y (v1 has lowest y, v3 has highest y)
         if v1.y > v2.y {
@@ -905,6 +978,7 @@ impl Game {
         let properties = scene_obj.mesh.properties;
         let mut zbuf_row = self.zbuf.get_row_guard(y as usize).lock().unwrap();
         let mut pixel_row = self.pixel_buf.get_row_guard(y as usize).lock().unwrap();
+
         for x in left..=right {
 
             let q3 = (x as f32 - x1) / (x2 - x1);
