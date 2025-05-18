@@ -8,6 +8,8 @@ interface IGameContext {
     gameStatus: GameStatus;
     followCamera: boolean;
     fov: number; 
+    focalDistance: number;
+    dofStrength: number;
     // Add other shared states here, e.g., selectedObjectProperties, rayTraceProgress
 
     // Actions callable from React components (which might then call WASM)
@@ -33,7 +35,9 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
     const [selectedObjMatProps, setSelectedObjMatProps] = useState<wasm.MaterialProperties | null | undefined>(null);
     const [gameStatus, setGameStatus] = useState<GameStatus>('Editing');
     const [followCamera, setFollowCamera] = useState<boolean>(false);
-    const [fov, setFov] = useState<number>(90); // Default FOV, adjust as needed
+    const [fov, setFov] = useState<number>(90);
+    const [focalDistance, setFocalDistance] = useState<number>(10.0);
+    const [dofStrength, setDofStrength] = useState<number>(0.0);
 
     // Setup the WASM to JS bridge implementations
     useEffect(() => {
@@ -70,6 +74,16 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
                 console.log("GameProvider: Bridge updating FOV", fov);
                 setFov(fov);
             },
+            updateFocalDistance: (focalDistance) => {
+                console.log("GameProvider: Bridge updating focal distance", focalDistance);
+                setFocalDistance(focalDistance);
+            },
+            updateDofStrength: (defocusAngle) => {
+                // defocus angle is range [0,0.05], need to map to [0,100]
+                const dofStrength = defocusAngle * 2000;
+                console.log("GameProvider: Bridge updating DOF strength", dofStrength, ", defocusAngle", defocusAngle);
+                setDofStrength(dofStrength);
+            },
             // Implement other bridge functions here to update context state
         };
 
@@ -87,6 +101,8 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
         gameStatus,
         followCamera,
         fov,
+        focalDistance,
+        dofStrength,
     };
 
     return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
