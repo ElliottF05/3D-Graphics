@@ -4,7 +4,7 @@ use web_sys::console;
 
 use rayon::prelude::*;
 
-use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
+use crate::{console_error, console_log, console_warn, utils::{math::{degrees_to_radians, radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -100,7 +100,7 @@ impl Game {
             // testing
         };
 
-        game.create_rt_test_scene_spheres();
+        // game.create_rt_test_scene_spheres();
         // game.create_rt_test_scene_simple_light();
         // game.create_rt_test_scene_cornell();
         // game.create_rt_test_scene_cornell_metal();
@@ -294,11 +294,14 @@ impl Game {
     }
 
     pub fn rotate_selected_obj(&mut self, x: f32, y: f32, z: f32) {
+        let x_rad = degrees_to_radians(x);
+        let y_rad = degrees_to_radians(y);
+        let z_rad = degrees_to_radians(z);
         if self.status == GameStatus::RasterizingNoLighting {
             if let Some(selected_index) = self.selected_object_index {
                 // let selected_obj = &mut self.scene_objects.borrow_mut()[selected_index];
                 let selected_obj = &mut self.scene_objects.write().unwrap()[selected_index];
-                selected_obj.rotate_around_center(z, y);
+                selected_obj.rotate_around_center(z_rad, y_rad);
                 self.bvh = None; // invalidate bvh if obj is changed
             } else {
                 console_error!("Game::rotate_selected_obj() called but no object is selected");

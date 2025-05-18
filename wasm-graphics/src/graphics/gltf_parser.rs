@@ -108,12 +108,9 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         flip_indices_winding(&mut indices);
 
         // Get material properties
-        let mut phong_properties = PhongProperties::default();
+        let phong_properties = PhongProperties::default();
         let pbr = primitive.material().pbr_metallic_roughness();
         let pbr_base_color = pbr.base_color_factor();
-        phong_properties.alpha = pbr_base_color[3];
-        // material_props.alpha = 1.0;
-        // TODO: user proper alpha and add metalic etc. properties
 
         let base_color = Vec3::new(pbr_base_color[0], pbr_base_color[1], pbr_base_color[2]);
         let read_colors = reader.read_colors(0);
@@ -142,8 +139,6 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
             }
         };
         // console_log!("colors: {:?}", colors);
-
-        // TODO: ADD TO RT SCENE
 
         let vertex_object = Mesh::new(vertices, indices, colors, phong_properties);
         
@@ -349,29 +344,55 @@ pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
             match parse_gltf_objects(gltf, &buffers) {
                 Ok(mut meshes) => {
 
-                    for mesh in meshes.iter_mut() {
-                        for vertex in mesh.vertices.iter_mut() {
-                            // vertex.rotate_z(PI / 2.0);
-                            vertex.rotate_y(-PI / 2.0);
-                            *vertex *= 0.4;
-                            vertex.x += 20.0;
-                            vertex.z += 5.0;
-                        }
+                    // combine meshes into a one mesh
+                    let combined_vertices: Vec<Vec3> = meshes.iter().flat_map(|m| m.vertices.clone()).collect();
+                    let combined_colors = meshes.iter().flat_map(|m| m.colors.clone()).collect();
+                    let mut combined_indices = Vec::new();
+
+                    let mut vertex_offset = 0;
+                    for mesh in meshes {
+                        combined_indices.extend(mesh.indices.iter().map(|i| i + vertex_offset));
+                        vertex_offset += mesh.vertices.len();
                     }
 
-                    // TODO: ADD MATERIAL SUPPORT
-                    // add meshes to rt as triangles
-                    let scene_objects: Vec<SceneObject> = meshes
-                        .into_iter()
-                        .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
-                        .collect();
+                    let mut combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::default());
+                    combined_mesh.translate_to(Vec3::new(0.0, 0.0, 0.0));
+                    if combined_mesh.radius > 50.0 {
+                        let scale_factor = 50.0 / combined_mesh.radius;
+                        combined_mesh.scale_by(scale_factor);
+                    }
 
+                    let combined_scene_obj = SceneObject::new_from_mesh(combined_mesh, Lambertian::default().clone_box(), false);
                     GAME_INSTANCE.with(|game_instance| {
                         let mut g = game_instance.borrow_mut();
-                        g.scene_objects = RwLock::new(scene_objects);
+                        g.scene_objects.write().unwrap().push(combined_scene_obj);
                         g.bvh = None; // invalidate the bvh
                     });
                     true
+
+                    // for mesh in meshes.iter_mut() {
+                    //     for vertex in mesh.vertices.iter_mut() {
+                    //         // vertex.rotate_z(PI / 2.0);
+                    //         vertex.rotate_y(-PI / 2.0);
+                    //         *vertex *= 0.4;
+                    //         vertex.x += 20.0;
+                    //         vertex.z += 5.0;
+                    //     }
+                    // }
+
+                    // TODO: ADD MATERIAL SUPPORT
+                    // add meshes to rt as triangles
+                    // let scene_objects: Vec<SceneObject> = meshes
+                    //     .into_iter()
+                    //     .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
+                    //     .collect();
+
+                    // GAME_INSTANCE.with(|game_instance| {
+                    //     let mut g = game_instance.borrow_mut();
+                    //     g.scene_objects = RwLock::new(scene_objects);
+                    //     g.bvh = None; // invalidate the bvh
+                    // });
+                    // true
                 },
                 Err(e) => {
                     console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
