@@ -100,6 +100,12 @@ extern "C" {
         height: u32,
     );
 
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateFocalDistance)]
+    pub fn js_update_focal_distance(focal_distance: f32);
+
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateDofStrength)]
+    pub fn js_update_dof_strength(defocus_angle: f32);
+
 }
 
 // EXPOSING RUST FUNCTIONS TO JS
@@ -181,6 +187,18 @@ pub fn add_box(x: f32, y: f32, z: f32) {
 pub fn set_fov(fov: f32) {
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().set_fov(fov);
+    });
+}
+#[wasm_bindgen]
+pub fn set_focal_dist(focal_dist: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().set_focal_dist(focal_dist);
+    });
+}
+#[wasm_bindgen]
+pub fn set_defocus_angle(defocus_angle: f32) {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().set_defocus_angle(defocus_angle);
     });
 }
 

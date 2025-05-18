@@ -4,7 +4,7 @@ use web_sys::console;
 
 use rayon::prelude::*;
 
-use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
+use crate::{console_error, console_log, console_warn, utils::{math::{radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -148,6 +148,8 @@ impl Game {
 
         // Update JS initial states where needed
         js_update_fov(radians_to_degrees(game.camera.get_fov()));
+        js_update_focal_distance(game.focus_dist);
+        js_update_dof_strength(game.defocus_angle);
 
         return game;
     }
@@ -197,6 +199,15 @@ impl Game {
         self.camera.set_fov(fov);
         let fov_degrees = radians_to_degrees(fov);
         js_update_fov(fov_degrees);
+    }
+
+    pub fn set_focal_dist(&mut self, dist: f32) {
+        self.focus_dist = dist;
+        js_update_focal_distance(dist);
+    }
+    pub fn set_defocus_angle(&mut self, angle: f32) {
+        self.defocus_angle = angle;
+        js_update_dof_strength(angle);
     }
 
     pub fn enter_edit_mode(&mut self) {
@@ -576,7 +587,7 @@ impl Game {
         // 4 ms per frame?
 
         let focal_dist = self.focus_dist;
-        let aperture_factor = 30.0 * self.defocus_angle;
+        let aperture_factor = 10.0 * self.defocus_angle / self.camera.get_fov();
 
         if aperture_factor <= 0.0 {
             return;

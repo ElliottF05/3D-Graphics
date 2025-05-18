@@ -32,6 +32,8 @@ const SceneControlPanel: React.FC = () => {
         gameStatus,
         followCamera,
         fov,
+        focalDistance,
+        dofStrength,
     } = useGameContext();
 
     // state to control which accordion items are open
@@ -73,6 +75,21 @@ const SceneControlPanel: React.FC = () => {
         } else {
             wasm.enter_edit_mode();
         }
+    };
+
+    const handleFocalDistanceChange = (value: number[]) => {
+        const newFocalDistance = value[0];
+        console.log(`Context: Setting Focal Distance to ${newFocalDistance} via WASM`);
+        wasm.set_focal_dist(newFocalDistance);
+    };
+
+    const handleDofStrengthChange = (value: number[]) => {
+        const newDofStrength = value[0];
+        console.log(`Context: Setting Depth of Field Strength to ${newDofStrength} via WASM`);
+        // dof goes from 0 to 100, but defocus angle is in radians.
+        // let max defocus angle be 0.05 radians.
+        const radians = newDofStrength / 2000;
+        wasm.set_defocus_angle(radians);
     };
 
     const inEditMode = gameStatus === 'Editing';
@@ -128,6 +145,43 @@ const SceneControlPanel: React.FC = () => {
                     />
                 </div>
 
+                {/* Focal Distance Slider */}
+                <div className="space-y-2 pt-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="focal-distance-slider" className="text-sm font-medium">Focal Distance</Label>
+                        <span className="text-sm text-muted-foreground">{(focalDistance ?? 10).toFixed(1)}</span>
+                    </div>
+                    <Slider
+                        id="focal-distance-slider"
+                        disabled={inRayTracingMode}
+                        min={1}
+                        max={50}
+                        step={0.1}
+                        value={[focalDistance ?? 10]}
+                        onValueChange={handleFocalDistanceChange}
+                        className="w-full"
+                    />
+                </div>
+
+                {/* Depth of Field Strength Slider */}
+                <div className="space-y-2 pt-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="dof-strength-slider" className="text-sm font-medium">Depth of Field Strength</Label>
+                        <span className="text-sm text-muted-foreground">{(dofStrength ?? 0).toFixed(0)}</span>
+                    </div>
+                    <Slider
+                        id="dof-strength-slider"
+                        disabled={inRayTracingMode}
+                        // arbitrary min/max values
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[dofStrength ?? 0]}
+                        onValueChange={handleDofStrengthChange}
+                        className="w-full"
+                    />
+                </div>
+
                 {/* Top Level Mode Buttons */}
                 <div className="mb-4">
 
@@ -171,7 +225,7 @@ const SceneControlPanel: React.FC = () => {
                     />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    {!inEditMode ? "Scene-editing unavailable when using real-time lighting." : ""}
+                    {!inEditMode ? "Scene editing unavailable when using real-time lighting." : ""}
                 </p>
 
                 <Accordion
