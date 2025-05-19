@@ -263,7 +263,7 @@ impl Game {
                 let extra_prop = props.extra_prop;
 
                 selected_obj.set_color(color);
-                selected_obj.set_material_properties(material_type, extra_prop);
+                selected_obj.set_material_properties(material_type, extra_prop, color);
 
                 self.bvh = None; // invalidate bvh if obj is changed
 

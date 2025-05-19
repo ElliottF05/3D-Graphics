@@ -33,6 +33,7 @@ stl_io = "0.8.3"
 gltf = { version = "1.4.1", features = [
     "utils",
     "import",
+    "KHR_lights_punctual",
 ]}
 image = "0.25.5"
 data-url = "0.3.1"

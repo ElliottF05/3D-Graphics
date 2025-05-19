@@ -1,93 +1,112 @@
-use gltf::{buffer::{Data, Source}, image, json::extensions::material, mesh::{util::{tex_coords, ReadColors}, Reader}, Gltf, Primitive};
+use gltf::{buffer::{Data, Source}, image, json::extensions::material, mesh::{util::{tex_coords, ReadColors}, Reader}, scene, Gltf, Primitive};
 use ::image::{load_from_memory, GenericImageView};
 use wasm_bindgen::prelude::*;
-use std::{cell::RefCell, f32::consts::PI, sync::RwLock};
 use data_url;
 use crate::{console_error, console_log, utils::utils::flip_indices_winding, wasm::wasm::GAME_INSTANCE};
 
 use crate::utils::math::Vec3;
 
-use super::{mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::BVHNode, hittable::Hittable, material::{Lambertian, Material}}, scene_object::SceneObject};
+use super::{mesh::{Mesh, PhongProperties}, ray_tracing::material::{Lambertian, Material}, scene_object::SceneObject};
 
-// #[wasm_bindgen]
-// pub fn load_gltf_model(gltf_bytes: &[u8], bin_bytes: &[u8]) -> bool {
-//     match decode_gltf_bytes(gltf_bytes, bin_bytes) {
-//         Ok((gltf, buffers)) => {
-//             match parse_gltf_objects(gltf, &buffers) {
-//                 Ok(mut meshes) => {
+#[wasm_bindgen]
+pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
+    match decode_glb_bytes(glb_bytes) {
+        Ok((gltf, buffers)) => {
 
-//                     // TODO: remove later, this is for testing
-//                     for mesh in meshes.iter_mut() {
-//                         for vertex in mesh.vertices.iter_mut() {
-//                             // vertex.rotate_z(PI / 2.0);
-//                             vertex.rotate_y(-PI / 2.0);
-//                             *vertex *= 0.2;
-//                             vertex.x += 10.0;
-//                             vertex.z += 5.0;
-//                         }
-//                     }
+            let mut combined_mesh = match extract_combined_mesh_from_gltf(&gltf, &buffers) {
+                Ok(mesh) => mesh,
+                Err(e) => {
+                    console_error!("GLTF parse error on extract_combined_mesh_from_gltf(): {}", e);
+                    return false;
+                }
+            };
 
-//                     let scene_objects: Vec<SceneObject> = meshes
-//                         .into_iter()
-//                         .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
-//                         .collect();
+            // center the mesh
+            combined_mesh.translate_to(Vec3::new(0.0, 0.0, 0.0));
+            if combined_mesh.radius > 50.0 {
+                let scale_factor = 50.0 / combined_mesh.radius;
+                combined_mesh.scale_by(scale_factor);
+            }
 
-//                     GAME_INSTANCE.with(|game_instance| {
-//                         let mut g = game_instance.borrow_mut();
-//                         g.scene_objects = RefCell::new(scene_objects);
-//                     });
-//                     true
-//                 },
-//                 Err(e) => {
-//                     console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
-//                     false
-//                 }
-//             }
-//         },
-//         Err(e) => {
-//             console_error!("GLTF parse error on decode_gltf_bytes(): {}", e);
-//             false
-//         }
-//     }
-// }
+            let combined_scene_obj = SceneObject::new_from_mesh(combined_mesh, Lambertian::default().clone_box(), false);
+            GAME_INSTANCE.with(|game_instance| {
+                let mut g = game_instance.borrow_mut();
+                g.scene_objects.write().unwrap().push(combined_scene_obj);
+                g.bvh = None; // invalidate the bvh
+            });
+            true
+        },
+        Err(e) => {
+            console_error!("GLB error on decode_glb_bytes(): {}", e);
+            false
+        }
+    }
+}
 
-// // First parse just the GLTF structure
-// pub fn decode_gltf_bytes(gltf_bytes: &[u8], bin_bytes: &[u8]) 
-//     -> Result<(Gltf, Vec<Data>), String> {
+pub fn decode_glb_bytes(glb_bytes: &[u8]) -> Result<(Gltf, Vec<Data>), String> {
+    // Parse the GLB data - this works with both GLB and GLTF formats
+    let gltf = match Gltf::from_slice(glb_bytes) {
+        Ok(gltf) => gltf,
+        Err(e) => {
+            console_error!("Failed to parse GLB from slice: {}", e);
+            return Err(format!("Failed to parse GLB from slice: {}", e));
+        },
+    };
+
+    // console_log!("buffers().len(): {:?}", gltf.buffers().len());
+    // console_log!("buffers(): {:?}", gltf.buffers());
+    // console_log!("images().len(): {:?}", gltf.images().len());
+    // console_log!("images(): {:?}", gltf.images());
+
+    // console_log!("has blob: {:?}", gltf.blob.is_some());
+
+    // Extract buffer data directly from GLB
+    let mut buffers = Vec::new();
+    if let Some(blob) = gltf.blob.as_ref() {
+        buffers.push(Data::from_source_and_blob(Source::Bin, None, &mut Some(blob.clone())).unwrap());
+    } else { 
+        console_error!("GLB file missing binary chunk");
+        return Err("GLB file missing binary chunk".to_string());
+    }
+
+    Ok((gltf, buffers))
+}
+
+pub fn extract_combined_mesh_from_gltf(gltf: &Gltf, buffers: &[Data]) -> Result<Mesh, String> {
+    match parse_gltf_objects(&gltf, &buffers) {
+        Ok(meshes) => {
+
+            // combine meshes into a one mesh
+            let combined_vertices: Vec<Vec3> = meshes.iter().flat_map(|m| m.vertices.clone()).collect();
+            let combined_colors = meshes.iter().flat_map(|m| m.colors.clone()).collect();
+            let mut combined_indices = Vec::new();
+
+            let mut vertex_offset = 0;
+            for mesh in meshes {
+                combined_indices.extend(mesh.indices.iter().map(|i| i + vertex_offset));
+                vertex_offset += mesh.vertices.len();
+            }
+
+            let combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::default());
+            return Ok(combined_mesh);
+        },
+        Err(e) => {
+            console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
+            return Err(format!("GLTF parse error on parse_gltf_objects(): {}", e))
+        }
+    }
+}
+
+pub fn parse_gltf_objects(gltf: &Gltf, buffers: &[Data]) -> Result<Vec<Mesh>, String> {
     
-//     // Parse the GLTF structure
-//     let gltf = match gltf::Gltf::from_slice(gltf_bytes) {
-//         Ok(gltf) => gltf,
-//         Err(e) => return Err(format!("Failed to parse GLTF: {}", e)),
-//     };
-
-//     console_log!("buffers().len(): {:?}", gltf.buffers().len());
-//     console_log!("buffers(): {:?}", gltf.buffers());
-//     console_log!("images().len(): {:?}", gltf.images().len());
-//     console_log!("images(): {:?}", gltf.images());
-
-//     console_log!("has blob: {:?}", gltf.blob.is_some());
-    
-//     let buffer = match Data::from_source_and_blob(Source::Bin, None, &mut Some(bin_bytes.to_vec())) {
-//         Ok(buffer) => buffer,
-//         Err(e) => return Err(format!("Failed to create buffer: {}", e)),
-//     };
-//     let buffers = vec![buffer];
-
-//     return Ok((gltf, buffers));
-// }
-
-pub fn parse_gltf_objects(gltf: Gltf, buffers: &[Data]) 
-    -> Result<Vec<Mesh>, String> {
-    
-    let mut vertex_objects = Vec::new();
+    let mut meshes = Vec::new();
 
     for mesh in gltf.meshes() {
         let mesh_objects = parse_gltf_mesh(&gltf, mesh, buffers)?;
-        vertex_objects.extend(mesh_objects);
+        meshes.extend(mesh_objects);
     }
 
-    Ok(vertex_objects)
+    Ok(meshes)
 }
 
 fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Vec<Mesh>, String> {
@@ -336,102 +355,34 @@ fn sample_texture_at_uv(
     }
 }
 
+// fn parse_gltf_lights(gltf: &Gltf) -> Result<Vec<Light>, String> {
+//     console_log!("Parsing lights");
+//     // let lights = Vec::new();
+//     for node in gltf.nodes() {
+//         if let Some(gltf_light) = node.light() {
+//             let position_floats = node.transform().decomposed().0;
+//             let pos = Vec3::new(position_floats[0], position_floats[1], position_floats[2]);
 
-#[wasm_bindgen]
-pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
-    match decode_glb_bytes(glb_bytes) {
-        Ok((gltf, buffers)) => {
-            match parse_gltf_objects(gltf, &buffers) {
-                Ok(mut meshes) => {
+//             let color_floats = gltf_light.color();
+//             let color = Vec3::new(color_floats[0], color_floats[1], color_floats[2]);
 
-                    // combine meshes into a one mesh
-                    let combined_vertices: Vec<Vec3> = meshes.iter().flat_map(|m| m.vertices.clone()).collect();
-                    let combined_colors = meshes.iter().flat_map(|m| m.colors.clone()).collect();
-                    let mut combined_indices = Vec::new();
+//             let intensity = gltf_light.intensity();
 
-                    let mut vertex_offset = 0;
-                    for mesh in meshes {
-                        combined_indices.extend(mesh.indices.iter().map(|i| i + vertex_offset));
-                        vertex_offset += mesh.vertices.len();
-                    }
+//             match gltf_light.kind() {
+//                 gltf::khr_lights_punctual::Kind::Directional => {
+//                     console_log!("Found directional light");
+//                 },
+//                 gltf::khr_lights_punctual::Kind::Point => {
+//                     console_log!("Found point light");
+//                 },
+//                 gltf::khr_lights_punctual::Kind::Spot{inner_cone_angle, outer_cone_angle} => {
+//                     console_log!("Found spot light");
+//                 },
+//             }
+//         } else {
+//             console_log!("No light found");
+//         }
+//     }
 
-                    let mut combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::default());
-                    combined_mesh.translate_to(Vec3::new(0.0, 0.0, 0.0));
-                    if combined_mesh.radius > 50.0 {
-                        let scale_factor = 50.0 / combined_mesh.radius;
-                        combined_mesh.scale_by(scale_factor);
-                    }
-
-                    let combined_scene_obj = SceneObject::new_from_mesh(combined_mesh, Lambertian::default().clone_box(), false);
-                    GAME_INSTANCE.with(|game_instance| {
-                        let mut g = game_instance.borrow_mut();
-                        g.scene_objects.write().unwrap().push(combined_scene_obj);
-                        g.bvh = None; // invalidate the bvh
-                    });
-                    true
-
-                    // for mesh in meshes.iter_mut() {
-                    //     for vertex in mesh.vertices.iter_mut() {
-                    //         // vertex.rotate_z(PI / 2.0);
-                    //         vertex.rotate_y(-PI / 2.0);
-                    //         *vertex *= 0.4;
-                    //         vertex.x += 20.0;
-                    //         vertex.z += 5.0;
-                    //     }
-                    // }
-
-                    // TODO: ADD MATERIAL SUPPORT
-                    // add meshes to rt as triangles
-                    // let scene_objects: Vec<SceneObject> = meshes
-                    //     .into_iter()
-                    //     .map(|m| SceneObject::new_from_mesh(m, Lambertian::default().clone_box(), false))
-                    //     .collect();
-
-                    // GAME_INSTANCE.with(|game_instance| {
-                    //     let mut g = game_instance.borrow_mut();
-                    //     g.scene_objects = RwLock::new(scene_objects);
-                    //     g.bvh = None; // invalidate the bvh
-                    // });
-                    // true
-                },
-                Err(e) => {
-                    console_error!("GLTF parse error on parse_gltf_objects(): {}", e);
-                    false
-                }
-            }
-        },
-        Err(e) => {
-            console_error!("GLB error on decode_glb_bytes(): {}", e);
-            false
-        }
-    }
-}
-
-pub fn decode_glb_bytes(glb_bytes: &[u8]) -> Result<(Gltf, Vec<Data>), String> {
-    // Parse the GLB data - this works with both GLB and GLTF formats
-    let gltf = match Gltf::from_slice(glb_bytes) {
-        Ok(gltf) => gltf,
-        Err(e) => {
-            console_error!("Failed to parse GLB from slice: {}", e);
-            return Err(format!("Failed to parse GLB from slice: {}", e));
-        },
-    };
-
-    // console_log!("buffers().len(): {:?}", gltf.buffers().len());
-    // console_log!("buffers(): {:?}", gltf.buffers());
-    // console_log!("images().len(): {:?}", gltf.images().len());
-    // console_log!("images(): {:?}", gltf.images());
-
-    // console_log!("has blob: {:?}", gltf.blob.is_some());
-
-    // Extract buffer data directly from GLB
-    let mut buffers = Vec::new();
-    if let Some(blob) = gltf.blob.as_ref() {
-        buffers.push(Data::from_source_and_blob(Source::Bin, None, &mut Some(blob.clone())).unwrap());
-    } else { 
-        console_error!("GLB file missing binary chunk");
-        return Err("GLB file missing binary chunk".to_string());
-    }
-
-    Ok((gltf, buffers))
-}
+//     return Err("Not implemented".to_string());
+// }
