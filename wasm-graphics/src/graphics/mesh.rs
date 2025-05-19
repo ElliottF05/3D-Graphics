@@ -33,6 +33,9 @@ impl PhongProperties {
         phong_properties.is_light = true;
         return phong_properties;
     }
+    pub fn rt_default() -> PhongProperties {
+        return PhongProperties::new(1.0, 1.0, 0.4, 0.2, 4, false, true);
+    }
 }
 
 impl Default for PhongProperties {
@@ -307,6 +310,10 @@ impl Mesh {
             v.rotate_z_fast(sin_z, cos_z);
             v.rotate_y_fast(sin_y, cos_y);
             *v += center_of_rotation;
+        }
+        for n in self.normals.iter_mut() {
+            n.rotate_z_fast(sin_z, cos_z);
+            n.rotate_y_fast(sin_y, cos_y);
         }
         self.center -= center_of_rotation;
         self.center.rotate_z_fast(sin_z, cos_z);

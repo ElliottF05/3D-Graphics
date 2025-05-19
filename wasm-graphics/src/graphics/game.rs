@@ -1144,10 +1144,10 @@ impl Game {
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
             Ok(mesh) => {
                 let light = Light::new_looking_at(
-                    Vec3::new(50.0, 100.0, 200.0),
+                    Vec3::new(50.0, 200.0, 300.0),
                     Vec3::new(0.0, 0.0, 0.0),
-                    PI / 8.0,
-                    500.0 * Vec3::white(),
+                    PI / 12.0,
+                    800.0 * Vec3::white(),
                     10.0,
                     1000,
                     1000,
