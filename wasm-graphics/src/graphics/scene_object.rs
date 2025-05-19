@@ -50,13 +50,21 @@ impl SceneObject {
     pub fn new_sphere(center: Vec3, radius: f32, color: Vec3, subdivisions: u32, unified_mat: (PhongProperties, Box<dyn Material>)) -> SceneObject {
         return SceneObject::new_sphere_custom(center, radius, color, subdivisions, unified_mat.0, unified_mat.1);
     }
-    pub fn new_sphere_light(center: Vec3, radius: f32, color: Vec3, subdivisions: u32, buf_width: usize) -> SceneObject {
+    pub fn new_sphere_omni_light(center: Vec3, radius: f32, color: Vec3, subdivisions: u32, buf_width: usize) -> SceneObject {
         let sphere = Sphere::new(center, radius, color, DiffuseLight::default().clone_box());
         let mut properties = PhongProperties::default();
         properties.is_light = true;
         let mesh = Mesh::build_sphere(center, radius, subdivisions, color, properties);
         let lights = Light::new_omnidirectional(center, color, radius + 0.01, buf_width);
         return SceneObject::new(mesh, vec![Box::new(sphere)], lights, true);
+    }
+    pub fn new_sphere_custom_light(subdivisions: u32, light: Light) -> SceneObject {
+        let radius = light.min_dist - 0.01;
+        let sphere = Sphere::new(light.camera.pos, radius, light.color, DiffuseLight::default().clone_box());
+        let mut properties = PhongProperties::default();
+        properties.is_light = true;
+        let mesh = Mesh::build_sphere(light.camera.pos, radius, subdivisions, light.color, properties);
+        return SceneObject::new(mesh, vec![Box::new(sphere)], vec![light], true);
     }
 
     pub fn new_rectangle(origin: Vec3, u: Vec3, v: Vec3, color: Vec3, unified_mat: (PhongProperties, Box<dyn Material>), cull_faces: bool) -> SceneObject {

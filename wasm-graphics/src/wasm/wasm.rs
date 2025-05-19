@@ -5,6 +5,7 @@ use gltf::json::extensions::scene;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::console;
+use web_sys::js_sys::Promise;
 use web_sys::js_sys::Uint8ClampedArray;
 use web_sys::Event;
 use web_sys::EventTarget;
@@ -106,6 +107,9 @@ extern "C" {
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateDofStrength)]
     pub fn js_update_dof_strength(defocus_angle: f32);
 
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = getGlbBytes)]
+    pub async fn js_get_glb_bytes(url: String) -> Promise;
+
 }
 
 // EXPOSING RUST FUNCTIONS TO JS
@@ -200,6 +204,26 @@ pub fn set_defocus_angle(defocus_angle: f32) {
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().set_defocus_angle(defocus_angle);
     });
+}
+
+// loading scenes
+#[wasm_bindgen]
+pub fn load_scene_random_spheres() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().create_rt_test_scene_spheres();
+    });
+}
+#[wasm_bindgen]
+pub fn load_scene_fantasy_book(glb_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = glb_bytes {
+        console_log!("wasm.rs: load_scene_fantasy_book");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().load_scene_fantasy_book(&bytes);
+        });
+        return;
+    } else {
+        console_error!("wasm.rs: load_scene_fantasy_book failed, bytes are None");
+    }
 }
 
 

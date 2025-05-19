@@ -1,6 +1,7 @@
 import * as wasm from '@wasm/wasm_graphics';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { IWasmToJsBridge, wasmToJsBridge, GameStatus } from '@/wasmToJsBridge'; // Adjust path
+import { loadGlbModel } from '.';
 
 interface IGameContext {
     // State variables
@@ -84,6 +85,18 @@ export const GameProvider: React.FC<GameProviderProps> = ({ children }) => {
                 console.log("GameProvider: Bridge updating DOF strength", dofStrength, ", defocusAngle", defocusAngle);
                 setDofStrength(dofStrength);
             },
+            // getGlbBytes: async (url) => {
+            //     console.log("GameProvider: Bridge loading GLB model from URL", url);
+            //     try {
+            //         const response = await fetch(url);
+            //         const glbBuffer = await response.arrayBuffer();
+            //         const glbBytes = new Uint8Array(glbBuffer);
+            //         return glbBytes;
+            //     } catch (error) {
+            //         console.error("GameProvider: Bridge failed to load GLB model", error);
+            //         return new Uint8Array();
+            //     }
+            // },
             // Implement other bridge functions here to update context state
         };
 

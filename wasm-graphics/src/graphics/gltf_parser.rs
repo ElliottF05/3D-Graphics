@@ -8,6 +8,19 @@ use crate::utils::math::Vec3;
 
 use super::{mesh::{Mesh, PhongProperties}, ray_tracing::material::{Lambertian, Material}, scene_object::SceneObject};
 
+pub fn extract_combined_mesh_from_raw_glb_bytes(glb_bytes: &[u8]) -> Result<Mesh, String> {
+    match decode_glb_bytes(glb_bytes) {
+        Ok((gltf, buffers)) => {
+            let combined_mesh = extract_combined_mesh_from_gltf(&gltf, &buffers)?;
+            Ok(combined_mesh)
+        },
+        Err(e) => {
+            console_error!("GLB error on decode_glb_bytes(): {}", e);
+            Err(format!("GLB error on decode_glb_bytes(): {}", e))
+        }
+    }
+}
+
 #[wasm_bindgen]
 pub fn load_glb_model(glb_bytes: &[u8]) -> bool {
     match decode_glb_bytes(glb_bytes) {

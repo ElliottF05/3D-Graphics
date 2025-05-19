@@ -1,12 +1,13 @@
 use std::{cell::RefCell, collections::HashSet, f32::consts::{E, PI}, sync::RwLock};
 
-use web_sys::console;
+use wasm_bindgen_futures::JsFuture;
+use web_sys::{console, js_sys};
 
 use rayon::prelude::*;
 
-use crate::{console_error, console_log, console_warn, utils::{math::{degrees_to_radians, radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
+use crate::{console_error, console_log, console_warn, utils::{math::{degrees_to_radians, radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_get_glb_bytes, js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
 
-use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
+use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, gltf_parser::{extract_combined_mesh_from_gltf, extract_combined_mesh_from_raw_glb_bytes}, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum GameStatus {
@@ -146,6 +147,9 @@ impl Game {
         
         // game.bvh = Some(BVHNode::new(rt_objects));
 
+        // DEFAULT SCENE
+        game.create_rt_test_scene_spheres();
+
         // Update JS initial states where needed
         js_update_fov(radians_to_degrees(game.camera.get_fov()));
         js_update_focal_distance(game.focus_dist);
@@ -210,6 +214,14 @@ impl Game {
         js_update_dof_strength(angle);
     }
 
+    pub fn js_update_ui(&self) {
+        // update UI elements in JS
+        let fov_degrees = radians_to_degrees(self.camera.get_fov());
+        js_update_fov(fov_degrees);
+        js_update_focal_distance(self.focus_dist);
+        js_update_dof_strength(self.defocus_angle);
+    }
+
     pub fn enter_edit_mode(&mut self) {
         self.deselect_object();
         self.set_game_status(GameStatus::RasterizingNoLighting);
@@ -224,6 +236,7 @@ impl Game {
         if self.bvh.is_none() {
             self.rebuild_bvh();
         }
+        self.extract_rt_lights_from_scene_objects();
     }
 
     pub fn stop_ray_tracing(&mut self) {
@@ -240,7 +253,7 @@ impl Game {
 
     pub fn exit_edit_mode(&mut self) {
         console_log!("game.rs: exit_edit_mode()");
-        self.extract_lights_from_scene_objects();
+        self.extract_raster_lights_from_scene_objects();
         self.recalculate_shadow_maps();
         self.set_game_status(GameStatus::RasterizingWithLighting);
         self.deselect_object();
@@ -1083,7 +1096,8 @@ impl Game {
         return &self.rt_lights;
     }
 
-    pub fn extract_lights_from_scene_objects(&mut self) {
+    pub fn extract_raster_lights_from_scene_objects(&mut self) {
+        console_log!("Extracting raster lights from scene objects");
         self.lights = self
             .scene_objects
             .read()
@@ -1091,6 +1105,10 @@ impl Game {
             .iter()
             .flat_map(|s| s.lights.clone())
             .collect();
+    }
+
+    pub fn extract_rt_lights_from_scene_objects(&mut self) {
+        console_log!("Extracting ray tracing lights from scene objects");
         self.rt_lights = self
             .scene_objects
             .read()
@@ -1118,5 +1136,41 @@ impl Game {
             .collect();
         // self.bvh = Some(BVHNode::new(rt_objects));
         self.bvh = Some(FlattenedBVH::new(rt_objects));
+    }
+
+
+    // LOADING SCENES
+    pub fn load_scene_fantasy_book(&mut self, glb_bytes: &[u8]) {
+        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
+            Ok(mesh) => {
+                let light = Light::new_looking_at(
+                    Vec3::new(50.0, 100.0, 200.0),
+                    Vec3::new(0.0, 0.0, 0.0),
+                    PI / 8.0,
+                    500.0 * Vec3::white(),
+                    10.0,
+                    1000,
+                    1000,
+                );
+                let light_scene_obj = SceneObject::new_sphere_custom_light(2, light);
+                
+                let mut scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), false);
+                scene_obj.set_center(Vec3::new(0.0, 0.0, 0.0));
+                scene_obj.rotate_around_center(0.0, degrees_to_radians(-90.0));
+
+                {
+                    let mut scene_objects = self.scene_objects.write().unwrap();
+                    scene_objects.clear();
+                    scene_objects.push(light_scene_obj);
+                    scene_objects.push(scene_obj);
+                }
+
+                self.bvh = None; // invalidate bvh
+                self.set_fov(degrees_to_radians(90.0));
+            }
+            Err(e) => {
+                console_error!("Error loading fantasy book scene: {}", e);
+            }
+        }
     }
 }

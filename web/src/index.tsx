@@ -21,7 +21,7 @@ root.render(
 );
 
 // Helper functions to interface with the WebAssembly module
-async function loadGlbModel(url: string) {
+export async function loadGlbModel(url: string) {
     try {
         const response = await fetch(url);
         const glbBuffer = await response.arrayBuffer();
@@ -36,5 +36,17 @@ async function loadGlbModel(url: string) {
     }
 };
 
-loadGlbModel("../static/medieval_fantasy_book.glb");
+export async function getGlbBytes(url: string): Promise<Uint8Array | null> {
+    try {
+        const response = await fetch(url);
+        const glbBuffer = await response.arrayBuffer();
+        const glbBytes = new Uint8Array(glbBuffer);
+        return glbBytes;
+    } catch (error) {
+        console.error("Error fetching GLB bytes:", error);
+        return null;
+    }
+}
+
+// loadGlbModel("../static/medieval_fantasy_book.glb");
 // loadGlbModel("../static/low_poly_forest.glb");
