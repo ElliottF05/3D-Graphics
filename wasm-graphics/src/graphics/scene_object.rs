@@ -223,7 +223,7 @@ impl SceneObject {
             }
         }
     }
-    pub fn set_material_properties(&mut self, mat_type: u32, extra_prop: f32) {
+    pub fn set_material_properties(&mut self, mat_type: u32, extra_prop: f32, color: Vec3) {
         let unified_mat = match mat_type {
             1 => SceneObject::new_diffuse_mat(),
             2 => SceneObject::new_metal_mat(extra_prop),
@@ -240,12 +240,17 @@ impl SceneObject {
             h.set_material(unified_mat.1.clone());
         }
         if self.get_material_number() == 4 {
+            if self.lights.is_empty() {
+                self.lights = Light::new_omnidirectional(self.mesh.center, color, self.mesh.radius + 0.01, 1000);
+            }
             for l in self.lights.iter_mut() {
                 l.color *= extra_prop;
             }
             for h in self.hittables.iter_mut() {
                 h.set_color(h.get_color() * extra_prop);
             }
+        } else {
+            self.lights.clear();
         }
         self.mesh.properties = unified_mat.0;
         self.mesh.properties.is_light = mat_type == 4;
