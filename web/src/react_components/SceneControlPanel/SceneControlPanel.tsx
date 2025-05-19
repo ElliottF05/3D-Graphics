@@ -18,10 +18,28 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 import { useGameContext } from "@/gameContext";
+import { getGlbBytes } from "@/index";
+
+const loadSceneRandomSpheres = () => {
+    console.log("Loading random spheres scene");
+    wasm.load_scene_random_spheres();
+}
+const loadSceneFantasyBook = async () => {
+    console.log("Loading fantasy book scene");
+    const glbBytes = await getGlbBytes("../static/medieval_fantasy_book.glb");
+    wasm.load_scene_fantasy_book(glbBytes);
+}
 
 
 
@@ -40,14 +58,22 @@ const SceneControlPanel: React.FC = () => {
     const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
 
     // --- handlers ---
-    const handleEnterEditMode = () => {
-        console.log("Context: Requesting WASM to enter edit mode");
-        wasm.enter_edit_mode();
-    };
-
-    const handleExitEditMode = () => {
-        console.log("Context: Requesting WASM to exit edit mode");
-        wasm.exit_edit_mode();
+    const handleLoadDefaultScene = (sceneValue: string) => {
+        console.log(`Context: Requesting WASM to load default scene: ${sceneValue}`);
+        switch (sceneValue) {
+            case "Random Spheres":
+                loadSceneRandomSpheres();
+                break;
+            case "Cornell Box":
+                // wasm.load_default_scene_2_cornell_box();
+                break;
+            case "Fantasy Book":
+                loadSceneFantasyBook();
+                break;
+            // Add more cases for other scenes
+            default:
+                console.warn(`Unknown default scene value: ${sceneValue}`);
+        }
     };
 
     const handleEnterRayTraceMode = () => {
@@ -124,6 +150,27 @@ const SceneControlPanel: React.FC = () => {
                 <CardDescription>Manage and edit your 3D scene.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pb-20">
+
+                {/* Load Default Scene Dropdown */}
+                <div className="space-y-2 pt-2">
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="load-scene-select" className="text-sm font-medium">Load Default Scene</Label>
+                    </div>
+                    <Select
+                        onValueChange={handleLoadDefaultScene}
+                        disabled={!inEditMode}
+                        defaultValue="Random Spheres"
+                    >
+                        <SelectTrigger id="load-scene-select" className="w-full">
+                            <SelectValue placeholder="Select a scene" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Random Spheres">Random Spheres</SelectItem>
+                            <SelectItem value="Cornell Box">Cornell Box</SelectItem>
+                            <SelectItem value="Fantasy Book">Fantasy Book</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
 
                 {/* FOV Slider */}
                 <div className="space-y-2 pt-2">

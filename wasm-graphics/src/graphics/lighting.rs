@@ -47,6 +47,18 @@ impl Light {
             color_buf: PixelBuf::new(buf_width, buf_height)
         }
     }
+    pub fn new_looking_at(pos: Vec3, look_at: Vec3, fov: f32, color: Vec3, min_dist: f32, buf_width: usize, buf_height: usize) -> Light {
+        let mut cam = Camera::new(pos, 0.0, 0.0, fov, buf_width, buf_height);
+        cam.look_at(&look_at);
+        return Light {
+            camera: cam,
+            color,
+            min_dist,
+            max_dist: 1000.0,
+            zbuf: ZBuffer::new(buf_width, buf_height),
+            color_buf: PixelBuf::new(buf_width, buf_height)
+        }
+    }
     pub fn new_omnidirectional(pos: Vec3, color: Vec3, min_dist: f32, buf_width: usize) -> Vec<Light> {
         let directions = vec![
             Vec3::new(1.0, 0.0, 0.0),

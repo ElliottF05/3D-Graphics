@@ -307,6 +307,8 @@ impl Game {
 
     pub fn create_rt_test_scene_spheres(&mut self) {
 
+        self.scene_objects.write().unwrap().clear();
+
         self.ray_samples = 10;
         self.ray_max_depth = 10;
 
@@ -399,6 +401,7 @@ impl Game {
 
         // set up bvh
         // self.create_bvh_from_scene_objs();
+        self.js_update_ui();
         self.rebuild_bvh();
     
     }
@@ -517,7 +520,7 @@ impl Game {
             0.1, 1000);
         self.add_scene_object(light_rec);
 
-        self.extract_lights_from_scene_objects();
+        self.extract_raster_lights_from_scene_objects();
         self.recalculate_shadow_maps();
 
         // self.create_bvh_from_scene_objs();
@@ -622,7 +625,7 @@ impl Game {
         self.rebuild_bvh();
     
         // Lights for RT and rasterization
-        self.extract_lights_from_scene_objects();
+        self.extract_raster_lights_from_scene_objects();
     
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
@@ -726,7 +729,7 @@ impl Game {
         self.rebuild_bvh();
     
         // Lights for RT and rasterization
-        self.extract_lights_from_scene_objects();
+        self.extract_raster_lights_from_scene_objects();
     
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
