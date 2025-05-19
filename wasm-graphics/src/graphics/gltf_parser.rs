@@ -100,7 +100,7 @@ pub fn extract_combined_mesh_from_gltf(gltf: &Gltf, buffers: &[Data]) -> Result<
                 vertex_offset += mesh.vertices.len();
             }
 
-            let combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::default());
+            let combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::rt_default());
             return Ok(combined_mesh);
         },
         Err(e) => {
