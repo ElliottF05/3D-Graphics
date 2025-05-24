@@ -16,21 +16,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { getGlbBytes } from "@/index";
 
 type ObjectType = 'Sphere' | 'Box' | 'Custom';
 
 // Mock WASM function calls for adding objects
-const wasmAddSphere = (radius: number) => {
-    console.log(`WASM: Add Sphere with radius ${radius}`);
-    // Example: Module.ccall('add_sphere_to_scene', 'number', ['number'], [radius]);
-};
-const wasmAddBox = (length: number, width: number, height: number) => {
-    console.log(`WASM: Add Box L:${length} W:${width} H:${height}`);
-    // Example: Module.ccall('add_box_to_scene', null, ['number', 'number', 'number'], [length, width, height]);
-};
-const wasmAddCustomObject = (file: File) => {
+const wasmAddCustomObject = async (file: File) => {
     console.log(`WASM: Add Custom Object from file ${file.name}`);
-    // Example: You'd handle file reading and passing data to WASM here
+    const glbBuffer = await file.arrayBuffer();
+    const glbBytes = new Uint8Array(glbBuffer);
+    if (glbBytes) {
+        wasm.add_custom_object(glbBytes);
+    } else {
+        console.error("Failed to load GLB bytes for custom object, glbBytes is null or undefined.");
+    }
 };
 
 interface AddObjectPanelProps {
@@ -94,7 +93,7 @@ const AddObjectPanel: React.FC<AddObjectPanelProps> = () => {
                 <SelectContent>
                     <SelectItem value="Sphere">Sphere</SelectItem>
                     <SelectItem value="Box">Box</SelectItem>
-                    <SelectItem value="Custom">Custom (.glb)</SelectItem>
+                    <SelectItem value="Custom">Custom (.glb) - experimental!</SelectItem>
                 </SelectContent>
             </Select>
         </div>

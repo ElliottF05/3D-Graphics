@@ -390,6 +390,43 @@ impl Game {
         }
     }
 
+    pub fn add_custom_object(&mut self, glb_bytes: &[u8]) {
+        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
+            Ok(mut mesh) => {
+
+                // scale mesh to be between 1 and 100 radius
+                let radius = mesh.radius;
+                let scale_factor = if radius > 100.0 {
+                    100.0 / radius
+                } else if radius < 1.0 {
+                    1.0 / radius
+                } else {
+                    1.0
+                };
+                mesh.scale_by(scale_factor);
+
+                // move mesh to where user is looking
+                let mut looking_at_dir = *self.camera.get_looking_dir();
+                looking_at_dir.normalize();
+                looking_at_dir *= 1.5 * mesh.radius; // move it 1.5x its radius away from camera
+
+                mesh.set_center(self.camera.pos + looking_at_dir);
+
+                let new_obj = SceneObject::new_from_mesh(
+                    mesh,
+                    Lambertian::default().clone_box(),
+                    false
+                );
+
+                self.scene_objects.write().unwrap().push(new_obj);
+                self.bvh = None; // invalidate bvh if obj is added
+            },
+            Err(e) => {
+                console_error!("Failed to extract mesh from glb bytes: {}", e);
+            }
+        }
+    }
+
     fn process_all_input(&mut self) {
 
         match self.status {
