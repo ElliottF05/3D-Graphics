@@ -48,5 +48,11 @@ export async function getGlbBytes(url: string): Promise<Uint8Array | null> {
     }
 }
 
+// https://sketchfab.com/3d-models/medieval-fantasy-book-06d5a80a04fc4c5ab552759e9a97d91a
 // loadGlbModel("../static/medieval_fantasy_book.glb");
-// loadGlbModel("../static/low_poly_forest.glb");
+
+// https://sketchfab.com/3d-models/magical-help-73fcb7197ba441419c768105c7db5d17
+// loadGlbModel("../static/magical_help.glb");
+
+// https://sketchfab.com/3d-models/this-tree-is-growing-60a1b5a73e184c8db7aa6007cd9d3462
+// loadGlbModel("../static/this_tree_is_growing.glb");

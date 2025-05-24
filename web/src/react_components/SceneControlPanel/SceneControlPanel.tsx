@@ -40,6 +40,11 @@ const loadSceneFantasyBook = async () => {
     const glbBytes = await getGlbBytes("../static/medieval_fantasy_book.glb");
     wasm.load_scene_fantasy_book(glbBytes);
 }
+const loadSceneMagicBridge = async () => {
+    console.log("Loading magic bridge scene");
+    const glbBytes = await getGlbBytes("../static/magical_help.glb");
+    wasm.load_scene_magic_bridge(glbBytes);
+}
 
 
 
@@ -70,6 +75,8 @@ const SceneControlPanel: React.FC = () => {
             case "Fantasy Book":
                 loadSceneFantasyBook();
                 break;
+            case "Magic Bridge (incomplete)":
+                loadSceneMagicBridge();
             // Add more cases for other scenes
             default:
                 console.warn(`Unknown default scene value: ${sceneValue}`);
@@ -168,6 +175,7 @@ const SceneControlPanel: React.FC = () => {
                             <SelectItem value="Random Spheres">Random Spheres</SelectItem>
                             <SelectItem value="Cornell Box">Cornell Box</SelectItem>
                             <SelectItem value="Fantasy Book">Fantasy Book</SelectItem>
+                            <SelectItem value="Magic Bridge (incomplete)">Magic Bridge (incomplete)</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
