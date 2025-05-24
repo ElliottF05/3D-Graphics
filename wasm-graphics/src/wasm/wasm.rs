@@ -237,6 +237,25 @@ pub fn load_scene_magic_bridge(glb_bytes: Option<Vec<u8>>) {
         console_error!("wasm.rs: load_scene_magic_bridge failed, bytes are None");
     }
 }
+#[wasm_bindgen]
+pub fn load_scene_cornell_box() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().create_rt_test_scene_cornell();
+    });
+}
+#[wasm_bindgen]
+pub fn load_scene_cornell_box_extra() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().create_rt_test_scene_cornell_metal();
+    });
+}
+#[wasm_bindgen]
+pub fn load_scene_simple_light() {
+    GAME_INSTANCE.with(|game_instance| {
+        game_instance.borrow_mut().create_rt_test_scene_simple_light();
+    });
+}
+
 
 
 // MAIN GAME INSTANCE

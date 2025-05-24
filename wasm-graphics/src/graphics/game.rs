@@ -1166,6 +1166,9 @@ impl Game {
                     scene_objects.push(scene_obj);
                 }
 
+                self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+                self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+
                 self.bvh = None; // invalidate bvh
                 self.set_fov(degrees_to_radians(90.0));
             }
