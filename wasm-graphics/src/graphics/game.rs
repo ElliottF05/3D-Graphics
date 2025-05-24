@@ -148,7 +148,7 @@ impl Game {
         // game.bvh = Some(BVHNode::new(rt_objects));
 
         // DEFAULT SCENE
-        game.create_rt_test_scene_spheres();
+        // game.create_rt_test_scene_spheres();
 
         // Update JS initial states where needed
         js_update_fov(radians_to_degrees(game.camera.get_fov()));
@@ -1141,6 +1141,7 @@ impl Game {
 
     // LOADING SCENES
     pub fn load_scene_fantasy_book(&mut self, glb_bytes: &[u8]) {
+        // https://sketchfab.com/3d-models/medieval-fantasy-book-06d5a80a04fc4c5ab552759e9a97d91a
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
             Ok(mesh) => {
                 let light = Light::new_looking_at(
@@ -1167,6 +1168,50 @@ impl Game {
 
                 self.bvh = None; // invalidate bvh
                 self.set_fov(degrees_to_radians(90.0));
+            }
+            Err(e) => {
+                console_error!("Error loading fantasy book scene: {}", e);
+            }
+        }
+    }
+
+    pub fn load_scene_magic_bridge(&mut self, glb_bytes: &[u8]) {
+        // https://sketchfab.com/3d-models/magical-help-73fcb7197ba441419c768105c7db5d17
+        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
+            Ok(mesh) => {
+                let mut scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), false);
+                scene_obj.set_center(Vec3::new(0.0, 0.0, 0.0));
+                scene_obj.mesh.properties.cull_faces = false;
+                
+                // Key Light - slightly off-center, magical blue/cyan
+                // let key_light_color = Vec3::new(0.6, 0.85, 1.0); // Pale cyan/blue
+                let key_light_color = Vec3::new(1.0, 0.8, 0.4);
+                // let key_light_color = Vec3::white();
+                let key_light_intensity = 700.0;
+                let key_light_scene_obj = SceneObject::new_sphere_omni_light(
+                    Vec3::new(5.0, 5.0, 8.0), // Moved slightly
+                    0.5, // Smaller visual representation
+                    key_light_intensity * key_light_color,
+                    3,
+                    1000
+                );
+
+                // night time setting
+                self.max_sky_color = 0.5 * Vec3::new(0.07, 0.10, 0.22);
+                self.min_sky_color = 0.5 * Vec3::new(0.03, 0.04, 0.1);
+
+                {
+                    let mut scene_objects = self.scene_objects.write().unwrap();
+                    scene_objects.clear();
+                    scene_objects.push(scene_obj);
+                    scene_objects.push(key_light_scene_obj);
+                }
+
+                self.bvh = None; // invalidate bvh
+                self.extract_rt_lights_from_scene_objects();
+                self.set_fov(degrees_to_radians(75.0)); // Slightly narrower FOV can feel more cinematic
+                self.camera.pos = Vec3::new(-15.0, 0.0, 5.0); // Example camera position
+                self.camera.look_at(&Vec3::new(0.0,0.0,2.0)); // Make camera look towards the bridge center
             }
             Err(e) => {
                 console_error!("Error loading fantasy book scene: {}", e);

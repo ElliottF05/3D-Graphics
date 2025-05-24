@@ -91,7 +91,7 @@ pub fn extract_combined_mesh_from_gltf(gltf: &Gltf, buffers: &[Data]) -> Result<
 
             // combine meshes into a one mesh
             let combined_vertices: Vec<Vec3> = meshes.iter().flat_map(|m| m.vertices.clone()).collect();
-            let combined_colors = meshes.iter().flat_map(|m| m.colors.clone()).collect();
+            let combined_colors: Vec<Vec3> = meshes.iter().flat_map(|m| m.colors.clone()).collect();
             let mut combined_indices = Vec::new();
 
             let mut vertex_offset = 0;
@@ -99,6 +99,11 @@ pub fn extract_combined_mesh_from_gltf(gltf: &Gltf, buffers: &[Data]) -> Result<
                 combined_indices.extend(mesh.indices.iter().map(|i| i + vertex_offset));
                 vertex_offset += mesh.vertices.len();
             }
+
+            // log lengths of buffers
+            console_log!("combined_vertices.len(): {:?}", combined_vertices.len());
+            console_log!("combined_indices.len(): {:?}", combined_indices.len());
+            console_log!("combined_colors.len(): {:?}", combined_colors.len());
 
             let combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::rt_default());
             return Ok(combined_mesh);
@@ -147,9 +152,9 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
         let base_color = Vec3::new(pbr_base_color[0], pbr_base_color[1], pbr_base_color[2]);
         let read_colors = reader.read_colors(0);
 
-        let colors = if let Ok(vertex_colors) = get_colors_from_vertex_colors(read_colors) {
-            vertex_colors
-        } else {
+        // get_colors_from_vertex_colors() is unused, models often have meaningless vertex colors
+
+        let colors =  {
             // Try to get colors from texture
             let tex_coords_vec = match reader.read_tex_coords(0) {
                 Some(tc) => tc.into_f32().collect(),
@@ -163,10 +168,17 @@ fn parse_gltf_mesh(gltf: &Gltf, mesh: gltf::Mesh, buffers: &[Data]) -> Result<Ve
 
             if !tex_coords_vec.is_empty() && !indices_for_texture.is_empty() {
                 match get_colors_from_texture(gltf, &primitive, tex_coords_vec, indices_for_texture, buffers) {
-                    Ok(texture_colors) => texture_colors,
-                    Err(_) => vec![base_color; indices.len() / 3]
+                    Ok(texture_colors) => {
+                        console_log!("using texture colors");
+                        texture_colors
+                    },
+                    Err(_) => {
+                        console_log!("Failed to get colors from texture, using base color");
+                        vec![base_color; indices.len() / 3]
+                    }
                 }
             } else {
+                console_log!("No texture coordinates or indices found, using base color");
                 vec![base_color; indices.len() / 3]
             }
         };

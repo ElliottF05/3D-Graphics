@@ -225,6 +225,18 @@ pub fn load_scene_fantasy_book(glb_bytes: Option<Vec<u8>>) {
         console_error!("wasm.rs: load_scene_fantasy_book failed, bytes are None");
     }
 }
+#[wasm_bindgen]
+pub fn load_scene_magic_bridge(glb_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = glb_bytes {
+        console_log!("wasm.rs: load_scene_magic_bridge");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().load_scene_magic_bridge(&bytes);
+        });
+        return;
+    } else {
+        console_error!("wasm.rs: load_scene_magic_bridge failed, bytes are None");
+    }
+}
 
 
 // MAIN GAME INSTANCE
