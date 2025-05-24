@@ -312,8 +312,7 @@ impl Game {
         self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
         self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
 
-        self.ray_samples = 10;
-        self.ray_max_depth = 10;
+        self.ray_max_depth = 20;
 
         let ground_material = Lambertian::default();
         let sphere = SceneObject::new_sphere(
@@ -411,7 +410,6 @@ impl Game {
 
     pub fn create_rt_test_scene_quads(&mut self) {
 
-        self.ray_samples = 10;
         self.ray_max_depth = 10;
 
         let origins = vec![
@@ -481,7 +479,6 @@ impl Game {
 
     pub fn create_rt_test_scene_simple_light(&mut self) {
 
-        self.ray_samples = 100;
         self.ray_max_depth = 50;
 
         self.scene_objects.write().unwrap().clear();
@@ -539,8 +536,7 @@ impl Game {
     }
 
     pub fn create_rt_test_scene_cornell(&mut self) {
-        self.ray_samples = 50;
-        self.ray_max_depth = 10;
+        self.ray_max_depth = 20;
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
@@ -635,8 +631,7 @@ impl Game {
 
 
     pub fn create_rt_test_scene_cornell_metal(&mut self) {
-        self.ray_samples = 50;
-        self.ray_max_depth = 10;
+        self.ray_max_depth = 50;
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
