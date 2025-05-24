@@ -1183,10 +1183,8 @@ impl Game {
                 scene_obj.set_center(Vec3::new(0.0, 0.0, 0.0));
                 scene_obj.mesh.properties.cull_faces = false;
                 
-                // Key Light - slightly off-center, magical blue/cyan
-                // let key_light_color = Vec3::new(0.6, 0.85, 1.0); // Pale cyan/blue
+                // Key Light - slightly off-center, warm color
                 let key_light_color = Vec3::new(1.0, 0.8, 0.4);
-                // let key_light_color = Vec3::white();
                 let key_light_intensity = 700.0;
                 let key_light_scene_obj = SceneObject::new_sphere_omni_light(
                     Vec3::new(5.0, 5.0, 8.0), // Moved slightly
