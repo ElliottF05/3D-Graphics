@@ -46,7 +46,6 @@ pub struct Game {
     // pub bvh: Option<BVHNode>,
     pub bvh: Option<FlattenedBVH>,
     rt_lights: Vec<Box<dyn Hittable>>,
-    pub ray_samples: usize,
     pub ray_max_depth: usize,
 
     pub defocus_angle: f32,
@@ -89,7 +88,6 @@ impl Game {
             // ray tracing variables
             bvh: None,
             rt_lights: Vec::new(),
-            ray_samples: 10,
             ray_max_depth: 10,
 
             defocus_angle: 0.0,
@@ -1206,6 +1204,8 @@ impl Game {
                 self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
                 self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
 
+                self.ray_max_depth = 20;
+
                 self.bvh = None; // invalidate bvh
                 self.set_fov(degrees_to_radians(90.0));
             }
@@ -1237,6 +1237,8 @@ impl Game {
                 // night time setting
                 self.max_sky_color = 0.5 * Vec3::new(0.07, 0.10, 0.22);
                 self.min_sky_color = 0.5 * Vec3::new(0.03, 0.04, 0.1);
+
+                self.ray_max_depth = 20;
 
                 {
                     let mut scene_objects = self.scene_objects.write().unwrap();
