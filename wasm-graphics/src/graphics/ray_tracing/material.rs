@@ -78,15 +78,19 @@ impl Material for Lambertian {
         let mut light_pdf = 0.0;
         let point_to_light_ray = Ray::new(hit_record.pos, cosine_dir);
         for light in lights {
-            let hit_light = light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
+            let mut temp_hit_record = HitRecord::default();
+            let hit_light = light.hit(&point_to_light_ray, 0.001, 5000.0, &mut temp_hit_record);
             if hit_light {
-                let light_sample_point = light.sample_random_point();
                 let area = light.get_area();
-                let r_squared = (light_sample_point - hit_record.pos).len_squared();
-                let cos_theta_light = light.get_normal(light_sample_point).dot(-cosine_dir).abs().clamp(0.0, 1.0);
-                light_pdf += (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+                let r_squared = (temp_hit_record.pos - hit_record.pos).len_squared();
+                let cos_theta_light = temp_hit_record.normal.dot(-cosine_dir).abs().clamp(0.0, 1.0);
+                // light_pdf += (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+                if area > 1e-7 && cos_theta_light > 1e-7 { // Avoid division by zero
+                    light_pdf += (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+                }
             }
         }
+        
         // let point_to_light_ray = Ray::new(hit_record.pos, cosine_dir);
         // let hit_light = sample_light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
         // let light_pdf = if hit_light {
