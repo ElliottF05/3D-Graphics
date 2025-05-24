@@ -61,27 +61,40 @@ impl Material for Lambertian {
             let (successful_scatter, attenuation, scattered_ray) = self.scatter(ray, hit_record);
             return (successful_scatter, attenuation, scattered_ray, None);
         }
-        let light = &lights[random_int(0, lights.len() as i32 - 1) as usize];
-        let light_sample_point = light.sample_random_point();
+        let random_light = &lights[random_int(0, lights.len() as i32 - 1) as usize];
+        let random_light_sample_point = random_light.sample_random_point();
 
         let cosine_dir = (hit_record.normal + Vec3::random_on_unit_sphere()).normalized();
 
-        let mut light_dir = light_sample_point - hit_record.pos;
-        let r_squared = light_dir.len_squared();
-        let area = light.get_area();
-        light_dir.normalize();
+        let mut random_light_dir = random_light_sample_point - hit_record.pos;
+        let random_light_r_squared = random_light_dir.len_squared();
+        let random_light_area = random_light.get_area();
+        random_light_dir.normalize();
+
 
         // 1) indirect lighting (cosine distribution)
         let cosine_pdf = hit_record.normal.dot(cosine_dir).clamp(0.0, 1.0) / PI; // dot(n,w) / pi
 
+        let mut light_pdf = 0.0;
         let point_to_light_ray = Ray::new(hit_record.pos, cosine_dir);
-        let hit_light = light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
-        let light_pdf = if hit_light {
-            let cos_theta_light = light.get_normal(light_sample_point).dot(-cosine_dir).abs().clamp(0.0, 1.0);
-            (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light
-        } else {
-            0.0
-        };
+        for light in lights {
+            let hit_light = light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
+            if hit_light {
+                let light_sample_point = light.sample_random_point();
+                let area = light.get_area();
+                let r_squared = (light_sample_point - hit_record.pos).len_squared();
+                let cos_theta_light = light.get_normal(light_sample_point).dot(-cosine_dir).abs().clamp(0.0, 1.0);
+                light_pdf += (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+            }
+        }
+        // let point_to_light_ray = Ray::new(hit_record.pos, cosine_dir);
+        // let hit_light = sample_light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
+        // let light_pdf = if hit_light {
+        //     let cos_theta_light = sample_light.get_normal(light_sample_point).dot(-cosine_dir).abs().clamp(0.0, 1.0);
+        //     (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light
+        // } else {
+        //     0.0
+        // };
 
         let pdf_mix = (cosine_pdf + light_pdf).max(1e-6);
 
@@ -94,21 +107,21 @@ impl Material for Lambertian {
 
 
         // 2) direct lighting (light sample distribution)
-        let cosine_pdf = hit_record.normal.dot(light_dir).clamp(0.0, 1.0) / PI; // dot(n,w) / pi 
-        let cos_theta_light = light.get_normal(light_sample_point).dot(-light_dir).abs().clamp(0.0, 1.0);
-        let light_pdf = (1.0 / lights.len() as f32) * (1.0 / area) * r_squared / cos_theta_light;
+        let cosine_pdf = hit_record.normal.dot(random_light_dir).clamp(0.0, 1.0) / PI; // dot(n,w) / pi 
+        let cos_theta_light = random_light.get_normal(random_light_sample_point).dot(-random_light_dir).abs().clamp(0.0, 1.0);
+        let light_pdf = (1.0 / lights.len() as f32) * (1.0 / random_light_area) * random_light_r_squared / cos_theta_light;
 
         let pdf_mix = (cosine_pdf + light_pdf).max(1e-6);
 
         let brdf = hit_record.surface_color / PI;
 
-        let cos_wi = hit_record.normal.dot(light_dir).max(0.0);
+        let cos_wi = hit_record.normal.dot(random_light_dir).max(0.0);
         let mut direct_attenuation = brdf * cos_wi / pdf_mix;
-        direct_attenuation.mul_elementwise_inplace(light.get_color()); // TODO: is this correct?
+        direct_attenuation.mul_elementwise_inplace(random_light.get_color()); // TODO: is this correct?
         
-        let shadow_ray = Ray::new(hit_record.pos, light_dir);
+        let shadow_ray = Ray::new(hit_record.pos, random_light_dir);
 
-        let light_dist = r_squared.sqrt();
+        let light_dist = random_light_r_squared.sqrt();
         let light_option = Some((direct_attenuation, shadow_ray, light_dist));
 
         return (true, indirect_attenuation, scattered_ray, light_option);
