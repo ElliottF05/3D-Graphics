@@ -331,6 +331,7 @@ impl Mesh {
             *v *= scale_factor;
             *v += center_of_scale;
         }
+        self.radius *= scale_factor;
     }
     pub fn scale_by(&mut self, scale_factor: f32) {
         self.scale_around(self.center, scale_factor);

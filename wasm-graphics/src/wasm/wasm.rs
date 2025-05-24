@@ -188,6 +188,17 @@ pub fn add_box(x: f32, y: f32, z: f32) {
     });
 }
 #[wasm_bindgen]
+pub fn add_custom_object(glb_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = glb_bytes {
+        console_log!("wasm.rs: add_custom_object");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().add_custom_object(&bytes);
+        });
+    } else {
+        console_error!("wasm.rs: add_custom_object failed, bytes are None");
+    }
+}
+#[wasm_bindgen]
 pub fn set_fov(fov: f32) {
     GAME_INSTANCE.with(|game_instance| {
         game_instance.borrow_mut().set_fov(fov);
@@ -255,7 +266,6 @@ pub fn load_scene_simple_light() {
         game_instance.borrow_mut().create_rt_test_scene_simple_light();
     });
 }
-
 
 
 // MAIN GAME INSTANCE
