@@ -309,6 +309,9 @@ impl Game {
 
         self.scene_objects.write().unwrap().clear();
 
+        self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+        self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+
         self.ray_samples = 10;
         self.ray_max_depth = 10;
 
@@ -481,6 +484,8 @@ impl Game {
         self.ray_samples = 100;
         self.ray_max_depth = 50;
 
+        self.scene_objects.write().unwrap().clear();
+
         let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, -1000.0), 
             1000.0, 
@@ -520,12 +525,6 @@ impl Game {
             0.1, 1000);
         self.add_scene_object(light_rec);
 
-        self.extract_raster_lights_from_scene_objects();
-        self.recalculate_shadow_maps();
-
-        // self.create_bvh_from_scene_objs();
-        self.rebuild_bvh();
-
         self.max_sky_color = Vec3::new(0.01, 0.01, 0.01);
         self.min_sky_color = Vec3::zero();
 
@@ -534,6 +533,9 @@ impl Game {
 
         self.camera.set_fov(degrees_to_radians(20.0));
         self.defocus_angle = 0.0;
+
+        self.js_update_ui();
+        self.rebuild_bvh();
     }
 
     pub fn create_rt_test_scene_cornell(&mut self) {
@@ -620,21 +622,15 @@ impl Game {
         right_box.rotate_around_center(degrees_to_radians(-18.0), 0.0);
         self.add_scene_object(right_box);
     
-        // RT Hittables
-        // self.create_bvh_from_scene_objs();
-        self.rebuild_bvh();
-    
-        // Lights for RT and rasterization
-        self.extract_raster_lights_from_scene_objects();
-    
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
         self.camera.pos = Vec3::new(27.8, -80.0, 27.8);
         self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
     
-        // Shadow maps
-        self.recalculate_shadow_maps();
+        // Updating UI and rebuilding BVH
+        self.js_update_ui();
+        self.rebuild_bvh();
     }
 
 
@@ -724,20 +720,15 @@ impl Game {
         right_box.rotate_around_center(degrees_to_radians(-18.0), 0.0);
         self.add_scene_object(right_box);
     
-        // RT Hittables
-        // self.create_bvh_from_scene_objs();
-        self.rebuild_bvh();
-    
-        // Lights for RT and rasterization
-        self.extract_raster_lights_from_scene_objects();
-    
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
         self.camera.pos = Vec3::new(27.8, -80.0, 27.8);
         self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
-    
-        // Shadow maps
-        self.recalculate_shadow_maps();
+
+
+        // Updating UI and rebuilding BVH
+        self.js_update_ui();
+        self.rebuild_bvh();
     }
 }

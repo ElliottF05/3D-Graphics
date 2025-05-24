@@ -35,6 +35,10 @@ const loadSceneRandomSpheres = () => {
     console.log("Loading random spheres scene");
     wasm.load_scene_random_spheres();
 }
+const loadSceneCornellBox = () => {
+    console.log("Loading Cornell Box scene");
+    wasm.load_scene_cornell_box();
+}
 const loadSceneFantasyBook = async () => {
     console.log("Loading fantasy book scene");
     const glbBytes = await getGlbBytes("../static/medieval_fantasy_book.glb");
@@ -45,8 +49,14 @@ const loadSceneMagicBridge = async () => {
     const glbBytes = await getGlbBytes("../static/magical_help.glb");
     wasm.load_scene_magic_bridge(glbBytes);
 }
-
-
+const loadSceneSimpleLight = () => {
+    console.log("Loading simple light scene");
+    wasm.load_scene_simple_light();
+}
+const loadSceneCornellBoxPlusPlus = () => {
+    console.log("Loading Cornell Box++ scene");
+    wasm.load_scene_cornell_box_extra();
+}
 
 const SceneControlPanel: React.FC = () => {
 
@@ -70,13 +80,20 @@ const SceneControlPanel: React.FC = () => {
                 loadSceneRandomSpheres();
                 break;
             case "Cornell Box":
-                // wasm.load_default_scene_2_cornell_box();
+                loadSceneCornellBox();
                 break;
             case "Fantasy Book":
                 loadSceneFantasyBook();
                 break;
             case "Magic Bridge (incomplete)":
                 loadSceneMagicBridge();
+                break;
+            case "Simple Light":
+                loadSceneSimpleLight();
+                break;
+            case "Cornell Box++":
+                loadSceneCornellBoxPlusPlus();
+                break;
             // Add more cases for other scenes
             default:
                 console.warn(`Unknown default scene value: ${sceneValue}`);
@@ -172,10 +189,12 @@ const SceneControlPanel: React.FC = () => {
                             <SelectValue placeholder="Select a scene" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Random Spheres">Random Spheres</SelectItem>
                             <SelectItem value="Cornell Box">Cornell Box</SelectItem>
                             <SelectItem value="Fantasy Book">Fantasy Book</SelectItem>
                             <SelectItem value="Magic Bridge (incomplete)">Magic Bridge (incomplete)</SelectItem>
+                            <SelectItem value="Simple Light">Simple Light</SelectItem>
+                            <SelectItem value="Cornell Box++">Cornell Box++</SelectItem>
+                            <SelectItem value="Random Spheres">Random Spheres</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
