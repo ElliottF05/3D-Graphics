@@ -706,14 +706,21 @@ impl Game {
     
         // Right box
         let glass_mat = SceneObject::new_glass_mat(0.5, 1.5);
-        let mut right_box = SceneObject::new_box_from_corners(
-            Vec3::new(45.1, 6.5, 0.0),
-            Vec3::new(28.6, 23.0, 16.5),
-            white_color,
-            glass_mat.clone(),
+        // let mut right_sphere = SceneObject::new_box_from_corners(
+        //     Vec3::new(45.1, 6.5, 0.0),
+        //     Vec3::new(28.6, 23.0, 16.5),
+        //     white_color,
+        //     glass_mat.clone(),
+        // );
+        // right_sphere.rotate_around_center(degrees_to_radians(-18.0), 0.0);
+        let right_sphere = SceneObject::new_sphere(
+            Vec3::new(36.8, 15.0, 8.0), 
+            8.0,
+            Vec3::white(),
+            4, 
+            glass_mat.clone()
         );
-        right_box.rotate_around_center(degrees_to_radians(-18.0), 0.0);
-        self.add_scene_object(right_box);
+        self.add_scene_object(right_sphere);
     
         // Camera
         self.camera.set_fov(degrees_to_radians(40.0));
