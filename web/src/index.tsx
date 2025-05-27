@@ -36,14 +36,14 @@ export async function loadGlbModel(url: string) {
     }
 };
 
-export async function getGlbBytes(url: string): Promise<Uint8Array | null> {
+export async function getFileBytes(url: string): Promise<Uint8Array | null> {
     try {
         const response = await fetch(url);
-        const glbBuffer = await response.arrayBuffer();
-        const glbBytes = new Uint8Array(glbBuffer);
-        return glbBytes;
+        const fileBuffer = await response.arrayBuffer();
+        const fileBytes = new Uint8Array(fileBuffer);
+        return fileBytes;
     } catch (error) {
-        console.error("Error fetching GLB bytes:", error);
+        console.error("Error fetching file bytes:", error);
         return null;
     }
 }

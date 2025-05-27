@@ -16,7 +16,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { getGlbBytes } from "@/index";
+import { getFileBytes } from "@/index";
 
 type ObjectType = 'Sphere' | 'Box' | 'Custom';
 

@@ -630,15 +630,17 @@ impl Game {
     }
 
 
-    pub fn create_rt_test_scene_cornell_metal(&mut self) {
+    pub fn create_rt_test_scene_cornell_metal(&mut self, stl_bytes: &[u8]) {
         self.ray_max_depth = 50;
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
     
-        let red_color = Vec3::new(0.65, 0.05, 0.05);
-        let green_color = Vec3::new(0.12, 0.45, 0.15);
-        let white_color = Vec3::new(0.73, 0.73, 0.73);
-        let light_color = Vec3::new(25.0,  25.0, 25.0);
+        // let red_color = Vec3::new(0.65, 0.05, 0.05);
+        // let green_color = Vec3::new(0.12, 0.45, 0.15);
+        let red_color = Vec3::new(1.0, 0.2, 0.2);
+        let green_color = Vec3::new(0.2, 1.0, 0.2);
+        let grey_color = Vec3::new(0.73, 0.73, 0.73);
+        let light_color = Vec3::new(10.0,  10.0, 10.0);
     
         let lambert_mat = SceneObject::new_diffuse_mat();
         let metal_mat = SceneObject::new_metal_mat(0.0);
@@ -672,7 +674,7 @@ impl Game {
                 Vec3::new(0.0, 0.0, 0.0),
                 Vec3::new(55.5, 0.0, 0.0),
                 Vec3::new(0.0, 55.5, 0.0),
-                white_color,
+                grey_color,
                 lambert_mat.clone(),
                 true,
             ),
@@ -680,7 +682,7 @@ impl Game {
                 Vec3::new(55.5, 55.5, 55.5),
                 Vec3::new(0.0, -55.5, 0.0),
                 Vec3::new(-55.5, 0.0, 0.0),
-                white_color,
+                grey_color,
                 lambert_mat.clone(),
                 true,
             ),
@@ -688,31 +690,39 @@ impl Game {
                 Vec3::new(0.0, 55.5, 0.0),
                 Vec3::new(55.5, 0.0, 0.0),
                 Vec3::new(0.0, 0.0, 55.5),
-                white_color,
+                grey_color,
                 lambert_mat.clone(),
                 true,
             ),
         ]);
     
         // Left box
-        let mut left_box = SceneObject::new_box_from_corners(
-            Vec3::new(27.1, 29.5, 0.0),
-            Vec3::new(10.6, 46.0, 33.0),
-            white_color,
-            metal_mat.clone(),
-        );
-        left_box.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        self.add_scene_object(left_box);
-    
-        // Right box
-        let glass_mat = SceneObject::new_glass_mat(0.5, 1.5);
-        // let mut right_sphere = SceneObject::new_box_from_corners(
-        //     Vec3::new(45.1, 6.5, 0.0),
-        //     Vec3::new(28.6, 23.0, 16.5),
+        // let mut left_box = SceneObject::new_box_from_corners(
+        //     Vec3::new(27.1, 29.5, 0.0),
+        //     Vec3::new(10.6, 46.0, 33.0),
         //     white_color,
-        //     glass_mat.clone(),
+        //     metal_mat.clone(),
         // );
-        // right_sphere.rotate_around_center(degrees_to_radians(-18.0), 0.0);
+        // left_box.rotate_around_center(degrees_to_radians(15.0), 0.0);
+        // self.add_scene_object(left_box);
+
+        // Left statue
+        let statue_color = Vec3::new(0.8, 0.8, 0.8);
+        let (statue_phong, statue_mat) = SceneObject::new_diffuse_mat();
+        let mut statue_mesh = Mesh::new_from_stl_bytes(stl_bytes, statue_color, statue_phong);
+        statue_mesh.scale_by(0.15);
+        statue_mesh.rotate_around_center(-PI/2.0, PI/2.0);
+        statue_mesh.set_center(Vec3::new(18.5, 37.0, 24.75));
+        statue_mesh.rotate_around_center(-degrees_to_radians(15.0), 0.0);
+        let statue_obj = SceneObject::new_from_mesh(
+            statue_mesh, 
+            statue_mat.clone_box(),
+            true
+        );
+        self.add_scene_object(statue_obj);
+    
+        // Right sphere
+        let glass_mat = SceneObject::new_glass_mat(0.5, 1.5);
         let right_sphere = SceneObject::new_sphere(
             Vec3::new(36.8, 15.0, 8.0), 
             8.0,

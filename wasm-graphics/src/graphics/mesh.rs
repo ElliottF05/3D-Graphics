@@ -110,19 +110,17 @@ impl Mesh {
         return Mesh::new_from_non_indexed(vertices, colors, properties);
     }
 
-    pub fn new_from_stl_bytes(stl_bytes: &Vec<u8>, color: Vec3, properties: PhongProperties) -> Mesh {
-        let mut reader = Cursor::new(stl_bytes);
-        let triangle_iter = stl_io::create_stl_reader(&mut reader).expect("Failed to create TriangleIterator from stl bytes");
-        let mut vertices = Vec::with_capacity(triangle_iter.size_hint().0 * 3);
-        for t in triangle_iter {
-            let mut triangle = t.expect("Failed to unwrap a triangle in TriangleIterator");
-            (triangle.vertices[1], triangle.vertices[2]) = (triangle.vertices[2], triangle.vertices[1]);
-            for v in triangle.vertices {
-                vertices.push(Vec3::new(v[0], v[1], v[2]));
-            }
-        }
-        console_log!("stl_object num triangles: {}", vertices.len() / 3);
-        return Mesh::new_from_non_indexed_with_color(vertices, color, properties);
+    pub fn new_from_stl_bytes(stl_bytes: &[u8], color: Vec3, properties: PhongProperties) -> Mesh {
+        let indexed_mesh = stl_io::read_stl(&mut Cursor::new(stl_bytes)).expect(format!("Failed to read STL from bytes: {:?}", stl_bytes).as_str());
+        let vertices = indexed_mesh.vertices.iter()
+            .map(|v| Vec3::new(v[0], v[2], v[1]))
+            .collect::<Vec<Vec3>>();
+        let indices = indexed_mesh.faces.iter()
+            .flat_map(|f| vec![f.vertices[0], f.vertices[1], f.vertices[2]])
+            .collect::<Vec<usize>>();
+
+        let mesh = Mesh::new_with_color(vertices, indices, color, properties);
+        return mesh;
     }
 
     
