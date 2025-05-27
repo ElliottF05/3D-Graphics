@@ -255,10 +255,15 @@ pub fn load_scene_cornell_box() {
     });
 }
 #[wasm_bindgen]
-pub fn load_scene_cornell_box_extra() {
-    GAME_INSTANCE.with(|game_instance| {
-        game_instance.borrow_mut().create_rt_test_scene_cornell_metal();
-    });
+pub fn load_scene_cornell_box_extra(stl_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = stl_bytes {
+        console_log!("wasm.rs: load_scene_cornell_box_extra");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().create_rt_test_scene_cornell_metal(&bytes);
+        });
+    } else {
+        console_error!("wasm.rs: load_scene_cornell_box_extra failed, bytes are None");
+    }
 }
 #[wasm_bindgen]
 pub fn load_scene_simple_light() {

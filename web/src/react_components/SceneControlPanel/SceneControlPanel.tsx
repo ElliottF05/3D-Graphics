@@ -29,7 +29,7 @@ import {
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 import { useGameContext } from "@/gameContext";
-import { getGlbBytes } from "@/index";
+import { getFileBytes } from "@/index";
 
 const loadSceneRandomSpheres = () => {
     console.log("Loading random spheres scene");
@@ -41,21 +41,22 @@ const loadSceneCornellBox = () => {
 }
 const loadSceneFantasyBook = async () => {
     console.log("Loading fantasy book scene");
-    const glbBytes = await getGlbBytes("../static/medieval_fantasy_book.glb");
+    const glbBytes = await getFileBytes("../static/medieval_fantasy_book.glb");
     wasm.load_scene_fantasy_book(glbBytes);
 }
 const loadSceneMagicBridge = async () => {
     console.log("Loading magic bridge scene");
-    const glbBytes = await getGlbBytes("../static/magical_help.glb");
+    const glbBytes = await getFileBytes("../static/magical_help.glb");
     wasm.load_scene_magic_bridge(glbBytes);
 }
 const loadSceneSimpleLight = () => {
     console.log("Loading simple light scene");
     wasm.load_scene_simple_light();
 }
-const loadSceneCornellBoxPlusPlus = () => {
+const loadSceneCornellBoxPlusPlus = async () => {
     console.log("Loading Cornell Box++ scene");
-    wasm.load_scene_cornell_box_extra();
+    const stlBytes = await getFileBytes("../static/angel.stl");
+    wasm.load_scene_cornell_box_extra(stlBytes);
 }
 
 const SceneControlPanel: React.FC = () => {
