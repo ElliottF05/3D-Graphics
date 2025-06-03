@@ -27,6 +27,9 @@ pub struct Game {
     pub max_sky_color: Vec3,
     pub min_sky_color: Vec3,
 
+    pub rt_max_sky_color: Vec3,
+    pub rt_min_sky_color: Vec3,
+
     pub pixel_buf: PixelBuf,
     pub zbuf: ZBuffer,
 
@@ -70,6 +73,9 @@ impl Game {
             max_sky_color: Vec3::new(0.5, 0.7, 1.0),
             min_sky_color: Vec3::new(1.0, 1.0, 1.0),
 
+            rt_max_sky_color: Vec3::new(0.5, 0.7, 1.0),
+            rt_min_sky_color: Vec3::new(1.0, 1.0, 1.0),
+
             pixel_buf: PixelBuf::new(500, 500),
             zbuf: ZBuffer::new(500, 500),
 
@@ -88,7 +94,7 @@ impl Game {
             // ray tracing variables
             bvh: None,
             rt_lights: Vec::new(),
-            ray_max_depth: 10,
+            ray_max_depth: 20,
 
             defocus_angle: 0.0,
             focus_dist: 10.0,
@@ -1089,6 +1095,10 @@ impl Game {
         let a = 0.5 * (dir.z + 1.0);
         return self.min_sky_color * (1.0 - a) + self.max_sky_color * a;
     }
+    pub fn get_rt_sky_color(&self, dir: &Vec3) -> Vec3 {
+        let a = 0.5 * (dir.z + 1.0);
+        return self.rt_min_sky_color * (1.0 - a) + self.rt_max_sky_color * a;
+    }
     pub fn clear_pixel_buf_to_sky(&mut self) {
         let height = self.pixel_buf.height;
         for y in 0..height {
@@ -1204,6 +1214,9 @@ impl Game {
                 self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
                 self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
 
+                self.rt_max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+                self.rt_min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+
                 self.ray_max_depth = 20;
 
                 self.bvh = None; // invalidate bvh
@@ -1238,6 +1251,9 @@ impl Game {
                 self.max_sky_color = 0.5 * Vec3::new(0.07, 0.10, 0.22);
                 self.min_sky_color = 0.5 * Vec3::new(0.03, 0.04, 0.1);
 
+                self.rt_max_sky_color = 0.2 * Vec3::new(0.07, 0.10, 0.22);
+                self.rt_min_sky_color = 0.2 * Vec3::new(0.03, 0.04, 0.1);
+
                 self.ray_max_depth = 20;
 
                 {
@@ -1257,5 +1273,81 @@ impl Game {
                 console_error!("Error loading fantasy book scene: {}", e);
             }
         }
+    }
+
+    pub fn load_scene_gandalf_bust(&mut self, stl_bytes: &[u8]) {
+        let gandalf_color = Vec3::new(0.8, 0.8, 0.8);
+        let (gandalf_phong, gandalf_mat) = SceneObject::new_glossy_mat(1.6);
+        // let (gandalf_phong, gandalf_mat) = SceneObject::new_diffuse_mat();
+        let mut gandalf_mesh = Mesh::new_from_stl_bytes(stl_bytes, gandalf_color, gandalf_phong);
+
+        gandalf_mesh.set_center(Vec3::new(0.0, 0.0, 0.0));
+        gandalf_mesh.scale_by(0.05);
+        gandalf_mesh.rotate_around_center(-PI/2.0, PI/2.0);
+        gandalf_mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+
+        let gandalf_obj = SceneObject::new_from_mesh(gandalf_mesh, gandalf_mat, true);
+        self.add_scene_object(gandalf_obj);
+
+        // ground sphere
+        let ground_plane = SceneObject::new_rectangle(
+            Vec3::new(-100.0, -100.0, -5.0), 
+            Vec3::new(200.0, 0.0, 0.0), 
+            Vec3::new(0.0, 200.0, 0.0), 
+            Vec3::new(0.05, 0.05, 0.18),
+            SceneObject::new_diffuse_mat(),
+            false
+        );
+        self.add_scene_object(ground_plane);
+
+        let test_sphere = SceneObject::new_sphere(
+            Vec3::new(0.0, 0.0, 0.0), 
+            5.0, 
+            Vec3::new(1.0, 1.0, 1.0), 
+            3,
+            SceneObject::new_glossy_mat(1.5)
+        );
+        // self.add_scene_object(test_sphere);
+
+        // left (red) light
+        let light_1 = SceneObject::new_sphere_omni_light(
+            Vec3::new(2.0, -10.0, 5.0), 
+            5.0, 
+            3.0 * Vec3::new(1.0, 0.05, 0.05), 
+            2, 
+            1000);
+
+        // right (blue) light
+        let light_2 = SceneObject::new_sphere_omni_light(
+            Vec3::new(2.0, 10.0, 5.0), 
+            5.0, 
+            3.0 * Vec3::new(0.05, 0.05, 1.0), 
+            2, 
+            1000);
+
+        // top (white) light
+        let light_3 = SceneObject::new_sphere_omni_light(
+            Vec3::new(-10.0, 0.0, 20.0), 
+            10.0, 
+            5.0 * Vec3::new(1.0, 1.0, 1.0), 
+            2, 
+            1000);
+
+        self.add_scene_object(light_1);
+        self.add_scene_object(light_2);
+        self.add_scene_object(light_3);
+
+        self.camera.pos = Vec3::new(10.0, 0.0, 2.0);
+        self.camera.look_at(&Vec3::zero());
+        self.camera.set_fov(degrees_to_radians(60.0));
+
+        self.max_sky_color = Vec3::new(0.05, 0.05, 0.16);
+        self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+        self.rt_max_sky_color = Vec3::new(0.05, 0.05, 0.16);
+        self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+        self.extract_rt_lights_from_scene_objects();
+        self.extract_raster_lights_from_scene_objects();
     }
 }

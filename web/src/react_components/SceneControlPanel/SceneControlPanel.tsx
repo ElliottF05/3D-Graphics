@@ -59,6 +59,13 @@ const loadSceneCornellBoxPlusPlus = async () => {
     wasm.load_scene_cornell_box_extra(stlBytes);
 }
 
+const loadSceneGandalfBust = async () => {
+    console.log("Loading Gandalf bust scene");
+    const glbBytes = await getFileBytes("../static/gandalf_bust.stl");
+    wasm.load_scene_gandalf_bust(glbBytes);
+}
+loadSceneGandalfBust();
+
 const SceneControlPanel: React.FC = () => {
 
     const {
