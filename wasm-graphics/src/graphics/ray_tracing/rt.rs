@@ -169,7 +169,7 @@ impl Game {
                 }
 
             } else { // if hit_anything == false, then ray hit nothing, goes off into sky
-                let sky_color = self.get_sky_color(&ray.direction.normalized());
+                let sky_color = self.get_rt_sky_color(&ray.direction.normalized());
                 return pixel_color.mul_elementwise(sky_color);
             }
         }
@@ -247,7 +247,7 @@ impl Game {
                 }
 
             } else { // if hit_anything == false, then ray hit nothing, goes off into sky
-                let sky_color = self.get_sky_color(&ray.direction.normalized());
+                let sky_color = self.get_rt_sky_color(&ray.direction.normalized());
                 accum_color += throughput.mul_elementwise(sky_color);
                 return accum_color;
             }
@@ -312,6 +312,9 @@ impl Game {
         self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
         self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
 
+        self.rt_max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+        self.rt_min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+
         self.ray_max_depth = 20;
 
         let ground_material = Lambertian::default();
@@ -347,7 +350,7 @@ impl Game {
                         color = Vec3::random() * 0.5 + Vec3::new(0.5, 0.5, 0.5);
                         let fuzz = random_range(0.0, 0.5);
                         sphere_material = Metal::new(fuzz).clone_box();
-                        unified_mat = SceneObject::new_glossy_mat(fuzz)
+                        unified_mat = SceneObject::new_metal_mat(fuzz)
                     } else {
                         // glass
                         color = Vec3::new(1.0, 1.0, 1.0);
@@ -390,7 +393,7 @@ impl Game {
             1.0, 
             Vec3::new(0.7, 0.6, 0.5), 
             4,
-            SceneObject::new_glossy_mat(0.0)
+            SceneObject::new_metal_mat(0.0)
         );
         self.add_scene_object(sphere);
 
@@ -522,8 +525,11 @@ impl Game {
             0.1, 1000);
         self.add_scene_object(light_rec);
 
-        self.max_sky_color = Vec3::new(0.01, 0.01, 0.01);
+        self.max_sky_color = Vec3::new(0.05, 0.05, 0.05);
         self.min_sky_color = Vec3::zero();
+
+        self.rt_max_sky_color = Vec3::zero();
+        self.rt_min_sky_color = Vec3::zero();
 
         self.camera.pos = Vec3::new(26.0, 6.0, 3.0);
         self.camera.look_at(&Vec3::new(0.0, 0.0, 2.0));
@@ -537,8 +543,12 @@ impl Game {
 
     pub fn create_rt_test_scene_cornell(&mut self) {
         self.ray_max_depth = 20;
+
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
+
+        self.rt_max_sky_color = Vec3::zero();
+        self.rt_min_sky_color = Vec3::zero();
     
         let red_color = Vec3::new(0.65, 0.05, 0.05);
         let green_color = Vec3::new(0.12, 0.45, 0.15);
@@ -630,10 +640,14 @@ impl Game {
     }
 
 
-    pub fn create_rt_test_scene_cornell_metal(&mut self, stl_bytes: &[u8]) {
+    pub fn create_rt_test_scene_cornell_plus_plus(&mut self, stl_bytes: &[u8]) {
         self.ray_max_depth = 50;
+        
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
         self.min_sky_color = Vec3::zero();
+
+        self.rt_max_sky_color = Vec3::zero();
+        self.rt_min_sky_color = Vec3::zero();
     
         // let red_color = Vec3::new(0.65, 0.05, 0.05);
         // let green_color = Vec3::new(0.12, 0.45, 0.15);
@@ -696,16 +710,6 @@ impl Game {
             ),
         ]);
     
-        // Left box
-        // let mut left_box = SceneObject::new_box_from_corners(
-        //     Vec3::new(27.1, 29.5, 0.0),
-        //     Vec3::new(10.6, 46.0, 33.0),
-        //     white_color,
-        //     metal_mat.clone(),
-        // );
-        // left_box.rotate_around_center(degrees_to_radians(15.0), 0.0);
-        // self.add_scene_object(left_box);
-
         // Left statue
         let statue_color = Vec3::new(0.8, 0.8, 0.8);
         let (statue_phong, statue_mat) = SceneObject::new_diffuse_mat();
@@ -724,8 +728,8 @@ impl Game {
         // Right sphere
         let glass_mat = SceneObject::new_glass_mat(0.5, 1.5);
         let right_sphere = SceneObject::new_sphere(
-            Vec3::new(36.8, 15.0, 8.0), 
-            8.0,
+            Vec3::new(36.8, 15.0, 12.0), 
+            12.0,
             Vec3::white(),
             4, 
             glass_mat.clone()

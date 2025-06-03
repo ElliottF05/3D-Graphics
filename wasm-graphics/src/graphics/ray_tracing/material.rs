@@ -90,7 +90,7 @@ impl Material for Lambertian {
                 }
             }
         }
-        
+
         // let point_to_light_ray = Ray::new(hit_record.pos, cosine_dir);
         // let hit_light = sample_light.hit(&point_to_light_ray, 0.001, 5000.0, &mut HitRecord::default());
         // let light_pdf = if hit_light {
@@ -302,6 +302,103 @@ impl Material for DiffuseLight {
     }
     fn set_material_prop(&mut self, prop: f32) {
         // do nothing
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ClearCoat {
+    base_material: Box<dyn Material>,
+    index_of_refraction: f32,
+}
+
+impl ClearCoat {
+    pub fn new(base_material: Box<dyn Material>, index_of_refraction: f32) -> Self {
+        Self {
+            base_material,
+            index_of_refraction,
+        }
+    }
+
+    fn reflectance(&self, cos_theta: f32, n1: f32, n2: f32) -> f32 {
+        // use Schlick's approximation: https://en.wikipedia.org/wiki/Schlick%27s_approximation
+        let mut r_0 = (n1 - n2) / (n1 + n2);
+        r_0 = r_0 * r_0;
+
+        return r_0 + (1.0 - r_0) * (1.0 - cos_theta).powi(5);
+    }
+}
+
+impl Material for ClearCoat {
+    fn scatter(&self, ray: &Ray, hit_record: &HitRecord) -> (bool, Vec3, Ray) {
+        let n1 = 1.0; // air
+        let n2 = self.index_of_refraction;
+        let n1_over_n2 = n1 / n2;
+
+        let mut cos_theta = -ray.direction.dot(hit_record.normal);
+        cos_theta = cos_theta.min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let reflectance = self.reflectance(cos_theta, n1, n2);
+
+        // total internal reflection
+        let cannot_refract = n1_over_n2 * sin_theta > 1.0;
+
+        if cannot_refract || reflectance > random_float() {
+            // case 1: specular reflection from clear coat surface
+            let reflected_dir = ray.direction.reflect(hit_record.normal);
+            let refracted_ray = Ray::new(hit_record.pos, reflected_dir);
+            let attenuation = Vec3::white();
+            return (true, attenuation, refracted_ray);
+        } else {
+            // case 2: scatter from base material
+            return self.base_material.scatter(ray, hit_record);
+        }
+    }
+
+    fn scatter_mis(&self, ray: &Ray, hit_record: &HitRecord, lights: &Vec<Box<dyn Hittable>>) -> (bool, Vec3, Ray, Option<(Vec3, Ray, f32)>) {
+        let n1 = 1.0; // air
+        let n2 = self.index_of_refraction;
+        let n1_over_n2 = n1 / n2;
+
+        let mut cos_theta = -ray.direction.dot(hit_record.normal);
+        cos_theta = cos_theta.min(1.0);
+        let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
+
+        let reflectance = self.reflectance(cos_theta, n1, n2);
+
+        // total internal reflection
+        let cannot_refract = n1_over_n2 * sin_theta > 1.0;
+        
+        if cannot_refract || reflectance > random_float() {
+            // case 1: specular reflection from clear coat surface
+            let reflected_dir = ray.direction.reflect(hit_record.normal);
+            let refracted_ray = Ray::new(hit_record.pos, reflected_dir);
+            let attenuation = Vec3::white();
+            return (true, attenuation, refracted_ray, None); // there is no direct light sampling for specular reflection
+        } else {
+            // case 2: scatter from base material
+            return self.base_material.scatter_mis(ray, hit_record, lights);
+        }
+    }
+
+    fn emitted(&self, hit_record: &HitRecord) -> Vec3 {
+        return self.base_material.emitted(hit_record);
+    }
+
+    fn clone_box(&self) -> Box<dyn Material> {
+        Box::new(self.clone())
+    }
+    
+    fn get_material_number(&self) -> u32 {
+        return 5;
+    }
+    
+    fn get_material_prop(&self) -> f32 {
+        return 0.0; // this could be used to return the index of refraction or some other property
+    }
+    
+    fn set_material_prop(&mut self, prop: f32) {
+        console_log!("set_material_prop called for ClearCoat but not implemented for ClearCoat");
     }
 }
 

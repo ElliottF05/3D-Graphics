@@ -2,7 +2,7 @@ use rand::seq::index;
 
 use crate::{console_error, utils::math::Vec3};
 
-use super::{lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{hittable::{self, Hittable, Sphere}, material::{Dielectric, DiffuseLight, Lambertian, Material, Metal}}};
+use super::{lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{hittable::{self, Hittable, Sphere}, material::{ClearCoat, Dielectric, DiffuseLight, Lambertian, Material, Metal}}};
 
 pub struct SceneObject {
     pub mesh: Mesh,
@@ -114,7 +114,7 @@ impl SceneObject {
         let mat = Lambertian::default();
         return (phong, Box::new(mat));
     }
-    pub fn new_glossy_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
+    pub fn new_metal_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new(
             1.0, 
             0.2, 
@@ -126,9 +126,6 @@ impl SceneObject {
         );
         let mat = Metal::new(fuzz);
         return (phong, Box::new(mat));
-    }
-    pub fn new_metal_mat(fuzz: f32) -> (PhongProperties, Box<dyn Material>) {
-        return SceneObject::new_glossy_mat(fuzz);
     }
     pub fn new_glass_mat(alpha: f32, index_of_refrac: f32) -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new(
@@ -146,6 +143,19 @@ impl SceneObject {
     pub fn new_light_mat() -> (PhongProperties, Box<dyn Material>) {
         let phong = PhongProperties::new_light();
         let mat = DiffuseLight::default();
+        return (phong, Box::new(mat));
+    }
+    pub fn new_glossy_mat(index_of_refraction: f32) -> (PhongProperties, Box<dyn Material>) {
+        let phong = PhongProperties::new(
+            1.0, 
+            1.0, 
+            0.8, 
+            1.0, 
+            32, 
+            false,
+            true
+        );
+        let mat = ClearCoat::new(Lambertian::default().clone_box(), index_of_refraction);
         return (phong, Box::new(mat));
     }
 

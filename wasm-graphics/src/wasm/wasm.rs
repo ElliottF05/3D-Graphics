@@ -259,7 +259,7 @@ pub fn load_scene_cornell_box_extra(stl_bytes: Option<Vec<u8>>) {
     if let Some(bytes) = stl_bytes {
         console_log!("wasm.rs: load_scene_cornell_box_extra");
         GAME_INSTANCE.with(|game_instance| {
-            game_instance.borrow_mut().create_rt_test_scene_cornell_metal(&bytes);
+            game_instance.borrow_mut().create_rt_test_scene_cornell_plus_plus(&bytes);
         });
     } else {
         console_error!("wasm.rs: load_scene_cornell_box_extra failed, bytes are None");
@@ -271,6 +271,18 @@ pub fn load_scene_simple_light() {
         game_instance.borrow_mut().create_rt_test_scene_simple_light();
     });
 }
+#[wasm_bindgen]
+pub fn load_scene_gandalf_bust(stl_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = stl_bytes {
+        console_log!("wasm.rs: load_scene_gandalf_bust");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().load_scene_gandalf_bust(&bytes);
+        });
+    } else {
+        console_error!("wasm.rs: load_scene_gandalf_bust failed, bytes are None");
+    }
+}
+
 
 
 // MAIN GAME INSTANCE
