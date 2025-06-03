@@ -1313,7 +1313,7 @@ impl Game {
         let light_1 = SceneObject::new_sphere_omni_light(
             Vec3::new(2.0, -10.0, 5.0), 
             5.0, 
-            3.0 * Vec3::new(1.0, 0.05, 0.05), 
+            3.0 * Vec3::new(1.0, 0.08, 0.08), 
             2, 
             1000);
 

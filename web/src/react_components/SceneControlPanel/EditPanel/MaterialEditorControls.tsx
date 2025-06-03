@@ -227,6 +227,7 @@ const MaterialEditorControls: React.FC<MaterialEditorControlsProps> = ({ disable
                                 <SelectItem value="2">Metal</SelectItem>
                                 <SelectItem value="3">Glass</SelectItem>
                                 <SelectItem value="4">Light</SelectItem>
+                                <SelectItem value="5">Glossy</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

@@ -221,11 +221,11 @@ impl SceneObject {
     }
 
     // Used for interactions with JS
-    /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ERROR = 5
+    /// Lambertian = 1, Metal = 2, Dielectric = 3, DiffuseLight = 4, ClearCoat = 5, ERROR = 999
     pub fn get_material_number(&self) -> u32 {
         if self.hittables.is_empty() {
             console_error!("SceneObject::get_material_number() called on empty object");
-            return 5;
+            return 999;
         }
         return self.hittables[0].get_material().get_material_number();
     }
@@ -247,6 +247,7 @@ impl SceneObject {
             2 => SceneObject::new_metal_mat(extra_prop),
             3 => SceneObject::new_glass_mat(0.5, extra_prop),
             4 => SceneObject::new_light_mat(),
+            5 => SceneObject::new_glossy_mat(1.5),
             _ => {
                 console_error!("SceneObject::set_material_properties() called with invalid type");
                 return;
