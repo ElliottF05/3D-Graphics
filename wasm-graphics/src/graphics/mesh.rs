@@ -120,6 +120,7 @@ impl Mesh {
             .collect::<Vec<usize>>();
 
         let mesh = Mesh::new_with_color(vertices, indices, color, properties);
+        console_log!("Mesh created from STL with {} vertices and {} faces", mesh.vertices.len(), mesh.colors.len());
         return mesh;
     }
 

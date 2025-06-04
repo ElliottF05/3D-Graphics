@@ -1350,4 +1350,162 @@ impl Game {
         self.extract_rt_lights_from_scene_objects();
         self.extract_raster_lights_from_scene_objects();
     }
+
+    pub fn load_scene_roza_bust(&mut self, glb_bytes: &[u8]) {
+        // https://sketchfab.com/3d-models/sculpture-bust-of-roza-loewenfeld-fc6e731a0131471ba8e45511c7ea9996#download
+        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
+            Ok(mut mesh) => {
+                let bust_color = Vec3::new(0.8, 0.8, 0.8);
+                let (bust_phong, bust_mat) = SceneObject::new_glossy_mat(1.6);
+                mesh.properties = bust_phong;
+
+                mesh.set_center(Vec3::new(0.0, 0.0, 0.0));
+                mesh.scale_by(0.014);
+                mesh.rotate_around_center(0.0, -PI/2.0);
+                mesh.rotate_around_center(-PI, 0.0);
+                // mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+
+                let bust_obj = SceneObject::new_from_mesh(mesh, bust_mat, true);
+                self.add_scene_object(bust_obj);
+
+                // ground plane
+                let ground_plane = SceneObject::new_rectangle(
+                    Vec3::new(-100.0, -100.0, -4.0), 
+                    Vec3::new(200.0, 0.0, 0.0), 
+                    Vec3::new(0.0, 200.0, 0.0), 
+                    Vec3::new(0.05, 0.05, 0.18),
+                    SceneObject::new_diffuse_mat(),
+                    false
+                );
+                self.add_scene_object(ground_plane);
+
+
+                // left (red) light
+                let light_1 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(2.0, -10.0, 5.0), 
+                    1.0, 
+                    10.0 * Vec3::new(1.0, 0.08, 0.08), 
+                    2, 
+                    1000
+                );
+
+                // right (blue) light
+                let light_2 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(2.0, 10.0, 5.0), 
+                    1.0, 
+                    10.0 * Vec3::new(0.05, 0.05, 1.0), 
+                    2, 
+                    1000
+                );
+
+                // top (white) light
+                let light_3 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(-4.0, -2.0, 6.5), 
+                    1.0, 
+                    10.0 * Vec3::new(1.0, 1.0, 1.0), 
+                    2, 
+                    1000
+                );
+
+                self.add_scene_object(light_1);
+                self.add_scene_object(light_2);
+                self.add_scene_object(light_3);
+
+                self.camera.pos = Vec3::new(30.0, 0.0, -3.0);
+                self.camera.look_at(&Vec3::zero());
+                self.camera.set_fov(degrees_to_radians(15.0));
+
+                self.max_sky_color = Vec3::new(0.05, 0.05, 0.1);
+                self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+                self.rt_max_sky_color = Vec3::new(0.01, 0.01, 0.02);
+                self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+                self.extract_rt_lights_from_scene_objects();
+                self.extract_raster_lights_from_scene_objects();
+            },
+            Err(e) => {
+                console_error!("Error loading Roza bust scene: {}", e);
+            }
+        }
+    }
 }
+
+/*
+pub fn load_scene_roza_bust(&mut self, glb_bytes: &[u8]) {
+        // https://sketchfab.com/3d-models/sculpture-bust-of-roza-loewenfeld-fc6e731a0131471ba8e45511c7ea9996#download
+        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
+            Ok(mut mesh) => {
+                let bust_color = Vec3::new(0.8, 0.8, 0.8);
+                let (bust_phong, bust_mat) = SceneObject::new_glossy_mat(1.6);
+                mesh.properties = bust_phong;
+
+                mesh.set_center(Vec3::new(0.0, 0.0, 0.0));
+                mesh.scale_by(0.014);
+                mesh.rotate_around_center(0.0, -PI/2.0);
+                mesh.rotate_around_center(-PI, 0.0);
+                // mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+
+                let bust_obj = SceneObject::new_from_mesh(mesh, bust_mat, true);
+                self.add_scene_object(bust_obj);
+
+                // ground plane
+                let ground_plane = SceneObject::new_rectangle(
+                    Vec3::new(-100.0, -100.0, -4.0), 
+                    Vec3::new(200.0, 0.0, 0.0), 
+                    Vec3::new(0.0, 200.0, 0.0), 
+                    Vec3::new(0.05, 0.05, 0.18),
+                    SceneObject::new_diffuse_mat(),
+                    false
+                );
+                self.add_scene_object(ground_plane);
+
+
+                // left (red) light
+                let light_1 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(2.0, -10.0, 5.0), 
+                    5.0, 
+                    3.0 * Vec3::new(1.0, 0.08, 0.08), 
+                    2, 
+                    1000
+                );
+
+                // right (blue) light
+                let light_2 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(2.0, 10.0, 5.0), 
+                    5.0, 
+                    3.0 * Vec3::new(0.05, 0.05, 1.0), 
+                    2, 
+                    1000
+                );
+
+                // top (white) light
+                let light_3 = SceneObject::new_sphere_omni_light(
+                    Vec3::new(-40.0, 0.0, 50.0), 
+                    30.0, 
+                    5.0 * Vec3::new(1.0, 1.0, 1.0), 
+                    2, 
+                    1000
+                );
+
+                self.add_scene_object(light_1);
+                self.add_scene_object(light_2);
+                self.add_scene_object(light_3);
+
+                self.camera.pos = Vec3::new(30.0, 0.0, -3.0);
+                self.camera.look_at(&Vec3::zero());
+                self.camera.set_fov(degrees_to_radians(15.0));
+
+                self.max_sky_color = Vec3::new(0.05, 0.05, 0.1);
+                self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+                self.rt_max_sky_color = Vec3::new(0.01, 0.01, 0.02);
+                self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+                self.extract_rt_lights_from_scene_objects();
+                self.extract_raster_lights_from_scene_objects();
+            },
+            Err(e) => {
+                console_error!("Error loading Roza bust scene: {}", e);
+            }
+        }
+    }
+ */

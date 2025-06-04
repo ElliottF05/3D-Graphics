@@ -64,7 +64,15 @@ const loadSceneGandalfBust = async () => {
     const glbBytes = await getFileBytes("../static/gandalf_bust.stl");
     wasm.load_scene_gandalf_bust(glbBytes);
 }
-loadSceneGandalfBust();
+const loadSceneRozaBust = async () => {
+    console.log("Loading Roza bust scene");
+    const glbBytes = await getFileBytes("../static/roza_bust.glb");
+    wasm.load_scene_roza_bust(glbBytes);
+}
+
+// loadSceneGandalfBust();
+loadSceneRozaBust();
+
 
 const SceneControlPanel: React.FC = () => {
 
