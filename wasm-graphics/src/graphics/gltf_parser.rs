@@ -106,6 +106,9 @@ pub fn extract_combined_mesh_from_gltf(gltf: &Gltf, buffers: &[Data]) -> Result<
             console_log!("combined_colors.len(): {:?}", combined_colors.len());
 
             let combined_mesh = Mesh::new(combined_vertices, combined_indices, combined_colors, PhongProperties::rt_default());
+            console_log!("Extracted mesh from GLTF with {} vertices and {} faces", 
+                combined_mesh.vertices.len(),  
+                combined_mesh.colors.len());
             return Ok(combined_mesh);
         },
         Err(e) => {

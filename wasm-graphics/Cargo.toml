@@ -34,6 +34,7 @@ gltf = { version = "1.4.1", features = [
     "utils",
     "import",
     "KHR_lights_punctual",
+    "KHR_materials_pbrSpecularGlossiness",
 ]}
 image = "0.25.5"
 data-url = "0.3.1"
