@@ -152,7 +152,7 @@ impl Game {
         // game.bvh = Some(BVHNode::new(rt_objects));
 
         // DEFAULT SCENE
-        // game.create_rt_test_scene_spheres();
+        game.create_rt_test_scene_spheres();
 
         // Update JS initial states where needed
         js_update_fov(radians_to_degrees(game.camera.get_fov()));
@@ -1183,12 +1183,32 @@ impl Game {
         self.bvh = Some(FlattenedBVH::new(rt_objects));
     }
 
+    fn pre_scene_load(&mut self) {
+        self.scene_objects.write().unwrap().clear();
+        self.bvh = None;
+        self.lights.clear();
+        self.rt_lights.clear();
+        self.looking_at.write().unwrap().take(); // clear looking at
+        self.defocus_angle = 0.0; // reset defocus angle
+        self.selected_object_index = None; // clear selected object
+    }
+
+    fn post_scene_load(&mut self) {
+        self.bvh = None; // invalidate bvh
+        self.extract_raster_lights_from_scene_objects();
+        self.extract_rt_lights_from_scene_objects();
+        self.js_update_ui();
+    }
+
 
     // LOADING SCENES
     pub fn load_scene_fantasy_book(&mut self, glb_bytes: &[u8]) {
         // https://sketchfab.com/3d-models/medieval-fantasy-book-06d5a80a04fc4c5ab552759e9a97d91a
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
             Ok(mesh) => {
+
+                self.pre_scene_load();
+
                 let light = Light::new_looking_at(
                     Vec3::new(50.0, 200.0, 300.0),
                     Vec3::new(0.0, 0.0, 0.0),
@@ -1221,6 +1241,8 @@ impl Game {
 
                 self.bvh = None; // invalidate bvh
                 self.set_fov(degrees_to_radians(90.0));
+
+                self.post_scene_load();
             }
             Err(e) => {
                 console_error!("Error loading fantasy book scene: {}", e);
@@ -1232,6 +1254,9 @@ impl Game {
         // https://sketchfab.com/3d-models/magical-help-73fcb7197ba441419c768105c7db5d17
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
             Ok(mesh) => {
+
+                self.pre_scene_load();
+
                 let mut scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), false);
                 scene_obj.set_center(Vec3::new(0.0, 0.0, 0.0));
                 scene_obj.mesh.properties.cull_faces = false;
@@ -1264,10 +1289,11 @@ impl Game {
                 }
 
                 self.bvh = None; // invalidate bvh
-                self.extract_rt_lights_from_scene_objects();
                 self.set_fov(degrees_to_radians(75.0)); // Slightly narrower FOV can feel more cinematic
                 self.camera.pos = Vec3::new(-15.0, 0.0, 5.0); // Example camera position
                 self.camera.look_at(&Vec3::new(0.0,0.0,2.0)); // Make camera look towards the bridge center
+
+                self.post_scene_load();
             }
             Err(e) => {
                 console_error!("Error loading fantasy book scene: {}", e);
@@ -1276,6 +1302,8 @@ impl Game {
     }
 
     pub fn load_scene_gandalf_bust(&mut self, stl_bytes: &[u8]) {
+        self.pre_scene_load();
+
         let gandalf_color = Vec3::new(0.8, 0.8, 0.8);
         let (gandalf_phong, gandalf_mat) = SceneObject::new_glossy_mat(1.6);
         // let (gandalf_phong, gandalf_mat) = SceneObject::new_diffuse_mat();
@@ -1347,15 +1375,17 @@ impl Game {
         self.rt_max_sky_color = Vec3::new(0.05, 0.05, 0.16);
         self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
 
-        self.extract_rt_lights_from_scene_objects();
-        self.extract_raster_lights_from_scene_objects();
+        self.post_scene_load();
     }
 
     pub fn load_scene_roza_bust(&mut self, glb_bytes: &[u8]) {
         // https://sketchfab.com/3d-models/sculpture-bust-of-roza-loewenfeld-fc6e731a0131471ba8e45511c7ea9996#download
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
             Ok(mut mesh) => {
-                let bust_color = Vec3::new(0.8, 0.8, 0.8);
+
+                self.pre_scene_load();
+
+                // let bust_color = Vec3::new(0.8, 0.8, 0.8);
                 let (bust_phong, bust_mat) = SceneObject::new_glossy_mat(1.6);
                 mesh.properties = bust_phong;
 
@@ -1420,92 +1450,79 @@ impl Game {
                 self.rt_max_sky_color = Vec3::new(0.01, 0.01, 0.02);
                 self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
 
-                self.extract_rt_lights_from_scene_objects();
-                self.extract_raster_lights_from_scene_objects();
+                self.post_scene_load();
             },
             Err(e) => {
                 console_error!("Error loading Roza bust scene: {}", e);
             }
         }
+    }
+
+    pub fn load_scene_dragon(&mut self, stl_bytes: &[u8]) {
+        // https://www.cgtrader.com/free-3d-models/animals/other/dragon-free-model-blender
+
+        self.pre_scene_load();
+
+        let dragon_color = Vec3::new(1.0, 1.0, 1.0);
+        let (dragon_phong, dragon_mat) = SceneObject::new_glossy_mat(1.6);
+        let mut dragon_mesh = Mesh::new_from_stl_bytes(stl_bytes, dragon_color, dragon_phong);
+
+        dragon_mesh.set_center(Vec3::zero());
+        dragon_mesh.scale_by(0.5);
+
+        dragon_mesh.rotate_around_center(PI/2.0, -PI/2.0);
+        dragon_mesh.rotate_around_center(PI, 0.0);
+
+        let mut min_z: f32 = 10.0;
+        for v in &dragon_mesh.vertices {
+            min_z = min_z.min(v.z);
+        }
+        console_log!("Min Z of dragon mesh: {}", min_z);
+
+        let ground_plane = SceneObject::new_rectangle(
+            Vec3::new(-100.0, -100.0, min_z + 0.01), 
+            Vec3::new(200.0, 0.0, 0.0), 
+            Vec3::new(0.0, 200.0, 0.0), 
+            Vec3::new(1.0, 1.0, 1.0),
+            // SceneObject::new_diffuse_mat(),
+            SceneObject::new_metal_mat(0.05),
+            false
+        );
+        self.add_scene_object(ground_plane);
+
+        let dragon_obj = SceneObject::new_from_mesh(dragon_mesh, dragon_mat, true);
+        self.add_scene_object(dragon_obj);
+
+        self.camera.pos = Vec3::new(-5.5, -1.1, 1.1);
+        self.camera.look_at(&Vec3::zero());
+        self.set_fov(degrees_to_radians(30.0));
+
+        // left light (cream)
+        let light_1 = SceneObject::new_sphere_omni_light(
+            Vec3::new(0.5, 3.0, 1.0), 
+            0.5, 
+            3.0 * Vec3::new(1.0, 0.8, 0.6), 
+            2, 
+            1000
+        );
+
+        // right light (white)
+        let light_2 = SceneObject::new_sphere_omni_light(
+            Vec3::new(-1.5, -3.0, 2.3), 
+            0.5, 
+            3.0 * Vec3::new(1.0, 1.0, 1.0), 
+            2, 
+            1000
+        );
+
+        self.add_scene_object(light_1);
+        self.add_scene_object(light_2);
+
+        self.max_sky_color = Vec3::new(0.05, 0.05, 0.05);
+        self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+        self.rt_max_sky_color = Vec3::new(0.0, 0.0, 0.0);
+        self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+        self.post_scene_load();
     }
 }
-
-/*
-pub fn load_scene_roza_bust(&mut self, glb_bytes: &[u8]) {
-        // https://sketchfab.com/3d-models/sculpture-bust-of-roza-loewenfeld-fc6e731a0131471ba8e45511c7ea9996#download
-        match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
-            Ok(mut mesh) => {
-                let bust_color = Vec3::new(0.8, 0.8, 0.8);
-                let (bust_phong, bust_mat) = SceneObject::new_glossy_mat(1.6);
-                mesh.properties = bust_phong;
-
-                mesh.set_center(Vec3::new(0.0, 0.0, 0.0));
-                mesh.scale_by(0.014);
-                mesh.rotate_around_center(0.0, -PI/2.0);
-                mesh.rotate_around_center(-PI, 0.0);
-                // mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
-
-                let bust_obj = SceneObject::new_from_mesh(mesh, bust_mat, true);
-                self.add_scene_object(bust_obj);
-
-                // ground plane
-                let ground_plane = SceneObject::new_rectangle(
-                    Vec3::new(-100.0, -100.0, -4.0), 
-                    Vec3::new(200.0, 0.0, 0.0), 
-                    Vec3::new(0.0, 200.0, 0.0), 
-                    Vec3::new(0.05, 0.05, 0.18),
-                    SceneObject::new_diffuse_mat(),
-                    false
-                );
-                self.add_scene_object(ground_plane);
-
-
-                // left (red) light
-                let light_1 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(2.0, -10.0, 5.0), 
-                    5.0, 
-                    3.0 * Vec3::new(1.0, 0.08, 0.08), 
-                    2, 
-                    1000
-                );
-
-                // right (blue) light
-                let light_2 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(2.0, 10.0, 5.0), 
-                    5.0, 
-                    3.0 * Vec3::new(0.05, 0.05, 1.0), 
-                    2, 
-                    1000
-                );
-
-                // top (white) light
-                let light_3 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(-40.0, 0.0, 50.0), 
-                    30.0, 
-                    5.0 * Vec3::new(1.0, 1.0, 1.0), 
-                    2, 
-                    1000
-                );
-
-                self.add_scene_object(light_1);
-                self.add_scene_object(light_2);
-                self.add_scene_object(light_3);
-
-                self.camera.pos = Vec3::new(30.0, 0.0, -3.0);
-                self.camera.look_at(&Vec3::zero());
-                self.camera.set_fov(degrees_to_radians(15.0));
-
-                self.max_sky_color = Vec3::new(0.05, 0.05, 0.1);
-                self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
-                self.rt_max_sky_color = Vec3::new(0.01, 0.01, 0.02);
-                self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
-
-                self.extract_rt_lights_from_scene_objects();
-                self.extract_raster_lights_from_scene_objects();
-            },
-            Err(e) => {
-                console_error!("Error loading Roza bust scene: {}", e);
-            }
-        }
-    }
- */
