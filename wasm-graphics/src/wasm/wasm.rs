@@ -293,6 +293,17 @@ pub fn load_scene_roza_bust(glb_bytes: Option<Vec<u8>>) {
         console_error!("wasm.rs: load_scene_roza_bust failed, bytes are None");
     }
 }
+#[wasm_bindgen]
+pub fn load_scene_dragon(stl_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = stl_bytes {
+        console_log!("wasm.rs: load_scene_dragon");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().load_scene_dragon(&bytes);
+        });
+    } else {
+        console_error!("wasm.rs: load_scene_dragon failed, bytes are None");
+    }
+}
 
 
 
