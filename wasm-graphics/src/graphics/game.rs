@@ -152,7 +152,7 @@ impl Game {
         // game.bvh = Some(BVHNode::new(rt_objects));
 
         // DEFAULT SCENE
-        game.create_rt_test_scene_spheres();
+        // game.create_rt_test_scene_spheres();
 
         // Update JS initial states where needed
         js_update_fov(radians_to_degrees(game.camera.get_fov()));
@@ -1485,7 +1485,7 @@ impl Game {
             Vec3::new(0.0, 200.0, 0.0), 
             Vec3::new(1.0, 1.0, 1.0),
             // SceneObject::new_diffuse_mat(),
-            SceneObject::new_metal_mat(0.05),
+            SceneObject::new_metal_mat(0.02),
             false
         );
         self.add_scene_object(ground_plane);
@@ -1501,7 +1501,7 @@ impl Game {
         let light_1 = SceneObject::new_sphere_omni_light(
             Vec3::new(0.5, 3.0, 1.0), 
             0.5, 
-            3.0 * Vec3::new(1.0, 0.8, 0.6), 
+            12.0 * Vec3::new(1.0, 0.8, 0.6), 
             2, 
             1000
         );
@@ -1510,7 +1510,7 @@ impl Game {
         let light_2 = SceneObject::new_sphere_omni_light(
             Vec3::new(-1.5, -3.0, 2.3), 
             0.5, 
-            3.0 * Vec3::new(1.0, 1.0, 1.0), 
+            14.0 * Vec3::new(1.0, 1.0, 1.0), 
             2, 
             1000
         );
@@ -1522,6 +1522,212 @@ impl Game {
         self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
         self.rt_max_sky_color = Vec3::new(0.0, 0.0, 0.0);
         self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+        self.post_scene_load();
+    }
+
+    pub fn load_scene_mirror_box(&mut self, skull_stl_bytes: &[u8], sculpture_stl_bytes: &[u8]) {
+        // https://www.thingiverse.com/thing:1781327
+        // https://www.thingiverse.com/thing:5700
+        self.pre_scene_load();
+
+        // skull
+        let skull_color = Vec3::new(0.8, 0.7, 0.5); // gold color
+        let (skull_phong, skull_mat) = SceneObject::new_metal_mat(0.05);
+
+        let mut skull_mesh = Mesh::new_from_stl_bytes(skull_stl_bytes, skull_color, skull_phong);
+        skull_mesh.rotate_around_center(-PI/2.0, PI/2.0);
+        skull_mesh.rotate_around_center(-PI/4.0, 0.0);
+
+        let scale_factor = 3.5 / skull_mesh.radius;
+        skull_mesh.scale_by(scale_factor);
+
+        skull_mesh.set_center(Vec3::new(-1.0, 1.0, 0.0));
+        let mut min_z: f32 = 100.0;
+        for v in &skull_mesh.vertices {
+            min_z = min_z.min(v.z);
+        }
+        skull_mesh.translate_by(Vec3::new(0.0, 0.0, -min_z));
+
+        let skull_obj = SceneObject::new_from_mesh(skull_mesh, skull_mat, true);
+        self.add_scene_object(skull_obj);
+
+
+        // sculpture
+        let sculpture_color = 1.0 * Vec3::new(1.0, 0.5, 0.0); // bright orange
+        let (sculpture_phong, sculpture_mat) = SceneObject::new_light_mat();
+        let mut sculpture_mesh = Mesh::new_from_stl_bytes(sculpture_stl_bytes, sculpture_color, sculpture_phong);
+
+        sculpture_mesh.set_center(Vec3::new(1.0, 1.0, 0.8));
+        sculpture_mesh.scale_by(0.02);
+        sculpture_mesh.rotate_around_center(-PI/2.0, PI/2.0);
+
+        sculpture_mesh.rotate_around_center(0.0, -degrees_to_radians(35.0));
+        sculpture_mesh.rotate_around_center(PI/4.0, 0.0);
+
+        let sculpture_obj = SceneObject::new_from_mesh(sculpture_mesh, sculpture_mat, true);
+        self.add_scene_object(sculpture_obj);
+
+
+        // glass sphere
+        let glass_mat = SceneObject::new_glass_mat(0.5, 1.7);
+        let glass_color = Vec3::new(0.9, 0.9, 1.0);
+        let sphere_obj = SceneObject::new_sphere(
+            Vec3::new(1.5, -1.5, 1.0),
+            1.0,
+            glass_color,
+            3,
+            glass_mat
+        );
+        self.add_scene_object(sphere_obj);
+
+
+        // add mirror walls
+        let height = 7.0;
+        let mirror_color = Vec3::new(0.9, 0.9, 0.9);
+        let unified_mirror_mat = SceneObject::new_metal_mat(0.0);
+        let wall_1 = SceneObject::new_rectangle(
+            Vec3::new(-5.0, -5.0, 0.0),
+            Vec3::new(10.0, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, height),
+            mirror_color,
+            unified_mirror_mat.clone(),
+            false
+        );
+        self.add_scene_object(wall_1);
+        let wall_2 = SceneObject::new_rectangle(
+            Vec3::new(-5.0, -5.0, 0.0),
+            Vec3::new(0.0, 10.0, 0.0),
+            Vec3::new(0.0, 0.0, height),
+            mirror_color,
+            unified_mirror_mat.clone(),
+            false
+        );
+        self.add_scene_object(wall_2);
+        let wall_3 = SceneObject::new_rectangle(
+            Vec3::new(5.0, 5.0, 0.0),
+            Vec3::new(-10.0, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, height),
+            mirror_color,
+            unified_mirror_mat.clone(),
+            false
+        );
+        self.add_scene_object(wall_3);
+        let wall_4 = SceneObject::new_rectangle(
+            Vec3::new(5.0, 5.0, 0.0),
+            Vec3::new(0.0, -10.0, 0.0),
+            Vec3::new(0.0, 0.0, height),
+            mirror_color,
+            unified_mirror_mat,
+            false
+        );
+        self.add_scene_object(wall_4);
+
+        // add top diffuse surface
+        let top_color = Vec3::new(0.2, 0.2, 0.2);
+        let unified_top_mat = SceneObject::new_diffuse_mat();
+        let top_obj = SceneObject::new_rectangle(
+            Vec3::new(-5.0, -5.0, height),
+            Vec3::new(10.0, 0.0, 0.0),
+            Vec3::new(0.0, 10.0, 0.0),
+            top_color,
+            unified_top_mat,
+            false
+        );
+        self.add_scene_object(top_obj);
+
+        // add bottom diffuse surface
+        let bottom_color = Vec3::new(0.2, 0.2, 0.2);
+        let unified_bottom_mat = SceneObject::new_diffuse_mat();
+        let bottom_obj = SceneObject::new_rectangle(
+            Vec3::new(-5.0, -5.0, 0.0),
+            Vec3::new(10.0, 0.0, 0.0),
+            Vec3::new(0.0, 10.0, 0.0),
+            bottom_color,
+            unified_bottom_mat,
+            false
+        );
+        self.add_scene_object(bottom_obj);
+
+        // add light
+        let light_color = Vec3::new(1.0, 1.0, 1.0);
+        let light_obj = SceneObject::new_sphere_omni_light(
+            Vec3::new(0.0, 0.0, height),
+            0.5,
+            35.0 * light_color,
+            3,
+            1000
+        );
+        self.add_scene_object(light_obj);
+
+        self.camera.pos = Vec3::new(-4.0, -4.0, 5.0);
+        self.camera.look_at(&Vec3::new(0.0, 0.0, 5.0));
+        self.set_fov(degrees_to_radians(90.0));
+
+        // daylight colors
+        self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+        self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+        self.rt_max_sky_color = Vec3::new(0.5, 0.7, 1.0);
+        self.rt_min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+        self.ray_max_depth = 100;
+
+        self.post_scene_load();
+    }
+
+    pub fn load_scene_suzanne_monkey(&mut self, stl_bytes: &[u8]) {
+
+        self.pre_scene_load();
+
+        let suzanne_color = Vec3::new(1.0, 1.0, 1.0);
+        let (suzanne_phong, suzanne_mat) = SceneObject::new_glass_mat(0.5, 1.6);
+        let mut suzanne_mesh = Mesh::new_from_stl_bytes(stl_bytes, suzanne_color, suzanne_phong);
+
+        suzanne_mesh.scale_by(1.0);
+        suzanne_mesh.set_center(Vec3::new(0.0, 0.0, 0.0));
+
+        suzanne_mesh.rotate_around_center(-PI/2.0, PI/2.0);
+        suzanne_mesh.rotate_around_center(-degrees_to_radians(110.0), 0.0);
+
+        let mut min_z: f32 = 10.0;
+        for v in &suzanne_mesh.vertices {
+            min_z = min_z.min(v.z);
+        }
+
+        let suzanne_obj = SceneObject::new_from_mesh(suzanne_mesh, suzanne_mat, true);
+        self.add_scene_object(suzanne_obj);
+
+        let ground_color = Vec3::new(0.2, 0.2, 0.2);
+        let ground_unified_mat = SceneObject::new_diffuse_mat();
+        let ground_plane = SceneObject::new_rectangle(
+            Vec3::new(-100.0, -100.0, min_z), 
+            Vec3::new(200.0, 0.0, 0.0), 
+            Vec3::new(0.0, 200.0, 0.0), 
+            ground_color,
+            ground_unified_mat,
+            false
+        );
+        self.add_scene_object(ground_plane);
+
+        let light_color = Vec3::new(0.6, 0.8, 1.0);
+        let light = SceneObject::new_sphere_omni_light(
+            Vec3::new(2.0, 5.0, 2.0),
+            0.1,
+            3000.0 * light_color,
+            2,
+            1000
+        );
+        self.add_scene_object(light);
+
+        self.set_fov(degrees_to_radians(35.0));
+        self.camera.pos = Vec3::new(-5.0, -5.0, 5.0);
+        self.camera.look_at(&Vec3::new(0.0, -1.0, 0.0));
+
+        self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
+        self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+        self.rt_max_sky_color = Vec3::new(0.0, 0.0, 0.0);
+        self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
+
+        self.ray_max_depth = 10;
 
         self.post_scene_load();
     }

@@ -304,6 +304,32 @@ pub fn load_scene_dragon(stl_bytes: Option<Vec<u8>>) {
         console_error!("wasm.rs: load_scene_dragon failed, bytes are None");
     }
 }
+#[wasm_bindgen]
+pub fn load_scene_mirror_box(skull_stl_bytes: Option<Vec<u8>>, sculpture_stl_bytes: Option<Vec<u8>>) {
+    if let Some(skull_bytes) = skull_stl_bytes {
+        if let Some(sculpture_bytes) = sculpture_stl_bytes {
+            console_log!("wasm.rs: load_scene_mirror_box");
+            GAME_INSTANCE.with(|game_instance| {
+                game_instance.borrow_mut().load_scene_mirror_box(&skull_bytes, &sculpture_bytes);
+            });
+        } else {
+            console_error!("wasm.rs: load_scene_mirror_box failed, sculpture bytes are None");
+        }
+    } else {
+        console_error!("wasm.rs: load_scene_mirror_box failed, skull bytes are None");
+    }
+}
+#[wasm_bindgen]
+pub fn load_scene_suzanne_monkey(stl_bytes: Option<Vec<u8>>) {
+    if let Some(bytes) = stl_bytes {
+        console_log!("wasm.rs: load_scene_suzanne_monkey");
+        GAME_INSTANCE.with(|game_instance| {
+            game_instance.borrow_mut().load_scene_suzanne_monkey(&bytes);
+        })
+    } else {
+        console_error!("wasm.rs: load_scene_suzanne_monkey failed, bytes are None");
+    }
+}
 
 
 

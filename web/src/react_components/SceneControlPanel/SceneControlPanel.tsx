@@ -71,13 +71,30 @@ const loadSceneRozaBust = async () => {
 }
 const loadSceneDragon = async () => {
     console.log("Loading Dragon scene");
-    const glbBytes = await getFileBytes("../static/dragon.stl");
-    wasm.load_scene_dragon(glbBytes);
+    const stlBytes = await getFileBytes("../static/dragon.stl");
+    wasm.load_scene_dragon(stlBytes);
+}
+const loadSceneMirrorBox = async () => {
+    console.log("Loading Mirror Box scene");
+    const skullStlBytes = await getFileBytes("../static/skull.stl");
+    const sculptureStlBytes = await getFileBytes("../static/abstract_sculpture.stl");
+    wasm.load_scene_mirror_box(skullStlBytes, sculptureStlBytes);
+}
+const loadSceneSuzanneMonkey = async () => {
+    console.log("Loading Suzanne Monkey scene");
+    const suzanneStlBytes = await getFileBytes("../static/suzanne.stl");
+    wasm.load_scene_suzanne_monkey(suzanneStlBytes);
 }
 
-// loadSceneGandalfBust();
-// loadSceneRozaBust();
-// loadSceneDragon();
+
+setTimeout(() => {
+    // loadSceneGandalfBust();
+    // loadSceneRozaBust();
+    // loadSceneDragon();
+    // loadSceneMirrorBox();
+    loadSceneSuzanneMonkey();
+}, 1000)
+
 
 const SceneControlPanel: React.FC = () => {
 
@@ -222,8 +239,8 @@ const SceneControlPanel: React.FC = () => {
                             <SelectItem value="Fantasy Book">Fantasy Book</SelectItem>
                             <SelectItem value="Simple Light">Simple Light</SelectItem>
                             <SelectItem value="Random Spheres">Random Spheres</SelectItem>
-                            <SelectItem value="Cornell Box">Cornell Box</SelectItem>
-                            <SelectItem value="Magic Bridge (incomplete)">Magic Bridge (incomplete)</SelectItem>
+                            {/* <SelectItem value="Cornell Box">Cornell Box</SelectItem>
+                            <SelectItem value="Magic Bridge (incomplete)">Magic Bridge (incomplete)</SelectItem> */}
                         </SelectContent>
                     </Select>
                 </div>
