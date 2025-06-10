@@ -28,6 +28,10 @@ jobs:
       - name: Build the project
         working-directory: ./web # Run in the 'web' subdirectory
         run: npm run build  # This will create web/dist
+    
+      - name: List contents of web/dist # <-- ADDED DIAGNOSTIC STEP
+        run: ls -R ./web/dist
+        working-directory: . # Run from repo root to see full path in output
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
