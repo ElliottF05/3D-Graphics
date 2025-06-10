@@ -1,6 +1,6 @@
 import * as wasm from '@wasm/wasm_graphics';
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { IWasmToJsBridge, wasmToJsBridge, GameStatus } from '@/wasmToJsBridge'; // Adjust path
+import { IWasmToJsBridge, wasmToJsBridge, GameStatus } from '@/wasmToJSBridge'; // Adjust path
 import { loadGlbModel } from '.';
 
 interface IGameContext {
