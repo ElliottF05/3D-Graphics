@@ -42,9 +42,6 @@ const loadSceneCornellBox = () => {
 }
 const loadSceneFantasyBook = async () => {
     console.log("Loading fantasy book scene");
-    // const glbBytes = await getFileBytes("../static/medieval_fantasy_book.glb");
-    // wasm.load_scene_fantasy_book(glbBytes);
-
     const assetRelativePath = "static/medieval_fantasy_book.glb";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const glbBytes = await getFileBytes(fullPath);
@@ -52,7 +49,9 @@ const loadSceneFantasyBook = async () => {
 }
 const loadSceneMagicBridge = async () => {
     console.log("Loading magic bridge scene");
-    const glbBytes = await getFileBytes("../static/magical_help.glb");
+    const assetRelativePath = "static/magical_help.glb";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const glbBytes = await getFileBytes(fullPath);
     wasm.load_scene_magic_bridge(glbBytes);
 }
 const loadSceneSimpleLight = () => {
@@ -61,34 +60,50 @@ const loadSceneSimpleLight = () => {
 }
 const loadSceneCornellBoxPlusPlus = async () => {
     console.log("Loading Cornell Box++ scene");
-    const stlBytes = await getFileBytes("../static/angel.stl");
+    const assetRelativePath = "static/angel.stl";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const stlBytes = await getFileBytes(fullPath);
     wasm.load_scene_cornell_box_extra(stlBytes);
 }
 
 const loadSceneGandalfBust = async () => {
     console.log("Loading Gandalf bust scene");
-    const glbBytes = await getFileBytes("../static/gandalf_bust.stl");
-    wasm.load_scene_gandalf_bust(glbBytes);
+    const assetRelativePath = "static/gandalf_bust.stl";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const stlBytes = await getFileBytes(fullPath);
+    wasm.load_scene_gandalf_bust(stlBytes);
 }
 const loadSceneRozaBust = async () => {
     console.log("Loading Roza bust scene");
-    const glbBytes = await getFileBytes("../static/roza_bust.glb");
+    const assetRelativePath = "static/roza_bust.glb";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const glbBytes = await getFileBytes(fullPath);
     wasm.load_scene_roza_bust(glbBytes);
 }
 const loadSceneDragon = async () => {
     console.log("Loading Dragon scene");
-    const stlBytes = await getFileBytes("../static/dragon.stl");
+    const assetRelativePath = "static/dragon.stl";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const stlBytes = await getFileBytes(fullPath);
     wasm.load_scene_dragon(stlBytes);
 }
 const loadSceneMirrorBox = async () => {
     console.log("Loading Mirror Box scene");
-    const skullStlBytes = await getFileBytes("../static/skull.stl");
-    const sculptureStlBytes = await getFileBytes("../static/abstract_sculpture.stl");
+
+    const skullAssetRelativePath = "static/skull.stl";
+    const sculptureAssetRelativePath = "static/abstract_sculpture.stl";
+    const skullFullPath = `${import.meta.env.BASE_URL}${skullAssetRelativePath}`;
+    const sculptureFullPath = `${import.meta.env.BASE_URL}${sculptureAssetRelativePath}`;
+
+    const skullStlBytes = await getFileBytes(skullFullPath);
+    const sculptureStlBytes = await getFileBytes(sculptureFullPath);
     wasm.load_scene_mirror_box(skullStlBytes, sculptureStlBytes);
 }
 const loadSceneSuzanneMonkey = async () => {
     console.log("Loading Suzanne Monkey scene");
-    const suzanneStlBytes = await getFileBytes("../static/suzanne.stl");
+    const assetRelativePath = "static/suzanne.stl";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const suzanneStlBytes = await getFileBytes(fullPath);
     wasm.load_scene_suzanne_monkey(suzanneStlBytes);
 }
 
