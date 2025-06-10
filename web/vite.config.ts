@@ -9,10 +9,21 @@ export default defineConfig({
     build: {
         target: 'esnext',
     },
+    server: {
+        headers: {
+            'Cross-Origin-Embedder-Policy': 'require-corp',
+            'Cross-Origin-Opener-Policy': 'same-origin',
+            'Cross-Origin-Resource-Policy': 'cross-origin',
+        }
+
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
         "@wasm": path.resolve(__dirname, "./wasm"),
       },
     },
+    worker: {
+        format: "es"
+    }
   })

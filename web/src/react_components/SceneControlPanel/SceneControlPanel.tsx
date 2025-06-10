@@ -88,13 +88,15 @@ const loadSceneSuzanneMonkey = async () => {
 }
 
 
-setTimeout(() => {
-    // loadSceneGandalfBust();
-    // loadSceneRozaBust();
-    // loadSceneDragon();
-    // loadSceneMirrorBox();
-    loadSceneSuzanneMonkey();
-}, 1000)
+// setTimeout(() => {
+//     // loadSceneGandalfBust();
+//     // loadSceneRozaBust();
+//     // loadSceneDragon();
+//     // loadSceneMirrorBox();
+//     // loadSceneSuzanneMonkey();
+//     loadSceneFantasyBook();
+// }, 1000)
+loadSceneFantasyBook();
 
 
 const SceneControlPanel: React.FC = () => {
