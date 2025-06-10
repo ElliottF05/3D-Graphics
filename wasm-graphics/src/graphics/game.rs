@@ -1660,8 +1660,8 @@ impl Game {
         );
         self.add_scene_object(light_obj);
 
-        self.camera.pos = Vec3::new(-4.0, -4.0, 5.0);
-        self.camera.look_at(&Vec3::new(0.0, 0.0, 5.0));
+        self.camera.pos = Vec3::new(-0.0, -4.0, 4.0);
+        self.camera.look_at(&Vec3::new(0.0, 0.0, 2.0));
         self.set_fov(degrees_to_radians(90.0));
 
         // daylight colors
@@ -1727,7 +1727,7 @@ impl Game {
         self.rt_max_sky_color = Vec3::new(0.0, 0.0, 0.0);
         self.rt_min_sky_color = Vec3::new(0.0, 0.0, 0.0);
 
-        self.ray_max_depth = 10;
+        self.ray_max_depth = 50;
 
         self.post_scene_load();
     }

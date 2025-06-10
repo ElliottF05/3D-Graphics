@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use rand::seq::index;
 
 use crate::{console_error, utils::math::Vec3};
@@ -55,7 +57,8 @@ impl SceneObject {
         let mut properties = PhongProperties::default();
         properties.is_light = true;
         let mesh = Mesh::build_sphere(center, radius, subdivisions, color, properties);
-        let lights = Light::new_omnidirectional(center, color, radius + 0.01, buf_width);
+        let light_color = 0.05 * color * (4.0 * PI * radius * radius);
+        let lights = Light::new_omnidirectional(center, light_color, radius + 0.01, buf_width);
         return SceneObject::new(mesh, vec![Box::new(sphere)], lights, true);
     }
     pub fn new_sphere_custom_light(subdivisions: u32, light: Light) -> SceneObject {

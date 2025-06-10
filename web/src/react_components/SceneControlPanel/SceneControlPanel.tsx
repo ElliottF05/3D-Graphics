@@ -138,6 +138,12 @@ const SceneControlPanel: React.FC = () => {
             case "Dragon":
                 loadSceneDragon();
                 break;
+            case "Mirror Box":
+                loadSceneMirrorBox();
+                break;
+            case "Suzanne Monkey":
+                loadSceneSuzanneMonkey();
+                break;
             // Add more cases for other scenes
             default:
                 console.warn(`Unknown default scene value: ${sceneValue}`);
@@ -239,6 +245,8 @@ const SceneControlPanel: React.FC = () => {
                             <SelectItem value="Fantasy Book">Fantasy Book</SelectItem>
                             <SelectItem value="Simple Light">Simple Light</SelectItem>
                             <SelectItem value="Random Spheres">Random Spheres</SelectItem>
+                            <SelectItem value="Mirror Box">Mirror Box</SelectItem>
+                            <SelectItem value="Suzanne Monkey">Suzanne Monkey</SelectItem>
                             {/* <SelectItem value="Cornell Box">Cornell Box</SelectItem>
                             <SelectItem value="Magic Bridge (incomplete)">Magic Bridge (incomplete)</SelectItem> */}
                         </SelectContent>
