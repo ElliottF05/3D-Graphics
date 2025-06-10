@@ -25,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { ModeToggle } from "@/components/mode-toggle";
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
@@ -327,7 +328,12 @@ const SceneControlPanel: React.FC = () => {
                                     <div className="w-full"> {/* Wrapper for TooltipTrigger when button is disabled */}
                                     <Button
                                         onClick={handleEnterRayTraceMode}
-                                        className="w-full whitespace-normal break-words h-10 bg-green-600 hover:bg-green-700"
+                                        className="
+                                            w-full whitespace-normal break-words h-10
+                                            bg-green-600 hover:bg-green-700
+                                            dark:bg-green-500 dark:hover:bg-green-400
+                                            dark:text-black
+                                        "
                                     >
                                         Ray Trace
                                     </Button>
@@ -398,6 +404,13 @@ const SceneControlPanel: React.FC = () => {
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
+
+                <div className="flex justify-left">
+                    <ModeToggle />
+                    <p className="text-sm text-muted-foreground ml-2">
+                        Toggle between light and dark themes.
+                    </p>
+                </div>
 
             </CardContent>
         </Card>

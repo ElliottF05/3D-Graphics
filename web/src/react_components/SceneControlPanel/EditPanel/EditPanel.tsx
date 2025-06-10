@@ -30,7 +30,11 @@ const EditPanel: React.FC<EditPanelProps> = ({}) => {
             <div className="flex w-full gap-2">
                 <Button
                     variant="destructive"
-                    className="flex-1 min-w-0"
+                    className="
+                        flex-1 min-w-0
+                        bg-red-600 hover:bg-red-700 text-white
+                        dark:bg-red-500 dark:hover:bg-red-400 dark:text-black
+                    "
                     onClick={handleDeleteClick}
                 >
                     <Trash2 className="mr-1 h-4 w-4" />
