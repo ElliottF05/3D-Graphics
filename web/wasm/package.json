@@ -1,0 +1,15 @@
+{
+  "name": "wasm-graphics",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "wasm_graphics_bg.wasm",
+    "wasm_graphics.js",
+    "wasm_graphics.d.ts"
+  ],
+  "main": "wasm_graphics.js",
+  "types": "wasm_graphics.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
