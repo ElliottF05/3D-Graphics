@@ -9,6 +9,7 @@ export default defineConfig({
     build: {
         target: 'esnext',
     },
+    base: "./",
     server: {
         headers: {
             'Cross-Origin-Embedder-Policy': 'require-corp',
