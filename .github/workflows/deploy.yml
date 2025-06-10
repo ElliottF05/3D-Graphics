@@ -29,12 +29,11 @@ jobs:
         working-directory: ./web # Run in the 'web' subdirectory
         run: npm run build  # This will create web/dist
     
-      - name: List contents of web/dist # <-- ADDED DIAGNOSTIC STEP
+      - name: List contents of web/dist # <-- ADD THIS DIAGNOSTIC STEP
         run: ls -R ./web/dist
-        working-directory: . # Run from repo root to see full path in output
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./web/dist # Publish from the 'web/dist' directory
+          publish_dir: web/dist # Publish from the 'web/dist' directory
