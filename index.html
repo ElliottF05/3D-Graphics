@@ -1,89 +1,14 @@
-<!-- THIS FILE IS SERVED WHEN TESTING LOCALLY -->
-<!-- GITHUB PAGES USES dist/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D-Graphics</title>
     <script src="coi-serviceworker.js"></script>
-  <script type="module" crossorigin src="./assets/index-B2jcumWp.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DPUjHnC4.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Graphics</title>
+  <script type="module" crossorigin src="/assets/index-VSw4CLax.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C7qzexlL.css">
 </head>
 <body>
-    <div id="main-container">
-        <div id="user-management">
-            <h2>User Management</h2>
-            <form id="user-form">
-                <label for="email">Email:</label>
-                <input type="email" id="email" required>
-                <label for="password">Password:</label>
-                <input type="password" id="password" required>
-                <div class="button-container">
-                    <button type="button" id="sign-in-button">Sign In</button>
-                    <button type="button" id="sign-up-button">Sign Up</button>
-                </div>
-                <p id="user-status-message"></p>
-            </form>
-            <div id="scene-gallery">   
-            </div>
-            <div id="scene-gallery-buttons" class="hidden">
-                <button id="load-scene-button">Load Scene</button>
-                <button id="delete-scene-button">Delete Scene</button>
-            </div>
-        </div>
-        <div id="main-div">
-            <canvas id="canvas" width="500" height="500"></canvas>
-
-            <div id="controls-section">
-                <a href="#" id="open-controls-popup" class="controls-link controls-text">Click here to see the controls!</a>
-            </div>
-
-            <div id="controls-popup" class="popup hidden">
-                <div class="popup-content">
-                    <span id="close-controls-popup" class="popup-close controls-text">&times;</span>
-                    <h2 id="control-popup-header" class="controls-text">Controls</h2>
-                    <p class="controls-text">
-                        Begin by clicking on the image window!<br/> 
-                        <ul id="controls-list" class="controls-text">
-                            <li class="controls-text"><strong>Move the Camera:</strong> WASD</li>
-                            <li class="controls-text"><strong>Rotate/Look Around:</strong> Use your mouse or the arrow keys</li>
-                            <li class="controls-text"><strong>Pause:</strong> Press P</li>
-                            <li class="controls-text"><strong>Exit the Image Window:</strong> Press escape</li>
-                            <li class="controls-text"><strong>Place a Cube:</strong> Left click</li>
-                            <li class="controls-text"><strong>Delete a Cube:</strong> Right click</li>
-                            <li class="controls-text"><strong>Change Cube Color:</strong> Use the color picker in the top right</li>
-                            <li class="controls-text"><strong>Make Raytraced Image (EXPERIMENTAL!!!):</strong> Press R</li>
-                        </ul>
-                    </p>
-                </div>
-            </div>
-
-        </div>
-        <div id="scene-management">
-            <h2>Scene Management</h2>
-            <label for="color-picker">Select Color:</label>
-            <input type="color" id="color-picker">
-            
-            <!-- New input field for Scene Name -->
-            <label for="scene-name-input">Scene Name:</label>
-            <input type="text" id="scene-name-input" placeholder="Enter scene name">
-            
-            <button type="button" id="save-image-button">Save Image</button>
-            <button type="button" id="save-scene-button">Save Scene</button>
-            <p id="scene-status-message"></p>
-            <div id="image-gallery">
-                <!-- <img src="public/scene.png" alt="Scene Image 1">
-                <img src="public/scene.png" alt="Scene Image 2">
-                <img src="public/scene.png" alt="Scene Image 3"> -->
-                <!-- Add more images as needed -->
-            </div>
-            <div id="image-buttons">
-                <button id="view-image-button">View Image</button>
-                <button id="delete-image-button">Delete Image</button>
-            </div>
-            <p id="image-button-status-message"></p>
-        </div>
-    </div>
+    <div id="root"></div>
 </body>
 </html>
