@@ -256,7 +256,7 @@ const SceneControlPanel: React.FC = () => {
                     <Select
                         onValueChange={handleLoadDefaultScene}
                         disabled={!inEditMode}
-                        defaultValue="Random Spheres"
+                        defaultValue="Fantasy Book"
                     >
                         <SelectTrigger id="load-scene-select" className="w-full">
                             <SelectValue placeholder="Select a scene" />
