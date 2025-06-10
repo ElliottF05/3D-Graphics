@@ -42,7 +42,12 @@ const loadSceneCornellBox = () => {
 }
 const loadSceneFantasyBook = async () => {
     console.log("Loading fantasy book scene");
-    const glbBytes = await getFileBytes("../static/medieval_fantasy_book.glb");
+    // const glbBytes = await getFileBytes("../static/medieval_fantasy_book.glb");
+    // wasm.load_scene_fantasy_book(glbBytes);
+
+    const assetRelativePath = "static/medieval_fantasy_book.glb";
+    const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
+    const glbBytes = await getFileBytes(fullPath);
     wasm.load_scene_fantasy_book(glbBytes);
 }
 const loadSceneMagicBridge = async () => {
