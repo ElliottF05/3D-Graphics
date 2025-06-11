@@ -15,6 +15,7 @@ export interface IWasmToJsBridge {
     updateFov: (fov: number) => void;
     updateFocalDistance: (focalDistance: number) => void;
     updateDofStrength: (dofStrength: number) => void;
+    updateSceneLoading: (loading: boolean) => void;
     // getGlbBytes: (url: string) => Promise<Uint8Array>;
 }
 
@@ -41,10 +42,9 @@ class WasmToJsBridge implements IWasmToJsBridge {
     public updateDofStrength: (dofStrength: number) => void = (dofStrength) => {
         console.warn("WasmToJsBridge.updateDofStrength called before React context initialized it.", dofStrength);
     };
-    // public getGlbBytes: (url: string) => Promise<Uint8Array> = async (url) => {
-    //     console.error("WasmToJsBridge.getGlbBytes called before React context initialized it.", url);
-    //     return new Uint8Array();
-    // };
+    public updateSceneLoading: (loading: boolean) => void = (loading) => {
+        console.warn("WasmToJsBridge.updateSceneLoading called before React context initialized it.", loading);
+    };
 
     // Implement other methods with default warnings
 }

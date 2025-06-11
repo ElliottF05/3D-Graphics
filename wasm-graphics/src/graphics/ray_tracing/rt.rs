@@ -307,7 +307,7 @@ impl Game {
 
     pub fn create_rt_test_scene_spheres(&mut self) {
 
-        self.scene_objects.write().unwrap().clear();
+        self.pre_scene_load();
 
         self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
         self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
@@ -404,14 +404,13 @@ impl Game {
         self.defocus_angle = degrees_to_radians(0.6);
         self.focus_dist = 10.0;
 
-        // set up bvh
-        // self.create_bvh_from_scene_objs();
-        self.js_update_ui();
-        self.rebuild_bvh();
+        self.post_scene_load();
     
     }
 
     pub fn create_rt_test_scene_quads(&mut self) {
+
+        self.pre_scene_load();
 
         self.ray_max_depth = 10;
 
@@ -472,19 +471,18 @@ impl Game {
         let scene_obj = SceneObject::new_from_mesh(mesh, Lambertian::default().clone_box(), true);
         self.add_scene_object(scene_obj);
 
-        // self.create_bvh_from_scene_objs();
-        self.rebuild_bvh();
-
         self.camera.set_fov(degrees_to_radians(80.0));
         self.camera.pos = Vec3::new(0.0, 9.0, 0.0);
         self.camera.look_at(&Vec3::zero());
+
+        self.post_scene_load();
     }
 
     pub fn create_rt_test_scene_simple_light(&mut self) {
 
-        self.ray_max_depth = 50;
+        self.pre_scene_load();
 
-        self.scene_objects.write().unwrap().clear();
+        self.ray_max_depth = 50;
 
         let sphere = SceneObject::new_sphere(
             Vec3::new(0.0, 0.0, -1000.0), 
@@ -537,11 +535,12 @@ impl Game {
         self.camera.set_fov(degrees_to_radians(20.0));
         self.defocus_angle = 0.0;
 
-        self.js_update_ui();
-        self.rebuild_bvh();
+        self.post_scene_load();
     }
 
     pub fn create_rt_test_scene_cornell(&mut self) {
+        self.pre_scene_load();
+
         self.ray_max_depth = 20;
 
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
@@ -635,12 +634,13 @@ impl Game {
         self.defocus_angle = 0.0;
     
         // Updating UI and rebuilding BVH
-        self.js_update_ui();
-        self.rebuild_bvh();
+        self.post_scene_load();
     }
 
 
     pub fn create_rt_test_scene_cornell_plus_plus(&mut self, stl_bytes: &[u8]) {
+        self.pre_scene_load();
+
         self.ray_max_depth = 50;
         
         self.max_sky_color = Vec3::new(0.1, 0.1, 0.1);
@@ -742,9 +742,7 @@ impl Game {
         self.camera.look_at(&Vec3::new(27.8, 0.0, 27.8));
         self.defocus_angle = 0.0;
 
-
         // Updating UI and rebuilding BVH
-        self.js_update_ui();
-        self.rebuild_bvh();
+        self.post_scene_load();
     }
 }

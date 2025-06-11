@@ -30,18 +30,22 @@ import { ModeToggle } from "@/components/mode-toggle";
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
 import { useGameContext } from "@/gameContext";
+import { wasmToJsBridge } from "@/wasmToJSBridge";
 import { getFileBytes } from "@/index";
 
 const loadSceneRandomSpheres = () => {
     console.log("Loading random spheres scene");
+    wasmToJsBridge.updateSceneLoading(true);
     wasm.load_scene_random_spheres();
 }
 const loadSceneCornellBox = () => {
     console.log("Loading Cornell Box scene");
+    wasmToJsBridge.updateSceneLoading(true);
     wasm.load_scene_cornell_box();
 }
 const loadSceneFantasyBook = async () => {
     console.log("Loading fantasy book scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/medieval_fantasy_book.glb";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const glbBytes = await getFileBytes(fullPath);
@@ -49,6 +53,7 @@ const loadSceneFantasyBook = async () => {
 }
 const loadSceneMagicBridge = async () => {
     console.log("Loading magic bridge scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/magical_help.glb";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const glbBytes = await getFileBytes(fullPath);
@@ -56,10 +61,12 @@ const loadSceneMagicBridge = async () => {
 }
 const loadSceneSimpleLight = () => {
     console.log("Loading simple light scene");
+    wasmToJsBridge.updateSceneLoading(true);
     wasm.load_scene_simple_light();
 }
 const loadSceneCornellBoxPlusPlus = async () => {
     console.log("Loading Cornell Box++ scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/angel.stl";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const stlBytes = await getFileBytes(fullPath);
@@ -68,6 +75,7 @@ const loadSceneCornellBoxPlusPlus = async () => {
 
 const loadSceneGandalfBust = async () => {
     console.log("Loading Gandalf bust scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/gandalf_bust.stl";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const stlBytes = await getFileBytes(fullPath);
@@ -75,6 +83,7 @@ const loadSceneGandalfBust = async () => {
 }
 const loadSceneRozaBust = async () => {
     console.log("Loading Roza bust scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/roza_bust.glb";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const glbBytes = await getFileBytes(fullPath);
@@ -82,6 +91,7 @@ const loadSceneRozaBust = async () => {
 }
 const loadSceneDragon = async () => {
     console.log("Loading Dragon scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/dragon.stl";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const stlBytes = await getFileBytes(fullPath);
@@ -89,6 +99,7 @@ const loadSceneDragon = async () => {
 }
 const loadSceneMirrorBox = async () => {
     console.log("Loading Mirror Box scene");
+    wasmToJsBridge.updateSceneLoading(true);
 
     const skullAssetRelativePath = "static/skull.stl";
     const sculptureAssetRelativePath = "static/abstract_sculpture.stl";
@@ -101,6 +112,7 @@ const loadSceneMirrorBox = async () => {
 }
 const loadSceneSuzanneMonkey = async () => {
     console.log("Loading Suzanne Monkey scene");
+    wasmToJsBridge.updateSceneLoading(true);
     const assetRelativePath = "static/suzanne.stl";
     const fullPath = `${import.meta.env.BASE_URL}${assetRelativePath}`;
     const suzanneStlBytes = await getFileBytes(fullPath);
@@ -108,15 +120,15 @@ const loadSceneSuzanneMonkey = async () => {
 }
 
 
-// setTimeout(() => {
-//     // loadSceneGandalfBust();
-//     // loadSceneRozaBust();
-//     // loadSceneDragon();
-//     // loadSceneMirrorBox();
-//     // loadSceneSuzanneMonkey();
-//     loadSceneFantasyBook();
-// }, 1000)
-loadSceneFantasyBook();
+setTimeout(() => {
+    // loadSceneGandalfBust();
+    // loadSceneRozaBust();
+    // loadSceneDragon();
+    // loadSceneMirrorBox();
+    // loadSceneSuzanneMonkey();
+    loadSceneFantasyBook();
+}, 1000)
+// loadSceneFantasyBook();
 
 
 const SceneControlPanel: React.FC = () => {
@@ -128,6 +140,7 @@ const SceneControlPanel: React.FC = () => {
         fov,
         focalDistance,
         dofStrength,
+        sceneLoading,
     } = useGameContext();
 
     // state to control which accordion items are open
@@ -255,7 +268,7 @@ const SceneControlPanel: React.FC = () => {
                     </div>
                     <Select
                         onValueChange={handleLoadDefaultScene}
-                        disabled={!inEditMode}
+                        disabled={!inEditMode || sceneLoading}
                         defaultValue="Fantasy Book"
                     >
                         <SelectTrigger id="load-scene-select" className="w-full">

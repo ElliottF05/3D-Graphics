@@ -5,7 +5,7 @@ use web_sys::{console, js_sys};
 
 use rayon::prelude::*;
 
-use crate::{console_error, console_log, console_warn, utils::{math::{degrees_to_radians, radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_get_glb_bytes, js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_selected_obj_mat_props, MaterialProperties}};
+use crate::{console_error, console_log, console_warn, utils::{math::{degrees_to_radians, radians_to_degrees, Vec3}, utils::{clamp_color, gamma_correct_color, get_time, shift_color}}, wasm::wasm::{js_update_dof_strength, js_update_focal_distance, js_update_follow_camera, js_update_fov, js_update_game_status, js_update_scene_loading, js_update_selected_obj_mat_props, MaterialProperties}};
 
 use super::{buffers::{PixelBuf, ZBuffer}, camera::Camera, gltf_parser::{extract_combined_mesh_from_gltf, extract_combined_mesh_from_raw_glb_bytes}, lighting::Light, mesh::{Mesh, PhongProperties}, ray_tracing::{bvh::{BVHNode, FlattenedBVH}, hittable::Hittable, material::{Dielectric, Lambertian, Material, Metal}}, scene_object::SceneObject};
 
@@ -1183,7 +1183,8 @@ impl Game {
         self.bvh = Some(FlattenedBVH::new(rt_objects));
     }
 
-    fn pre_scene_load(&mut self) {
+    pub fn pre_scene_load(&mut self) {
+        // js_update_scene_loading(true);
         self.scene_objects.write().unwrap().clear();
         self.bvh = None;
         self.lights.clear();
@@ -1193,11 +1194,12 @@ impl Game {
         self.selected_object_index = None; // clear selected object
     }
 
-    fn post_scene_load(&mut self) {
+    pub fn post_scene_load(&mut self) {
         self.bvh = None; // invalidate bvh
         self.extract_raster_lights_from_scene_objects();
         self.extract_rt_lights_from_scene_objects();
         self.js_update_ui();
+        js_update_scene_loading(false);
     }
 
 
@@ -1205,15 +1207,21 @@ impl Game {
     pub fn load_scene_fantasy_book(&mut self, glb_bytes: &[u8]) {
         // https://sketchfab.com/3d-models/medieval-fantasy-book-06d5a80a04fc4c5ab552759e9a97d91a
         match extract_combined_mesh_from_raw_glb_bytes(glb_bytes) {
-            Ok(mesh) => {
+            Ok(mut mesh) => {
 
                 self.pre_scene_load();
+
+                mesh.properties.ambient = 0.8;
+                mesh.properties.diffuse = 0.2; // Maximize diffuse reflection
+                mesh.properties.specular = 0.1; // Keep specular low for a non-shiny book
+                mesh.properties.shininess = 4;  // Low shininess
 
                 let light = Light::new_looking_at(
                     Vec3::new(50.0, 200.0, 300.0),
                     Vec3::new(0.0, 0.0, 0.0),
                     PI / 12.0,
-                    800.0 * Vec3::white(),
+                    // sun color
+                    2400.0 * Vec3::new(0.8, 0.7, 0.6),
                     10.0,
                     1000,
                     1000,
@@ -1231,11 +1239,12 @@ impl Game {
                     scene_objects.push(scene_obj);
                 }
 
-                self.max_sky_color = Vec3::new(0.5, 0.7, 1.0);
-                self.min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+                // Daytime blue sky colors
+                self.max_sky_color = Vec3::new(0.22, 0.48, 1.0); // deeper blue zenith
+                self.min_sky_color = Vec3::new(0.80, 0.90, 1.0); // slightly bluer horizon
 
-                self.rt_max_sky_color = Vec3::new(0.5, 0.7, 1.0);
-                self.rt_min_sky_color = Vec3::new(1.0, 1.0, 1.0);
+                self.rt_max_sky_color = Vec3::new(0.22, 0.48, 1.0);
+                self.rt_min_sky_color = Vec3::new(0.80, 0.90, 1.0);
 
                 self.ray_max_depth = 20;
 

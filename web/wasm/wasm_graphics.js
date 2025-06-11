@@ -438,7 +438,7 @@ export function wbg_rayon_start_worker(receiver) {
 }
 
 function __wbg_adapter_22(arg0, arg1, arg2) {
-    wasm.closure266_externref_shim(arg0, arg1, arg2);
+    wasm.closure284_externref_shim(arg0, arg1, arg2);
 }
 
 function __wbg_adapter_25(arg0, arg1) {
@@ -849,6 +849,9 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_updateGameStatus_90e602e4cb6a2474 = function(arg0) {
         wasmToJsBridge.updateGameStatus(arg0 >>> 0);
     };
+    imports.wbg.__wbg_updateSceneLoading_0450d9222f91b994 = function(arg0) {
+        wasmToJsBridge.updateSceneLoading(arg0 !== 0);
+    };
     imports.wbg.__wbg_updateSelectedObjMatProps_1d25fed871aa2c6b = function(arg0) {
         wasmToJsBridge.updateSelectedObjMatProps(arg0 === 0 ? undefined : MaterialProperties.__wrap(arg0));
     };
@@ -868,12 +871,12 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper599 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 267, __wbg_adapter_22);
+    imports.wbg.__wbindgen_closure_wrapper637 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 285, __wbg_adapter_22);
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper601 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 267, __wbg_adapter_25);
+    imports.wbg.__wbindgen_closure_wrapper639 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 285, __wbg_adapter_25);
         return ret;
     };
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {

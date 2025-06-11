@@ -107,8 +107,8 @@ extern "C" {
     #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateDofStrength)]
     pub fn js_update_dof_strength(defocus_angle: f32);
 
-    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = getGlbBytes)]
-    pub async fn js_get_glb_bytes(url: String) -> Promise;
+    #[wasm_bindgen(js_namespace = ["wasmToJsBridge"], js_name = updateSceneLoading)]
+    pub fn js_update_scene_loading(loading: bool);
 
 }
 
