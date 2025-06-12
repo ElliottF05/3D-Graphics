@@ -35,12 +35,18 @@ fi
 echo "✅ wasm-bindgen successful"
 
 # Step 3: Optimize WebAssembly after wasm-bindgen
-wasm-opt -O4 -g -o ../web/wasm/wasm_graphics_bg.wasm ../web/wasm/wasm_graphics_bg.wasm
+if command -v wasm-opt &> /dev/null
+then
+    echo "Found wasm-opt. Optimizing WebAssembly..."
+    wasm-opt -O4 -g -o ../web/wasm/wasm_graphics_bg.wasm ../web/wasm/wasm_graphics_bg.wasm
 
-if [ $? -ne 0 ]; then
-    echo "❌ wasm-opt failed"
-    exit 1
+    if [ $? -ne 0 ]; then
+        echo "⚠️ wasm-opt failed, but continuing without optimization."
+    else
+        echo "✅ wasm-opt successful"
+    fi
+else
+    echo "ℹ️ wasm-opt not found. Skipping WebAssembly optimization."
 fi
-echo "✅ wasm-opt successful"
 
 echo "🚀 WASM build completed!"
