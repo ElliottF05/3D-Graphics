@@ -1402,7 +1402,11 @@ impl Game {
                 mesh.scale_by(0.014);
                 mesh.rotate_around_center(0.0, -PI/2.0);
                 mesh.rotate_around_center(-PI, 0.0);
-                // mesh.rotate_around_center(degrees_to_radians(15.0), 0.0);
+                mesh.rotate_around_center(degrees_to_radians(40.0), 0.0);
+
+                for color in mesh.colors.iter_mut() {
+                    *color *= 0.6;
+                }
 
                 let bust_obj = SceneObject::new_from_mesh(mesh, bust_mat, true);
                 self.add_scene_object(bust_obj);
@@ -1416,32 +1420,32 @@ impl Game {
                     SceneObject::new_diffuse_mat(),
                     false
                 );
-                self.add_scene_object(ground_plane);
+                // self.add_scene_object(ground_plane);
 
 
                 // left (red) light
                 let light_1 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(2.0, -10.0, 5.0), 
+                    Vec3::new(4.0, -8.0, 8.0), 
                     1.0, 
-                    10.0 * Vec3::new(1.0, 0.08, 0.08), 
+                    30.0 * Vec3::new(1.0, 0.08, 0.08), 
                     2, 
                     1000
                 );
 
                 // right (blue) light
                 let light_2 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(2.0, 10.0, 5.0), 
+                    Vec3::new(4.0, 8.0, 5.0), 
                     1.0, 
-                    10.0 * Vec3::new(0.05, 0.05, 1.0), 
+                    30.0 * Vec3::new(0.05, 0.05, 1.0), 
                     2, 
                     1000
                 );
 
                 // top (white) light
                 let light_3 = SceneObject::new_sphere_omni_light(
-                    Vec3::new(-4.0, -2.0, 6.5), 
+                    Vec3::new(-5.0, -2.0, 6.5), 
                     1.0, 
-                    10.0 * Vec3::new(1.0, 1.0, 1.0), 
+                    35.0 * Vec3::new(1.0, 1.0, 1.0), 
                     2, 
                     1000
                 );
@@ -1451,8 +1455,8 @@ impl Game {
                 self.add_scene_object(light_3);
 
                 self.camera.pos = Vec3::new(30.0, 0.0, -3.0);
-                self.camera.look_at(&Vec3::zero());
-                self.camera.set_fov(degrees_to_radians(15.0));
+                self.camera.look_at(&Vec3::new(0.0, 0.0, 0.75));
+                self.camera.set_fov(degrees_to_radians(10.5));
 
                 self.max_sky_color = Vec3::new(0.05, 0.05, 0.1);
                 self.min_sky_color = Vec3::new(0.0, 0.0, 0.0);
