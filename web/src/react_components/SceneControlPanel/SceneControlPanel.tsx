@@ -29,6 +29,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 
 import EditPanel from './EditPanel/EditPanel';
 import AddObjectPanel from './AddObjectPanel';
+import InstructionsDialog from "./InstructionsDialog";
 import { useGameContext } from "@/gameContext";
 import { wasmToJsBridge } from "@/wasmToJSBridge";
 import { getFileBytes } from "@/index";
@@ -255,9 +256,10 @@ const SceneControlPanel: React.FC = () => {
 
     return (
         <Card className="w-full h-full overflow-y-auto rounded-none border-0">
-            <CardHeader>
+            <CardHeader className="relative">
                 <CardTitle>Scene Controls</CardTitle>
-                <CardDescription>Manage and edit your 3D scene.</CardDescription>
+                <CardDescription>Manage and edit your 3D scene. Click the question mark for controls.</CardDescription>
+                <InstructionsDialog />
             </CardHeader>
             <CardContent className="space-y-6 pb-20">
 
