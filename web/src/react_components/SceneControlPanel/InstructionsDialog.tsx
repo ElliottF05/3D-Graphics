@@ -2,8 +2,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { HelpCircle } from "lucide-react";
 
-const InstructionsDialog = () => (
-    <Dialog>
+interface InstructionsDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
+
+const InstructionsDialog: React.FC<InstructionsDialogProps> = ({ open, onOpenChange }) => (
+    <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>
             <Button variant="ghost" size="icon" className="absolute top-2 right-2" aria-label="Show instructions">
                 <HelpCircle className="w-5 h-5" />

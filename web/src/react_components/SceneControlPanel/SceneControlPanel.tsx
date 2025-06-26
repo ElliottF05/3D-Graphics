@@ -146,6 +146,7 @@ const SceneControlPanel: React.FC = () => {
 
     // state to control which accordion items are open
     const [openAccordionItems, setOpenAccordionItems] = useState<string[]>([]);
+    const [instructionsOpen, setInstructionsOpen] = useState(false);
 
     // --- handlers ---
     const handleLoadDefaultScene = (sceneValue: string) => {
@@ -254,12 +255,17 @@ const SceneControlPanel: React.FC = () => {
         // or explicitly in mode change handlers (like handleEnterEditMode).
     }, [selectedObjMatProps, inEditMode]); // Depend on inEditMode directly
 
+    useEffect(() => {
+        // Show on first load. For "first visit only", use localStorage here.
+        setInstructionsOpen(true);
+    }, []);
+
     return (
         <Card className="w-full h-full overflow-y-auto rounded-none border-0">
             <CardHeader className="relative">
                 <CardTitle>Scene Controls</CardTitle>
                 <CardDescription>Manage and edit your 3D scene. Click the question mark for controls.</CardDescription>
-                <InstructionsDialog />
+                <InstructionsDialog open={instructionsOpen} onOpenChange={setInstructionsOpen} />
             </CardHeader>
             <CardContent className="space-y-6 pb-20">
 
